@@ -2,8 +2,8 @@
     "manifest_version": 2,
     "name": "Corporate Earnings",
     "version": "0.1",
-    "browser_action": {
-        "default_icon": "icon.png"
+    "background": {
+        "scripts": ["background.js"]
     },
     "content_scripts": [
         {
@@ -13,5 +13,9 @@
             "js":["jquery-3.4.0.min.js", "content.js"],
             "run_at": "document_end"
         }
-    ]
+    ],
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
+    }
 }
