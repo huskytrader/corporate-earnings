@@ -1,0 +1,14 @@
+{
+    "manifest_version": 2,
+    "name": "Earnings Extension",
+    "version": "0.1",
+    "content_scripts": [
+        {
+            "matches":[
+                "https://seekingalpha.com/symbol/*/earnings"
+            ],
+            "js":["jquery.min.js", "content.js"],
+            "run_at": "document_end"
+        }
+    ]
+}
