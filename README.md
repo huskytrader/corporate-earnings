@@ -18,7 +18,7 @@
     1. Search Engine: CorporateEarnings
     1. Keyword: e
     1. URL: https://seekingalpha.com/symbol/%s/earnings
-To load new symbol, for example NVDA, type: 'e NVDA' on the browser address bar and press return
+    1. Once setup, to load new symbol, for example NVDA, type: 'e NVDA' on the browser address bar and press return
 
 ###Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
