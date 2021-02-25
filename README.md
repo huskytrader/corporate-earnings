@@ -9,16 +9,18 @@
 1. In Chrome/Edge go to the extensions page (`chrome://extensions` or `edge://extensions`)
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-master` folder anywhere on the page to import it (do not delete the folder afterwards)
-1. Add a custom search engine as described in https://zapier.com/blog/add-search-engine-to-chrome/
-   1. Search Engine: CorporateEarnings
-   1. Keyword: c
-   1. URL: https://seekingalpha.com/symbol/%s/earnings
-1. To load new symbol, for example NVDA, type: 'c NVDA' on the browser address bar and press return
+1. You can use the extension either by pressing on the new extension button on the address bar and entering a symbol in the popup
+1. Alternatively you can add a custom search engine as described in https://zapier.com/blog/add-search-engine-to-chrome/
+    1. Search Engine: CorporateEarnings
+    1. Keyword: e
+    1. URL: https://seekingalpha.com/symbol/%s/earnings
+   To load new symbol, for example NVDA, type: 'e NVDA' on the browser address bar and press return
 
 ###Troubleshooting**
-* If earnings data doesn't appear on top of the page, try turning off adblocker and/or refreshing page
+* If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
 
 ### Show your support
-* Follow me on Twitter [@huskytrader](https://twitter.com/huskytrader) for updates
+* Follow me on Twitter [@huskytrader](https://twitter.com/huskytrader)
+* If you wish to donate, please send any amount you like via Paypal to huskytrades@gmail.com or with Bitcoin 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
 
 

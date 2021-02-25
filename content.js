@@ -92,15 +92,14 @@ window.onload=function(){
        .myt {
          float: left;
          border-collapse: collapse;
-         margin: 25px 50px 25px 25px;
+         margin: 25px 100px 25px 25px;
          padding-left: 15px;
-         // font-size: 0.9em;
          font-family: sans-serif;
          min-width: 400px;
          box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
        }
        .myt thead tr {
-         background-color: #dcdcdc;
+         background-color: #333333;
          color: #ffffff;
          text-align: left;
        }
@@ -130,16 +129,16 @@ window.onload=function(){
       }
       .myt tbody tr .wred {
         color: #FF0000;
+      }     
+      .container {
+        overflow: hidden;
+        margin-bottom: 50px;
       }
-      
-     .container {
-       overflow: hidden;
-     }
-     .column {
-       float: left;
-       margin: 10px;
-       padding-bottom: 100%;
-       margin-bottom: -100%;
+      .column {
+        float: left;
+        margin: 10px;
+        padding-bottom: 100%;
+        margin-bottom: -100%;
      }
 
     </style>`;
@@ -317,7 +316,7 @@ function normalizeRevenue(revStr) {
     } else if (revStr.endsWith('K')) {
         return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
     } else if (revStr.endsWith('B')) {
-        return parseFloat(revStr) * 1000;
+        return Math.round(parseFloat(revStr) * 1000);
     }
     else {
         return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
