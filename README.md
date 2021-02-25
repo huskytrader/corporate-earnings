@@ -13,7 +13,7 @@
 1. In Chrome/Edge go to the extensions page (`chrome://extensions` or `edge://extensions`)
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
-1. You can use the extension either by pressing on the new extension button on the address bar and entering a symbol in the popup
+1. You can use the extension either by pressing on the extension button on address bar and entering a stock symbol in the popup
 1. Alternatively you can add a custom search engine as described in https://zapier.com/blog/add-search-engine-to-chrome/
     1. Search Engine: CorporateEarnings
     1. Keyword: e
