@@ -9,7 +9,7 @@
 ### Installation Instructions
 **Google Chrome / Microsoft Edge**
 1. Download this repo as a [ZIP file from GitHub](https://github.com/huskytrader/corporate-earnings/archive/main.zip)
-1. Unzip the file and you should have a folder names `corporate-earnings-main`
+1. Unzip the file and you should have a folder named `corporate-earnings-main`
 1. In Chrome/Edge go to the extensions page (`chrome://extensions` or `edge://extensions`)
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
