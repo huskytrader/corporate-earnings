@@ -92,7 +92,7 @@ window.onload=function(){
        .myt {
          float: left;
          border-collapse: collapse;
-         margin: 25px 100px 25px 25px;
+         margin: 25px 50px 25px 0px;
          padding-left: 15px;
          font-family: sans-serif;
          min-width: 400px;
