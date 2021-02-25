@@ -1,10 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "0.1",
-    "background": {
-        "scripts": ["background.js"]
-    },
+    "version": "1.0",
     "content_scripts": [
         {
             "matches":[
