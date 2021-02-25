@@ -1,0 +1,19 @@
+#content {
+    padding: 10px 10px 10px 10px;
+}
+
+#symbol {
+  font-size: 20px;
+  font-size: max(20px, 1em);
+  font-family: inherit;
+  padding: 0.25em 0.5em;
+  background-color: #fff;
+  border: 2px solid var(--input-border);
+  border-radius: 4px;
+  width: 100px;
+}
+
+#ok_btn {
+    margin-top: 10px;
+}
+

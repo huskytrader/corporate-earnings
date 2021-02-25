@@ -16,5 +16,15 @@
   });
 
   function handleSubmit() {
-        chrome.tabs.create({"url": "https://seekingalpha.com/symbol/"+ $("#symbol").val().trim() + "/earnings"});
+    let stockRegex = /^[a-zA-Z\s]*$/;
+    let symbol = $("#symbol").val().trim();
+    if (symbol==null || symbol=="") {
+        alert("Symbol must not be blank");
+        return;
     }
+    else if (!stockRegex.test(symbol)) {
+        alert("Symbol may only contain characters");
+        return;
+    }
+    chrome.tabs.create({"url": "https://seekingalpha.com/symbol/"+ $("#symbol").val().trim() + "/earnings"});
+  }

@@ -1,152 +1,151 @@
 window.onload=function(){
-        $('#main-nav-wrapper-row').hide();
-        $('#tab-content-header').hide();
-        $('#sp-center-menu').hide();
+    $('#main-nav-wrapper-row').hide();
+    $('#tab-content-header').hide();
+    $('#sp-center-menu').hide();
 
-        $('.symbol_title').hide();
+    $('.symbol_title').hide();
 
-        $('#estimates').hide();
-        $('#cresscap').hide();
+    $('#estimates').hide();
+    $('#cresscap').hide();
 
-        $('.panel-body').hide();
-        $('#breaking-news').hide();
-        $('.col-xs-3').hide();
+    $('.panel-body').hide();
+    $('#breaking-news').hide();
+    $('.col-xs-3').hide();
 
-        let epsDates = [];
-        $('.panel-title.earning-title').each(function() {
-            let epsItem = {};
-            epsItem.name = normalizeQtrName($(this).find('.title-period').text());
-            epsItem.eps = parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
-            epsItem.rev = parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+    let epsDates = [];
+    $('.panel-title.earning-title').each(function() {
+        let epsItem = {};
+        epsItem.name = normalizeQtrName($(this).find('.title-period').text());
+        epsItem.eps = parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+        epsItem.rev = parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
 
-            if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
-                epsDates.unshift(epsItem);
-                calculateEpsPerf(epsDates);
-            }
-
-        });
-
-
-        // add annual eps estimates
-        let annualEst = [];
-        $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
-            let annualItem = {};
-            $(this).children().each(function(index) {
-                if (index == 0) {
-                    annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
-                } else if (index == 1) {
-                    annualItem.eps = $(this).text().trim();
-                }
-            });
-            annualEst.push(annualItem);
-        });
-
-        // add annual revenue estimates
-        $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
-            $(this).children().each(function(index2) {
-                if (index2 == 1) {
-                    annualEst[index].rev = normalizeRevenue($(this).text().trim());
-                }
-            })
-        })
-
-        // calculate eps/revenue for previous years using existing quaterly data
-        // keep going back until can't find 4 qtrs for that year
-        let numAttempts = 0;
-        if (epsDates.length > 0) {
-            let year = getLatestQtrYear(epsDates);
-            while (true) {
-                let annualItem = {};
-                annualItem.name = year;
-                annualItem.eps = 0;
-                annualItem.rev = 0;
-                let numQtrs4Year = 0;
-
-                epsDates.forEach(function(item) {
-                    if (item.name.indexOf(year.toString()) > -1) {
-                        annualItem.eps += item.eps.eps;
-                        annualItem.rev += item.rev.rev;
-                        ++numQtrs4Year;
-                    }
-                })
-
-                ++numAttempts;
-                --year;
-
-                if (numQtrs4Year < 4) {
-                    if (numAttempts < 2) {
-                        continue;
-                    }
-                    else {
-                        break;
-                    }
-                }
-                annualItem.eps = +annualItem.eps.toFixed(1);
-                annualItem.rev = +annualItem.rev.toFixed(1);
-                annualEst.unshift(annualItem);
-            }
+        if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
+            epsDates.unshift(epsItem);
+            calculateEpsPerf(epsDates);
         }
 
-        calculateAnnualPerf(annualEst);
+    });
 
-        const css = `<style>
-           .myt {
-             float: left;
-             border-collapse: collapse;
-             margin: 25px 50px 25px 25px;
-             padding-left: 15px;
-             // font-size: 0.9em;
-             font-family: sans-serif;
-             min-width: 400px;
-             box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-           }
-           .myt thead tr {
-             background-color: #dcdcdc;
-             color: #ffffff;
-             text-align: left;
-           }
-           .myt th,
-           .myt td {
-             padding: 12px 15px;
-           }
-           .myt tbody tr {
-              border-bottom: 1px solid #dddddd;
-           }
-          .myt tbody tr:nth-of-type(even) {
-             background-color: #f3f3f3;
-          }
-          .myt tbody tr:last-of-type {
-            /*border-bottom: 2px solid #009879;*/
-          }
-          .myt tbody tr .sgreen {
-            color: #0000FF;
-            font-weight: bold;
-          }
-          .myt tbody tr .wgreen {
-            color: #0000FF;
-          }
-          .myt tbody tr .sred {
-            color: #FF0000;
-            font-weight: bold;
-          }
-          .myt tbody tr .wred {
-            color: #FF0000;
-          }
-          
-         .container {
-           overflow: hidden;
-         }
-         .column {
-           float: left;
-           margin: 10px;
-           padding-bottom: 100%;
-           margin-bottom: -100%;
-         }
+    // add annual eps estimates
+    let annualEst = [];
+    $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
+        let annualItem = {};
+        $(this).children().each(function(index) {
+            if (index == 0) {
+                annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
+            } else if (index == 1) {
+                annualItem.eps = $(this).text().trim();
+            }
+        });
+        annualEst.push(annualItem);
+    });
 
-       </style>`;
+    // add annual revenue estimates
+    $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
+        $(this).children().each(function(index2) {
+            if (index2 == 1) {
+                annualEst[index].rev = normalizeRevenue($(this).text().trim());
+            }
+        })
+    })
 
-        $('head').prepend(css);
-        $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+    // calculate eps/revenue for previous years using existing quaterly data
+    // keep going back until can't find 4 qtrs for that year
+    let numAttempts = 0;
+    if (epsDates.length > 0) {
+        let year = getLatestQtrYear(epsDates);
+        while (true) {
+            let annualItem = {};
+            annualItem.name = year;
+            annualItem.eps = 0;
+            annualItem.rev = 0;
+            let numQtrs4Year = 0;
+
+            epsDates.forEach(function(item) {
+                if (item.name.indexOf(year.toString()) > -1) {
+                    annualItem.eps += item.eps.eps;
+                    annualItem.rev += item.rev.rev;
+                    ++numQtrs4Year;
+                }
+            })
+
+            ++numAttempts;
+            --year;
+
+            if (numQtrs4Year < 4) {
+                if (numAttempts < 2) {
+                    continue;
+                }
+                else {
+                    break;
+                }
+            }
+            annualItem.eps = +annualItem.eps.toFixed(1);
+            annualItem.rev = +annualItem.rev.toFixed(1);
+            annualEst.unshift(annualItem);
+        }
+    }
+
+    calculateAnnualPerf(annualEst);
+
+    const css = `<style>
+       .myt {
+         float: left;
+         border-collapse: collapse;
+         margin: 25px 50px 25px 25px;
+         padding-left: 15px;
+         // font-size: 0.9em;
+         font-family: sans-serif;
+         min-width: 400px;
+         box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+       }
+       .myt thead tr {
+         background-color: #dcdcdc;
+         color: #ffffff;
+         text-align: left;
+       }
+       .myt th,
+       .myt td {
+         padding: 12px 15px;
+       }
+       .myt tbody tr {
+          border-bottom: 1px solid #dddddd;
+       }
+      .myt tbody tr:nth-of-type(even) {
+         background-color: #f3f3f3;
+      }
+      .myt tbody tr:last-of-type {
+        /*border-bottom: 2px solid #009879;*/
+      }
+      .myt tbody tr .sgreen {
+        color: #0000FF;
+        font-weight: bold;
+      }
+      .myt tbody tr .wgreen {
+        color: #0000FF;
+      }
+      .myt tbody tr .sred {
+        color: #FF0000;
+        font-weight: bold;
+      }
+      .myt tbody tr .wred {
+        color: #FF0000;
+      }
+      
+     .container {
+       overflow: hidden;
+     }
+     .column {
+       float: left;
+       margin: 10px;
+       padding-bottom: 100%;
+       margin-bottom: -100%;
+     }
+
+    </style>`;
+
+    $('head').prepend(css);
+    $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
 
 };
 
