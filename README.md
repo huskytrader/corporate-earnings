@@ -20,7 +20,7 @@
     1. URL: https://seekingalpha.com/symbol/%s/earnings
     1. Once setup, to load new symbol, for example NVDA, type: 'e NVDA' on the browser address bar and press return
 
-###Troubleshooting
+### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
 
 ### Show your support
