@@ -7,7 +7,7 @@ displayWaiting();
 $( document ).ready(function() {
     delay(function(){
         extractContent();
-        populate();
+        displayContent();
     }, 2000 ); // end delay
     
 });
@@ -21,7 +21,7 @@ var delay = ( function() {
 })();
 
 function displayWaiting() {
-    $('body').prepend('<div class="container" id="waiting"><div class="column">WAITING FOR CONTENT....</div>');
+    $('body').prepend('<div class="container" id="waiting"><div class="column">WAITING FOR CONTENT....</div></div>');
 }
 
 function prepare() {
@@ -83,7 +83,7 @@ function prepare() {
     $('head').prepend(css);
 }
 
-function populate() {
+function displayContent() {
     $('#waiting').hide();
     $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
 }
@@ -162,8 +162,8 @@ function toNum(str) {
 }
 
 function fromNum(num) {
-  let str = num.toFixed(2);
-  return str;
+    let str = num.toFixed(2);
+    return str;
 }
 
 // to calculate eps performance, compare with entry 4 qtrs back
@@ -346,7 +346,6 @@ function extractContent() {
         });
         annualEst.push(annualItem);
     });
-//});
 
     // add annual revenue estimates
     $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
@@ -356,44 +355,42 @@ function extractContent() {
             }
         })
     })
-//});    
+    
+    // calculate eps/revenue for previous years using existing quaterly data
+    // keep going back until can't find 4 qtrs for that year
+    let numAttempts = 0;
+    if (epsDates.length > 0) {
+        let year = getLatestQtrYear(epsDates);
+        while (true) {
+            let annualItem = {};
+            annualItem.name = year;
+            annualItem.eps = 0;
+            annualItem.rev = 0;
+            let numQtrs4Year = 0;
 
-// calculate eps/revenue for previous years using existing quaterly data
-// keep going back until can't find 4 qtrs for that year
-let numAttempts = 0;
-if (epsDates.length > 0) {
-    let year = getLatestQtrYear(epsDates);
-    while (true) {
-        let annualItem = {};
-        annualItem.name = year;
-        annualItem.eps = 0;
-        annualItem.rev = 0;
-        let numQtrs4Year = 0;
+            epsDates.forEach(function(item) {
+                if (item.name.indexOf(year.toString()) > -1) {
+                    annualItem.eps += item.eps.eps;
+                    annualItem.rev += item.rev.rev;
+                    ++numQtrs4Year;
+                }
+            })
 
-        epsDates.forEach(function(item) {
-            if (item.name.indexOf(year.toString()) > -1) {
-                annualItem.eps += item.eps.eps;
-                annualItem.rev += item.rev.rev;
-                ++numQtrs4Year;
+            ++numAttempts;
+            --year;
+
+            if (numQtrs4Year < 4) {
+                if (numAttempts < 2) {
+                    continue;
+                }
+                else {
+                    break;
+                }
             }
-        })
-
-        ++numAttempts;
-        --year;
-
-        if (numQtrs4Year < 4) {
-            if (numAttempts < 2) {
-                continue;
-            }
-            else {
-                break;
-            }
+            annualItem.eps = +annualItem.eps.toFixed(1);
+            annualItem.rev = +annualItem.rev.toFixed(1);
+            annualEst.unshift(annualItem);
         }
-        annualItem.eps = +annualItem.eps.toFixed(1);
-        annualItem.rev = +annualItem.rev.toFixed(1);
-        annualEst.unshift(annualItem);
     }
-}
-
-calculateAnnualPerf(annualEst);
+    calculateAnnualPerf(annualEst);
 }
