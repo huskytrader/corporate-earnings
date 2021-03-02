@@ -21,7 +21,7 @@ var delay = ( function() {
 })();
 
 function displayWaiting() {
-    $('body').prepend('<div class="container" id="waiting"><div class="column">WAITING FOR CONTENT....</div></div>');
+    $('body').prepend('<div class="container" id="waiting"><p class="loading_msg">Loading earnings data</p></div>');
 }
 
 function prepare() {
@@ -77,6 +77,33 @@ function prepare() {
         padding-bottom: 100%;
         margin-bottom: -100%;
     }
+    .loading_msg:after {
+        content: '.';
+        animation: dots 1s steps(1, end) infinite;
+    }
+    @keyframes dots {
+        0%, 12.5% {
+            opacity: 0;
+        }
+        25% {
+            opacity: 1;
+        }
+        37.5% {
+            text-shadow: .5em 0;
+        }
+        50% {
+            text-shadow: .5em 0, 1em 0;
+        }
+        62.5% {
+            text-shadow: .5em 0, 1em 0, 1.5em 0;
+        }
+        75% {
+            text-shadow: .5em 0, 1em 0, 1.5em 0, 2em 0;
+        }
+        87.5%, 100%{
+            text-shadow: .5em 0, 1em 0, 1.5em 0, 2em 0, 2.5em;
+        }
+    }   
     </style>`;
 
     hideExtraContent();
@@ -103,17 +130,31 @@ function epsDatesToHtml(epsDates) {
         if (index < epsDates.length - 8) { return; }
         let epsPerf = '-';
         if (typeof item.eps.perf !== 'undefined') {
-            epsPerf = item.eps.perf > 0 ? ('+' + item.eps.perf) : item.eps.perf;
+            if (item.eps.negativeCompQtr) {
+                epsPerf = 'N/A';
+            } 
+            else {
+                if (item.eps.perf >= 1000) {
+                    epsPerf = '999%';   
+                }
+                else { epsPerf = item.eps.perf + '%'; }
+                if (item.eps.perf > 0) { epsPerf = '+' + epsPerf; }
+                if (item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
+            }
         }
         let revPerf = '-';
         if (typeof item.rev.perf !== 'undefined') {
-            revPerf = item.rev.perf > 0 ? ('+' + item.rev.perf) : item.rev.perf;
+            if (item.rev.perf >= 1000) {
+                    revPerf = '999%';   
+            }
+            else { revPerf = item.rev.perf + '%'; }
+            if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
         }
         html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.eps.perf) + '">' + epsPerf + '</td>';
+        html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.rev.perf) + '">' + revPerf  + '</td></tr>';
+        html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
     html += '</tbody></table>';
     return html;
@@ -142,9 +183,9 @@ function yearlyToHtml(annualEst) {
 
         html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
         html += '<td class="myd">' + yearlyEps + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td class="myd' + getHighlightClass(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(yearlyRev) + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.revPerf) + '">' + revPerf  + '</td></tr>';
+        html += '<td class="myd' + getHighlightClass(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
     html += '</tbody></table>';
     return html;
@@ -170,7 +211,15 @@ function fromNum(num) {
 function calculateEpsPerf(dates) {
    dates.map(function(item, index) {
        if (index-4 > 0 && dates[index-4].eps.eps != 0) {
+           item.eps.negativeCompQtr = false; 
+           item.eps.negativeTurnaround = false;
            item.eps.perf = Math.round(100*((item.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
+           if (item.eps.eps < 0 && dates[index-4].eps.eps) {
+                item.eps.negativeCompQtr = true;
+           }
+           else if (dates[index-4].eps.eps < 0) {
+                item.eps.negativeTurnaround = true;
+           }
        }
    });
 }
@@ -277,8 +326,9 @@ function normalizeQtrName(str) {
    <0 && >-20 : weak read
    < -20 : strong red
 */
-function getHighlightClass(num) {
+function getHighlightClass(num, str) {
     let hclass = '';
+    if (str === 'N/A') { return hclass; }
     if (typeof num !== 'undefined') {
         if (num >= 30) {
             hclass = ' sgreen';
@@ -322,6 +372,7 @@ function hideExtraContent() {
 }
 
 function extractContent() {
+    // add quarters
     $('.panel-title.earning-title').each(function() {
         let epsItem = {};
         epsItem.name = normalizeQtrName($(this).find('.title-period').text());
