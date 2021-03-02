@@ -126,6 +126,12 @@ function getLatestQtrYear(epsDates) {
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    if (epsDates.length == 0) {
+        html += '<tr class="myd"><td class="myd" colspan="5">No data. Check below to see if any quarters have reported and if so, reload the page.</td></tr>';
+        html += '</tbody></table>';
+        return html;
+    }
+
     epsDates.forEach(function(item, index){
         if (index < epsDates.length - 8) { return; }
         let epsPerf = '-';
@@ -150,7 +156,7 @@ function epsDatesToHtml(epsDates) {
             else { revPerf = item.rev.perf + '%'; }
             if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
         }
-        html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
+        html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
         html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
@@ -207,24 +213,24 @@ function fromNum(num) {
     return str;
 }
 
-// to calculate eps performance, compare with entry 4 qtrs back
+// to calculate eps performance (%Chg), compare with entry 4 qtrs back
 function calculateEpsPerf(dates) {
-   dates.map(function(item, index) {
-       if (index-4 > 0 && dates[index-4].eps.eps != 0) {
-           item.eps.negativeCompQtr = false; 
-           item.eps.negativeTurnaround = false;
-           item.eps.perf = Math.round(100*((item.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
-           if (item.eps.eps < 0 && dates[index-4].eps.eps) {
-                item.eps.negativeCompQtr = true;
+   dates.map(function(qtr, index) {
+       if (index-4 >= 0 && dates[index-4].eps.eps != 0) {
+           qtr.eps.negativeCompQtr = false; 
+           qtr.eps.negativeTurnaround = false;
+           qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
+           if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
+                qtr.eps.negativeCompQtr = true;
            }
            else if (dates[index-4].eps.eps < 0) {
-                item.eps.negativeTurnaround = true;
+                qtr.eps.negativeTurnaround = true;
            }
        }
    });
 }
 
-// TO calculate annual performance, compare with previous year
+// TO calculate annual performance (%Chg), compare with previous year
 function calculateAnnualPerf(dates) {
    dates.map(function(item, index) {
        if (index-1 >= 0) {
@@ -381,9 +387,10 @@ function extractContent() {
 
         if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
             epsDates.unshift(epsItem);
-            calculateEpsPerf(epsDates);
         }
     });
+    calculateEpsPerf(epsDates);
+
 
     // add annual eps estimates
     $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
@@ -444,4 +451,8 @@ function extractContent() {
         }
     }
     calculateAnnualPerf(annualEst);
+}
+
+function getDisplayQuarter(qtr) {
+    return qtr.substr(0,3) + '-' + qtr.substr(6);
 }
