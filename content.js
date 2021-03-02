@@ -126,8 +126,9 @@ function getLatestQtrYear(epsDates) {
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data. Check below to see if any quarters have reported and if so, reload the page.</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="5">No data. Try reloading this page.</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -169,6 +170,13 @@ function epsDatesToHtml(epsDates) {
 function yearlyToHtml(annualEst) {
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    
+    if (annualEst.length == 0) {
+        html += '<tr class="myd"><td class="myd" colspan="5">No data. Try reloading this page.</td></tr>';
+        html += '</tbody></table>';
+        return html;
+    }
+
     annualEst.forEach(function(item, index){
         let yearlyEps = '-';
         if (typeof item.eps !== 'undefined') {
