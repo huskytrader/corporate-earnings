@@ -142,9 +142,9 @@ function epsDatesToHtml(epsDates) {
             } 
             else {
                 if (item.eps.perf >= 1000) {
-                    epsPerf = '999%';   
+                    epsPerf = '999';   
                 }
-                else { epsPerf = item.eps.perf + '%'; }
+                else { epsPerf = item.eps.perf; }
                 if (item.eps.perf > 0) { epsPerf = '+' + epsPerf; }
                 if (item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
             }
@@ -152,9 +152,9 @@ function epsDatesToHtml(epsDates) {
         let revPerf = '-';
         if (typeof item.rev.perf !== 'undefined') {
             if (item.rev.perf >= 1000) {
-                    revPerf = '999%';   
+                    revPerf = '999';   
             }
-            else { revPerf = item.rev.perf + '%'; }
+            else { revPerf = item.rev.perf; }
             if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
         }
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
