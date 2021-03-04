@@ -115,14 +115,6 @@ function displayContent() {
     $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
 }
 
-
-function getLatestQtrYear(epsDates) {
-  if (epsDates.length == 0) { return undefined; }
-  let lastQtrName = epsDates[epsDates.length-1].name;
-  let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
-  return year;
-}
-
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
@@ -423,7 +415,9 @@ function extractContent() {
     })
     
     // calculate eps/revenue for previous years using existing quaterly data
-    // keep going back until can't find 4 qtrs for that year
+    // getLatestYear to get year for latest quarter available (e.g. 2020)
+    // attempt to find all quarters for given year
+    // if found 0 quarters, exit
     let numAttempts = 0;
     if (epsDates.length > 0) {
         let year = getLatestQtrYear(epsDates);
@@ -432,33 +426,35 @@ function extractContent() {
             annualItem.name = year;
             annualItem.eps = 0;
             annualItem.rev = 0;
-            let numQtrs4Year = 0;
+            let foundQtrs4Year = 0;
 
-            epsDates.forEach(function(item) {
-                if (item.name.indexOf(year.toString()) > -1) {
-                    annualItem.eps += item.eps.eps;
-                    annualItem.rev += item.rev.rev;
-                    ++numQtrs4Year;
+            epsDates.forEach(function(qtr) {
+                if (qtr.name.indexOf(year.toString()) > -1) {
+                    annualItem.eps += qtr.eps.eps;
+                    annualItem.rev += qtr.rev.rev;
+                    ++foundQtrs4Year;
                 }
             })
 
-            ++numAttempts;
-            --year;
-
-            if (numQtrs4Year < 4) {
-                if (numAttempts < 2) {
-                    continue;
-                }
-                else {
-                    break;
-                }
+            if (foundQtrs4Year == 0) {
+                break;
             }
-            annualItem.eps = +annualItem.eps.toFixed(1);
+
+            annualItem.eps = +annualItem.eps.toFixed(2);
             annualItem.rev = +annualItem.rev.toFixed(1);
             annualEst.unshift(annualItem);
+            --year;
         }
     }
     calculateAnnualPerf(annualEst);
+}
+
+
+function getLatestQtrYear(epsDates) {
+    if (epsDates.length == 0) { return undefined; }
+    let lastQtrName = epsDates[epsDates.length-1].name;
+    let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
+    return year;
 }
 
 function getDisplayQuarter(qtr) {
