@@ -126,7 +126,7 @@ function epsDatesToHtml(epsDates) {
     }
 
     epsDates.forEach(function(item, index){
-        if (index < epsDates.length - 8) { return; }
+        //if (index < epsDates.length - 8) { return; }
         let epsPerf = '-';
         if (typeof item.eps.perf !== 'undefined') {
             if (item.eps.negativeCompQtr) {
