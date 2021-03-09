@@ -1,7 +1,15 @@
+// default settings
+var ms_style_output = true;
+var limit_num_qtr = true;
+
+chrome.storage.local.get(['ms_style_output', 'limit_num_qtr'], function(options) {
+   if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
+   if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
+ });
 
 var epsDates = [];
 var annualEst = [];
-
+    
 prepare();
 displayWaiting();
 $( document ).ready(function() {
@@ -116,6 +124,8 @@ function displayContent() {
 }
 
 function epsDatesToHtml(epsDates) {
+    console.log('ms_style_output='+ms_style_output+", limit_num_qtr="+limit_num_qtr);
+
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
@@ -125,25 +135,27 @@ function epsDatesToHtml(epsDates) {
         return html;
     }
 
-    epsDates.forEach(function(item, index){
-        if (index < epsDates.length - 8) { return; }
+    epsDates.forEach(function(item, index) {
+        // skip all but the last 8 qtrs if option is enabled
+        if (limit_num_qtr == true && index < epsDates.length - 8) { return; }
+        
         let epsPerf = '-';
         if (typeof item.eps.perf !== 'undefined') {
-            if (item.eps.negativeCompQtr) {
+            if (ms_style_output == true && item.eps.negativeCompQtr) {
                 epsPerf = 'N/A';
             } 
             else {
-                if (item.eps.perf >= 1000) {
+                if (ms_style_output == true && item.eps.perf >= 1000) {
                     epsPerf = '999';   
                 }
                 else { epsPerf = item.eps.perf; }
                 if (item.eps.perf > 0) { epsPerf = '+' + epsPerf; }
-                if (item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
+                if (ms_style_output == true && item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
             }
         }
         let revPerf = '-';
         if (typeof item.rev.perf !== 'undefined') {
-            if (item.rev.perf >= 1000) {
+            if (ms_style_output == true && item.rev.perf >= 1000) {
                     revPerf = '999';   
             }
             else { revPerf = item.rev.perf; }
@@ -459,4 +471,8 @@ function getLatestQtrYear(epsDates) {
 
 function getDisplayQuarter(qtr) {
     return qtr.substr(0,3) + '-' + qtr.substr(6);
+}
+
+function isDefined(smth) {
+    return typeof smth !== 'undefined';
 }
