@@ -14,15 +14,10 @@
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
 1. Use the extension by pressing on extension icon to the right of address bar and entering a stock symbol in the popup dialog
-1. Alternatively you may add a custom search engine as described in https://zapier.com/blog/add-search-engine-to-chrome/
-    1. Search Engine: CorporateEarnings
-    1. Keyword: e
-    1. URL: https://seekingalpha.com/symbol/%s/earnings
-    1. Once setup, to load new symbol, for example NVDA, type: 'e NVDA' on the browser address bar and press return
 
 ### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
 
 ### Show your support
-* Follow me on Twitter [@huskytrader](https://twitter.com/huskytrader)
-* If you wish to donate, please send any amount you like via Paypal: https://paypal.me/huskytrader or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+* Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
+* If you wish to donate, please send any amount you like via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
