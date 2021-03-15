@@ -1,3 +1,5 @@
+const urlPrefix = "aHR0cHM6Ly9zZWVraW5nYWxwaGEuY29tL3N5bWJvbC8=";
+
 $( document ).ready(function() {
     $("#symbol").focus();
 
@@ -22,5 +24,5 @@ function handleSubmit() {
         alert("Symbol must only contain characters");
         return;
     }
-    chrome.tabs.create({"url": "https://seekingalpha.com/symbol/"+ $("#symbol").val().trim() + "/earnings"});
+    chrome.tabs.create({"url": decodeURIComponent(escape(window.atob(urlPrefix))) + $("#symbol").val().trim() + "/earnings"});
 }
