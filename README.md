@@ -25,6 +25,4 @@
 
 ### Show your support
 * Follow me on Twitter [@huskytrader](https://twitter.com/huskytrader)
-* If you wish to donate, please send any amount you like via Paypal to huskytrades@gmail.com or with Bitcoin 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
-
-
+* If you wish to donate, please send any amount you like via Paypal: https://paypal.me/huskytrader or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
