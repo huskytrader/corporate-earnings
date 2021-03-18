@@ -17,7 +17,8 @@
 
 ### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
+* If you see installation errors on Windows, make sure you have extracted the ZIP file. Right click on the ZIP and select 'Extract All...'.
 
 ### Show your support
 * Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
-* If you wish to donate, please send any amount you like via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+* If you wish to donate to support development, send any amount you wish via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
