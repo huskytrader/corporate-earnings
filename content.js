@@ -9,24 +9,26 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr'], function(options)
 
 var epsDates = [];
 var annualEst = [];
-    
+
 prepare();
 displayWaiting();
-$( document ).ready(function() {
-    delay(function(){
-        extractContent();
-        displayContent();
-    }, 2000 ); // end delay
-    
-});
+displayWhenReady();
 
-var delay = ( function() {
-    var timer = 0;
-    return function(callback, ms) {
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
+function displayWhenReady() {
+    const earningsCount = $(document).find("div.earning-title").length;
+    if(earningsCount <= 0) {
+        // No rows, wait some more
+        setTimeout(displayWhenReady, 100);
+    }
+    else {
+        // At least one row, wait a moment to allow all rows to be populated
+        // before extracting and displaying
+        setTimeout(function() {
+            extractContent();
+            displayContent();
+        }, 250);
+    }
+}
 
 function displayWaiting() {
     $('body').prepend('<div class="container" id="waiting"><p class="loading_msg">Loading earnings data</p></div>');
