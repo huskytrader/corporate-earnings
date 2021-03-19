@@ -75,6 +75,9 @@ function prepare() {
     .myt tbody tr .wred {
         color: #FF0000;
     }     
+    .myd {
+        text-align: right;
+    }
     .container {
         overflow: hidden;
         margin-bottom: 50px;
