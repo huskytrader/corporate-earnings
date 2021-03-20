@@ -24,5 +24,5 @@ function handleSubmit() {
         alert("Symbol must only contain characters");
         return;
     }
-    chrome.tabs.create({"url": decodeURIComponent(escape(window.atob(urlPrefix))) + $("#symbol").val().trim() + "/earnings"});
+    chrome.tabs.create({"url": decodeURIComponent(escape(window.atob(urlPrefix))) + symbol.toUpperCase() + "/earnings"});
 }
