@@ -155,8 +155,6 @@ function displayContent() {
 }
 
 function epsDatesToHtml(epsDates) {
-    console.log('ms_style_output='+ms_style_output+", limit_num_qtr="+limit_num_qtr);
-
     let html = '<table class="myt">';
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
@@ -491,7 +489,6 @@ function extractContent() {
     }
     calculateAnnualPerf(annualEst);
 }
-
 
 function getLatestQtrYear(epsDates) {
     if (epsDates.length == 0) { return undefined; }

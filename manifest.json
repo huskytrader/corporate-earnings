@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "1.0",
+    "version": "1.1",
     "content_scripts": [
         {
             "matches":[
@@ -19,5 +19,5 @@
         "page": "options.html",
         "chrome_style": false
     },
-    "permissions": [ "storage" ]
+    "permissions": [ "storage", "tabs" ]
 }
