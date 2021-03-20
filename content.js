@@ -9,24 +9,47 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr'], function(options)
 
 var epsDates = [];
 var annualEst = [];
-    
+
 prepare();
 displayWaiting();
-$( document ).ready(function() {
-    delay(function(){
-        extractContent();
-        displayContent();
-    }, 2000 ); // end delay
-    
-});
 
-var delay = ( function() {
-    var timer = 0;
-    return function(callback, ms) {
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
+var numChecks = 0;
+var pollDelay = 100; // ms
+var timeout = 3000; // ms
+displayWhenReady();
+
+function displayWhenReady() {
+    // Bail out if ticker has no earnings data
+    const noData = $(document).find('#history .no-data').length == 1;
+    if(noData) {
+        $('#waiting').hide();
+        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+        return;
+    }
+
+    // Wait for earnings to appear
+    const earningsCount = $(document).find("div.earning-title").length;
+    if(earningsCount > 0) {
+        // At least one row, wait a moment to allow all rows to be populated
+        // before extracting and displaying
+        setTimeout(function() {
+            extractContent();
+            displayContent();
+        }, 250);
+        return;
+    }
+
+    // Check if we timed out
+    if(numChecks * 100 > timeout) {
+        $('#waiting').hide();
+        $('body').prepend('<div class="mymsg">No data found.</div>');
+        return;
+    }
+
+    // Wait some more before checking again
+    ++numChecks;
+    setTimeout(displayWhenReady, 100);
+}
 
 function displayWaiting() {
     $('body').prepend('<div class="container" id="waiting"><p class="loading_msg">Loading earnings data</p></div>');
@@ -34,6 +57,11 @@ function displayWaiting() {
 
 function prepare() {
     const css = `<style>
+    .mymsg, #waiting {
+       padding: 20px;
+       font-size: 1em;
+       font-style: italic;
+    }
     .myt {
        float: left;
        border-collapse: collapse;
