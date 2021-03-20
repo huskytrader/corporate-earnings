@@ -109,6 +109,7 @@ function prepare() {
     .container {
         overflow: hidden;
         margin-bottom: 50px;
+        margin-top: 6px;
     }
     .column {
         float: left;
