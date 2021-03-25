@@ -17,7 +17,7 @@
 
 ### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
-* If you see installation errors on Windows, make sure you have extracted the ZIP file. Right click on the ZIP and select 'Extract All...'.
+* On Windows make sure you have extracted the ZIP file not just listed it: right click on the ZIP and select 'Extract All...'. You may end up with an extra corporate-earnings-main folder. Make sure that folder that you drag into Chrome contains manifest.json file.
 
 ### Show your support
 * Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
