@@ -6,7 +6,8 @@
     "content_scripts": [
         {
             "matches":[
-                "https://seekingalpha.com/symbol/*/earnings"
+                "https://seekingalpha.com/symbol/*/earnings",
+                "https://www.zacks.com/stock/research/*/earnings-announcements"
             ],
             "js":["jquery-3.6.0.min.js", "content.js"],
             "run_at": "document_end"
