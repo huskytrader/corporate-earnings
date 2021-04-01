@@ -7,10 +7,10 @@
 *Corporate Earnings is a browser extension which displays earnings data in a format similar to MarketSmith*
 
 ### Installation Instructions
-**Google Chrome / Microsoft Edge**
+**Google Chrome / Microsoft Edge / Brave**
 1. Download this repo as a [ZIP file from GitHub](https://github.com/huskytrader/corporate-earnings/archive/main.zip)
 1. Unzip the file and you should have a folder named `corporate-earnings-main`
-1. In Chrome/Edge go to the extensions page (`chrome://extensions` or `edge://extensions`)
+1. In Chrome/Edge/Brave go to the extensions page (`chrome://extensions` or `edge://extensions` or `brave://extensions`)
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
 1. Use the extension by pressing on extension icon to the right of address bar and entering a stock symbol in the popup dialog
@@ -21,4 +21,4 @@
 
 ### Show your support
 * Star this repo. Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
-* If you wish to donate to support development, send any amount you wish via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+* If you wish to donate to support development, do so via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV

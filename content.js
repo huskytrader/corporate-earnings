@@ -1,7 +1,15 @@
 const monthMap = {
+    1: 'Jan',
+    2: 'Feb',
     3: 'Mar',
+    4: 'Apr',
+    5: 'May',
     6: 'Jun',
+    7: 'Jul',
+    8: 'Aug',
     9: 'Sep',
+    10: 'Oct',
+    11: 'Nov',
     12: 'Dec'
 };
 
@@ -33,7 +41,6 @@ else if (data_source == 'za') {
     extractContent();
     displayContent();
 }
-
 
 //
 // end of main
@@ -216,7 +223,7 @@ function epsDatesToHtml(epsDates) {
         if (limit_num_qtr == true && index < epsDates.length - 8) { return; }
         
         let epsPerf = '-';
-        if (typeof item.eps.perf !== 'undefined') {
+        if (isDefined(item.eps.perf)) {
             if (ms_style_output == true && item.eps.negativeCompQtr) {
                 epsPerf = 'N/A';
             } 
@@ -230,7 +237,7 @@ function epsDatesToHtml(epsDates) {
             }
         }
         let revPerf = '-';
-        if (typeof item.rev.perf !== 'undefined') {
+        if (isDefined(item.rev.perf)) {
             if (ms_style_output == true && item.rev.perf >= 1000) {
                     revPerf = '999';   
             }
@@ -315,6 +322,7 @@ function getHighlightClass(num, str) {
 }
 
 function numberWithCommas(x) {
+    if (!isDefined(x) || x == null) { return '-'; }
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
@@ -322,36 +330,7 @@ function isDefined(smth) {
     return typeof smth !== 'undefined';
 }
 
-// to calculate eps performance (%Chg), compare with entry 4 qtrs back
-function calculateEpsPerf(dates) {
-   dates.map(function(qtr, index) {
-       if (index-4 >= 0 && dates[index-4].eps.eps != 0) {
-           qtr.eps.negativeCompQtr = false; 
-           qtr.eps.negativeTurnaround = false;
-           qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
-           if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
-                qtr.eps.negativeCompQtr = true;
-           }
-           else if (dates[index-4].eps.eps < 0) {
-                qtr.eps.negativeTurnaround = true;
-           }
-       }
-   });
-}
 
-// TO calculate annual performance (%Chg), compare with previous year
-function calculateAnnualPerf(dates) {
-   dates.map(function(item, index) {
-       if (index-1 >= 0) {
-           if (dates[index-1].eps != 0) {
-               item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
-           }
-           if (dates[index-1].rev != 0) {
-               item.revPerf = Math.round(100*((item.rev - dates[index-1].rev) / Math.abs(dates[index-1].rev)));
-           }
-       }
-   });
-}
 // end display
 
 
@@ -394,8 +373,8 @@ function extractContent() {
         $('.panel-title.earning-title').each(function() {
             let epsItem = {};
             epsItem.name = sa_normalizeQtrName($(this).find('.title-period').text());
-            epsItem.eps = parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
-            epsItem.rev = parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+            epsItem.eps = sa_parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+            epsItem.rev = sa_parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
 
             if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
                 epsDates.unshift(epsItem);
@@ -429,15 +408,16 @@ function extractContent() {
         data = data.substr(data.indexOf('{'));
         data = data.substr(0, data.indexOf('}')+1);
         let dataObj = JSON.parse(data);
-        console.log('ZA extract content called: ' + JSON.stringify(dataObj));
-
         dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
             let epsItem = {};
             epsItem.name = za_normalizeQtrName(item[1]);
-            console.log(index + ', period=' + item[1] + ', normalized qtr='+ epsItem.name + ', eps='+item[3]+ ', rev='+dataObj.earnings_announcements_sales_table[index][3]);
+            epsItem.eps = za_parseQtrEps(item[3]);
+            epsItem.rev = za_parseQtrRev(item[1], dataObj.earnings_announcements_sales_table);
+            if (!(typeof epsItem.name === 'undefined' || epsItem.name.length == 0 || typeof epsItem.eps.eps === 'undefined' || isNaN(epsItem.eps.eps))) {
+                epsDates.unshift(epsItem);
+            }
         });
     }
-
     // with data extraction completed, do some calculations
     calculateEpsPerf(epsDates);
     calculateAnnual(epsDates, annualEst);
@@ -479,7 +459,6 @@ function calculateAnnual(epsDates, annualEst) {
     calculateAnnualPerf(annualEst);
 }
 
-
 /*
    Parse quaterly EPS string. String can be in the form:
 
@@ -487,7 +466,7 @@ function calculateAnnual(epsDates, annualEst) {
    Q2 2020 (Jun 2020) GAAP EPS of $0.01
 
 */
-function parseQtrEps(str) {
+function sa_parseQtrEps(str) {
     let eps = {};
     let dPos = str.indexOf('$');
 
@@ -496,7 +475,6 @@ function parseQtrEps(str) {
         if (str.substr(dPos-1,1) == '-') {
             sign = '-';
         }
-
         let sPos = str.indexOf(' ', dPos);
         if (sPos == -1) {
             eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
@@ -509,6 +487,12 @@ function parseQtrEps(str) {
     return eps;
 }
 
+function za_parseQtrEps(str) {
+    let eps = {};
+    eps.eps =  parseFloat(str.replace(/\$/, ''));
+    return eps;
+}
+
 /*
    Parse quaterly revenue string. String can be in the form:
 
@@ -516,7 +500,7 @@ function parseQtrEps(str) {
    Revenue of $112.33M beat by $8.47M
    Revenue of $112.33M
 */
-function parseQtrRev(str) {
+function sa_parseQtrRev(str) {
     let rev = {};
     rev.rev = 0;
     let revStr = '';
@@ -538,6 +522,20 @@ function parseQtrRev(str) {
     }
 
     rev.rev = normalizeRevenue(revStr);
+    return rev;
+}
+
+function za_parseQtrRev(period, revData) {
+    let rev = {};
+    rev.rev = 0;
+    // find corresponding period in revData
+    revData.forEach(function(item) {
+        if (item[1] == period) {
+            rev.rev = parseFloat(item[3].replace(/[\$\,]/g, ''));
+            // round to 1 decimal
+            rev.rev = Math.round(rev.rev * 10) / 10;
+        }
+    });
     return rev;
 }
 
@@ -582,5 +580,41 @@ function getLatestQtrYear(epsDates) {
     let lastQtrName = epsDates[epsDates.length-1].name;
     let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
     return year;
+}
+
+// to calculate eps performance (%Chg), compare with entry 4 qtrs back
+function calculateEpsPerf(dates) {
+   dates.map(function(qtr, index) {
+       if (index-4 >= 0) {
+            if (dates[index-4].eps.eps != 0) {
+               qtr.eps.negativeCompQtr = false; 
+               qtr.eps.negativeTurnaround = false;
+               qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
+               if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
+                    qtr.eps.negativeCompQtr = true;
+               }
+               else if (dates[index-4].eps.eps < 0) {
+                    qtr.eps.negativeTurnaround = true;
+               }
+           }
+           if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && dates[index-4].rev.rev != 0) {
+                qtr.rev.perf = Math.round(100*((qtr.rev.rev - dates[index-4].rev.rev) / Math.abs(dates[index-4].rev.rev)));
+           }
+       }
+   });
+}
+
+// TO calculate annual performance (%Chg), compare with previous year
+function calculateAnnualPerf(dates) {
+   dates.map(function(item, index) {
+       if (index-1 >= 0) {
+           if (dates[index-1].eps != 0) {
+               item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
+           }
+           if (dates[index-1].rev != 0) {
+               item.revPerf = Math.round(100*((item.rev - dates[index-1].rev) / Math.abs(dates[index-1].rev)));
+           }
+       }
+   });
 }
 
