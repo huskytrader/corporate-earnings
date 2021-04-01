@@ -10,7 +10,15 @@
     <div id="content">
       <span>Symbol</span>
       <input id="symbol" maxlength="5" />
-      <a id="options" href="options.html" tabindex="-1">Options</a>
+      <div style="display: inline-block;">
+        <div class="switch-field">
+          <input type="radio" id="radio-one" name="switch-one" value="yes" checked/>
+          <label for="radio-one">1</label>
+          <input type="radio" id="radio-two" name="switch-one" value="no" />
+          <label for="radio-two">2</label>
+        </div>  
+          <a id="options" href="options.html" tabindex="-1">Options</a>
+      </div>
     </div>
   </body>
 </html>
