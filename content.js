@@ -155,8 +155,8 @@ function prepare() {
     }
     .container {
         overflow: hidden;
-        margin-bottom: 50px;
         margin-top: 6px;
+        margin-bottom: 50px;
     }
     .column {
         float: left;
@@ -355,6 +355,9 @@ function hideContent() {
     else if (data_source == 'za') {
         //ZA
         $('header.primary-nav--content').hide();
+        $('.header-logos').hide();
+        $('.user-menu_list').hide();
+        $('.clearfix top-header-section').hide();
         $('#quote_ribbon_v2').hide();
         $('#quote_sidebar_toggle+nav.left_subnav').hide();
         $('.quote_body').hide();

@@ -21,6 +21,10 @@ body {
   font-size: 7px;
 }
 
+#controls {
+  display: inline-block;
+}
+
 .switch-field {
   display: flex;
   margin-bottom: 3px;
