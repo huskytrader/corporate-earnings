@@ -1,7 +1,11 @@
-const urlPrefix = "aHR0cHM6Ly9zZWVraW5nYWxwaGEuY29tL3N5bWJvbC8=";
+const ds1_urlPrefix = "aHR0cHM6Ly9zZWVraW5nYWxwaGEuY29tL3N5bWJvbC8=";
+const ds2_urlPrefix = "aHR0cHM6Ly93d3cuemFja3MuY29tL3N0b2NrL3Jlc2VhcmNoLw==";
+
 var open_new_tab = true;
-chrome.storage.local.get(['open_new_tab', 'ms_style_output', 'limit_num_qtr'], function(options) {
+var default_ds = 1;
+chrome.storage.local.get(['open_new_tab', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
     if (isDefined(options.open_new_tab)) {open_new_tab = options.open_new_tab;}
+    if (isDefined(options.default_ds)) {default_ds = options.default_ds;}
 });
 
 $( document ).ready(function() {
@@ -25,7 +29,13 @@ function handleSubmit() {
         return;
     }
 
-    let targetUrl = decodeURIComponent(escape(window.atob(urlPrefix))) + symbol.toUpperCase() + "/earnings";
+    let targetUrl = '';
+    if (default_ds == 1) {
+        targetUrl = decodeURIComponent(escape(window.atob(ds1_urlPrefix))) + symbol.toUpperCase() + "/earnings";
+    } else if (default_ds == 2) {
+        targetUrl = decodeURIComponent(escape(window.atob(ds2_urlPrefix))) + symbol.toUpperCase() + "/earnings-announcements";
+    }
+
     if (open_new_tab) {
         chrome.tabs.create({"url": targetUrl});
     }

@@ -14,39 +14,58 @@ const monthMap = {
 };
 
 // default settings
-var data_source = "za";
+var default_ds = 1;
 var ms_style_output = true;
 var limit_num_qtr = true;
 
-chrome.storage.local.get(['ms_style_output', 'limit_num_qtr'], function(options) {
-   if (isDefined(options.data_source)) { data_source = options.data_source; } 
-   if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
-   if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
- });
-
+// init data structures
 var epsDates = [];
 var annualEst = [];
 
-prepare();
-displayWaiting();
+chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+    if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
+    if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
+    if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
-var numChecks = 0;
-var pollDelay = 100; // ms
-var timeout = 3000; // ms
+    prepare();
+    displayWaiting();
 
-if (data_source == 'sa') {
-    displayWhenReady();
-}
-else if (data_source == 'za') {
-    extractContent();
-    displayContent();
-}
+    var numChecks = 0;
+    var pollDelay = 100; // ms
+    var timeout = 3000; // ms
+
+    if (default_ds == 1) {
+        // SA
+        const noData = $(document).find('#history .no-data').length == 1;
+        if(noData) {
+            $('#waiting').hide();
+            $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+            return;
+        }   
+        waitForEl("div.earning-title", displayWhenReady2, 10);
+    }
+    else if (default_ds == 2) {
+        // ZA
+        extractContent();
+        displayContent();
+    }
+ });
 
 //
 // end of main
 //
 
-function displayWhenReady() {
+function displayWhenReady2(el) {
+    if(el == null) {
+        $('#waiting').hide();
+        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+        return;
+    }
+    extractContent();
+    displayContent();  
+}
+
+function displayWhenReady(numChecks) {
     // Bail out if ticker has no earnings data
     const noData = $(document).find('#history .no-data').length == 1;
     if(noData) {
@@ -68,7 +87,7 @@ function displayWhenReady() {
     }
 
     // Check if we timed out
-    if(numChecks * 100 > timeout) {
+    if(numChecks * 100 > 3000) {
         $('#waiting').hide();
         $('body').prepend('<div class="mymsg">No data found.</div>');
         return;
@@ -76,7 +95,7 @@ function displayWhenReady() {
 
     // Wait some more before checking again
     ++numChecks;
-    setTimeout(SA_displayWhenReady, 100);
+    setTimeout(displayWhenReady(numChecks), 100);
 }
 
 /**
@@ -340,7 +359,7 @@ function isDefined(smth) {
 //
 //
 function hideContent() {
-    if (data_source == 'sa') {
+    if (default_ds == 1) {
         // SA
         $('#main-nav-wrapper-row').hide();
         $('#tab-content-header').hide();
@@ -352,7 +371,7 @@ function hideContent() {
         $('#breaking-news').hide();
         $('.col-xs-3').hide();
     }
-    else if (data_source == 'za') {
+    else if (default_ds == 2) {
         //ZA
         $('header.primary-nav--content').hide();
         $('.header-logos').hide();
@@ -371,7 +390,7 @@ function hideContent() {
 }
 
 function extractContent() {
-    if (data_source == 'sa') {
+    if (default_ds == 1) {
         // add quarters
         $('.panel-title.earning-title').each(function() {
             let epsItem = {};
@@ -406,10 +425,10 @@ function extractContent() {
             })
         })
     }
-    else {
+    else if (default_ds == 2) {
         let data = $('#earnings_announcements_tabs').next().html().trim();
         data = data.substr(data.indexOf('{'));
-        data = data.substr(0, data.indexOf('}')+1);
+        data = data.substr(0, data.lastIndexOf('}')+1);
         let dataObj = JSON.parse(data);
         dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
             let epsItem = {};
