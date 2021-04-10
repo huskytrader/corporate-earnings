@@ -30,10 +30,6 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], fun
     prepare();
     displayWaiting();
 
-    var numChecks = 0;
-    var pollDelay = 100; // ms
-    var timeout = 3000; // ms
-
     if (default_ds == 1) {
         // SA
         const noData = $(document).find('#history .no-data').length == 1;
@@ -42,7 +38,7 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], fun
             $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
             return;
         }   
-        waitForEl("div.earning-title", displayWhenReady2, 10);
+        waitForEl("div.earning-title", displayWhenReady2, 30);
     }
     else if (default_ds == 2) {
         // ZA
@@ -66,6 +62,10 @@ function displayWhenReady2(el) {
 }
 
 function displayWhenReady(numChecks) {
+    var numChecks = 0;
+    var pollDelay = 100; // ms
+    var timeout = 3000; // ms
+
     // Bail out if ticker has no earnings data
     const noData = $(document).find('#history .no-data').length == 1;
     if(noData) {
@@ -109,12 +109,14 @@ function displayWhenReady(numChecks) {
  */
 function waitForEl(selector, callback, maxtries = false, interval = 100) {
   const poller = setInterval(() => {
-    const el = jQuery(selector)
-    const retry = maxtries === false || maxtries-- > 0
-    if (retry && el.length < 1) return // will try again
-    clearInterval(poller)
-    callback(el || null)
-  }, interval)
+    const el = jQuery(selector);
+    const retry = maxtries === false || maxtries-- > 0;
+    if (retry && el.length < 1) return; // will try again
+    clearInterval(poller);
+    setTimeout(function() {
+            callback(el || null);
+    }, 250);
+  }, interval);
 }
 
 function displayWaiting() {
@@ -411,6 +413,7 @@ function extractContent() {
                     annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
                 } else if (index == 1) {
                     annualItem.eps = $(this).text().trim();
+                    annualItem.qtrs4Year = 4;
                 }
             });
             annualEst.push(annualItem);
@@ -458,22 +461,23 @@ function calculateAnnual(epsDates, annualEst) {
             annualItem.name = year;
             annualItem.eps = 0;
             annualItem.rev = 0;
-            let foundQtrs4Year = 0;
+            let qtrs4Year = 0;
 
             epsDates.forEach(function(qtr) {
                 if (qtr.name.indexOf(year.toString()) > -1) {
                     annualItem.eps += qtr.eps.eps;
                     annualItem.rev += qtr.rev.rev;
-                    ++foundQtrs4Year;
+                    ++qtrs4Year;
                 }
             })
 
-            if (foundQtrs4Year == 0) {
+            if (qtrs4Year == 0) {
                 break;
             }
 
             annualItem.eps = +annualItem.eps.toFixed(2);
             annualItem.rev = +annualItem.rev.toFixed(1);
+            annualItem.qtrs4Year = qtrs4Year;
             annualEst.unshift(annualItem);
             --year;
         }
@@ -629,7 +633,8 @@ function calculateEpsPerf(dates) {
 // TO calculate annual performance (%Chg), compare with previous year
 function calculateAnnualPerf(dates) {
    dates.map(function(item, index) {
-       if (index-1 >= 0) {
+       if (index-1 >= 0 && item.qtrs4Year == 4 && dates[index-1].qtrs4Year == 4) {
+           // previous year available. present year and previous have 4 qtrs.
            if (dates[index-1].eps != 0) {
                item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
            }
