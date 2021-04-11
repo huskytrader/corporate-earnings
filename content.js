@@ -13,7 +13,7 @@ const monthMap = {
     12: 'Dec'
 };
 
-// default settings
+// defaults
 var default_ds = 1;
 var ms_style_output = true;
 var limit_num_qtr = true;
@@ -38,7 +38,7 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], fun
             $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
             return;
         }   
-        waitForEl("div.earning-title", displayWhenReady2, 30);
+        waitForEl("div.earning-title", displayWhenReady, 30);
     }
     else if (default_ds == 2) {
         // ZA
@@ -51,56 +51,9 @@ chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], fun
 // end of main
 //
 
-function displayWhenReady2(el) {
-    if(el == null) {
-        $('#waiting').hide();
-        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
-        return;
-    }
-    extractContent();
-    displayContent();  
-}
-
-function displayWhenReady(numChecks) {
-    var numChecks = 0;
-    var pollDelay = 100; // ms
-    var timeout = 3000; // ms
-
-    // Bail out if ticker has no earnings data
-    const noData = $(document).find('#history .no-data').length == 1;
-    if(noData) {
-        $('#waiting').hide();
-        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
-        return;
-    }
-
-    // Wait for earnings to appear
-    const earningsCount = $(document).find("div.earning-title").length;
-    if(earningsCount > 0) {
-        // At least one row, wait a moment to allow all rows to be populated
-        // before extracting and displaying
-        setTimeout(function() {
-            extractContent();
-            displayContent();
-        }, 250);
-        return;
-    }
-
-    // Check if we timed out
-    if(numChecks * 100 > 3000) {
-        $('#waiting').hide();
-        $('body').prepend('<div class="mymsg">No data found.</div>');
-        return;
-    }
-
-    // Wait some more before checking again
-    ++numChecks;
-    setTimeout(displayWhenReady(numChecks), 100);
-}
-
 /**
  * Wait for the specified element to appear in the DOM. When the element appears,
- * provide it to the callback.
+ * provide it to the callback. Will wait additional 250ms where callback.
  *
  * @param selector a jQuery selector (eg, 'div.container img')
  * @param callback function that takes selected element (null if timeout)
@@ -117,6 +70,16 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
             callback(el || null);
     }, 250);
   }, interval);
+}
+
+function displayWhenReady(el) {
+    if(el == null) {
+        $('#waiting').hide();
+        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+        return;
+    }
+    extractContent();
+    displayContent();  
 }
 
 function displayWaiting() {
@@ -234,7 +197,7 @@ function epsDatesToHtml(epsDates) {
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found.</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
