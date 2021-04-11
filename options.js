@@ -48,8 +48,6 @@ function save_options() {
     ms_style_output: ms_style_output,
     limit_num_qtr: limit_num_qtr,
     default_ds: default_ds
-  }, function() {
-    chrome.runtime.reload();
   });
 }
 
