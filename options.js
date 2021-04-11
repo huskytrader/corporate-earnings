@@ -7,7 +7,7 @@ $(document).ready(init);
 
 function init() {
   restore_options();
-  $('.switch-field').change(save_options);
+  $('.checkbox').change(save_options);
   $('#ds-switch').change(save_options);
 }
 
