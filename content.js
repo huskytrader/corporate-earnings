@@ -243,7 +243,7 @@ function yearlyToHtml(annualEst) {
     html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found.</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
