@@ -1,12 +1,13 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "1.1",
+    "version": "1.2.0",
     "description": "Displays corporate earnings in the easy to analyze format",
     "content_scripts": [
         {
             "matches":[
-                "https://seekingalpha.com/symbol/*/earnings"
+                "https://seekingalpha.com/symbol/*/earnings",
+                "https://www.zacks.com/stock/research/*/earnings-announcements"
             ],
             "js":["jquery-3.6.0.min.js", "content.js"],
             "run_at": "document_end"

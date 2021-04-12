@@ -1,54 +1,85 @@
-// default settings
+const monthMap = {
+    1: 'Jan',
+    2: 'Feb',
+    3: 'Mar',
+    4: 'Apr',
+    5: 'May',
+    6: 'Jun',
+    7: 'Jul',
+    8: 'Aug',
+    9: 'Sep',
+    10: 'Oct',
+    11: 'Nov',
+    12: 'Dec'
+};
+
+// defaults
+var default_ds = 1;
 var ms_style_output = true;
 var limit_num_qtr = true;
 
-chrome.storage.local.get(['ms_style_output', 'limit_num_qtr'], function(options) {
-   if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
-   if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
- });
-
+// init data structures
 var epsDates = [];
 var annualEst = [];
 
-prepare();
-displayWaiting();
+chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+    if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
+    if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
+    if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
-var numChecks = 0;
-var pollDelay = 100; // ms
-var timeout = 3000; // ms
-displayWhenReady();
+    prepare();
+    displayWaiting();
 
-function displayWhenReady() {
-    // Bail out if ticker has no earnings data
-    const noData = $(document).find('#history .no-data').length == 1;
-    if(noData) {
+    if (default_ds == 1) {
+        // SA
+        const noData = $(document).find('#history .no-data').length == 1;
+        if(noData) {
+            $('#waiting').hide();
+            $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+            return;
+        }   
+        waitForEl("div.earning-title", displayWhenReady, 30);
+    }
+    else if (default_ds == 2) {
+        // ZA
+        extractContent();
+        displayContent();
+    }
+ });
+
+//
+// end of main
+//
+
+/**
+ * Wait for the specified element to appear in the DOM. When the element appears,
+ * provide it to the callback. Will wait additional 250ms where callback.
+ *
+ * @param selector a jQuery selector (eg, 'div.container img')
+ * @param callback function that takes selected element (null if timeout)
+ * @param maxtries number of times to try (return null after maxtries, false to disable, if 0 will still try once)
+ * @param interval ms wait between each try
+ */
+function waitForEl(selector, callback, maxtries = false, interval = 100) {
+  const poller = setInterval(() => {
+    const el = jQuery(selector);
+    const retry = maxtries === false || maxtries-- > 0;
+    if (retry && el.length < 1) return; // will try again
+    clearInterval(poller);
+    setTimeout(function() {
+            callback(el || null);
+    }, 250);
+  }, interval);
+}
+
+function displayWhenReady(el) {
+    if(el == null) {
         $('#waiting').hide();
         $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
         return;
     }
-
-    // Wait for earnings to appear
-    const earningsCount = $(document).find("div.earning-title").length;
-    if(earningsCount > 0) {
-        // At least one row, wait a moment to allow all rows to be populated
-        // before extracting and displaying
-        setTimeout(function() {
-            extractContent();
-            displayContent();
-        }, 250);
-        return;
-    }
-
-    // Check if we timed out
-    if(numChecks * 100 > timeout) {
-        $('#waiting').hide();
-        $('body').prepend('<div class="mymsg">No data found.</div>');
-        return;
-    }
-
-    // Wait some more before checking again
-    ++numChecks;
-    setTimeout(displayWhenReady, 100);
+    extractContent();
+    displayContent();  
 }
 
 function displayWaiting() {
@@ -108,8 +139,8 @@ function prepare() {
     }
     .container {
         overflow: hidden;
-        margin-bottom: 50px;
         margin-top: 6px;
+        margin-bottom: 50px;
     }
     .column {
         float: left;
@@ -146,10 +177,16 @@ function prepare() {
     }   
     </style>`;
 
-    hideExtraContent();
+    hideContent();
     $('head').prepend(css);
 }
 
+
+//
+//
+// Display functions 
+//
+//
 function displayContent() {
     $('#waiting').hide();
     $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
@@ -160,7 +197,7 @@ function epsDatesToHtml(epsDates) {
     html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found.</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -170,7 +207,7 @@ function epsDatesToHtml(epsDates) {
         if (limit_num_qtr == true && index < epsDates.length - 8) { return; }
         
         let epsPerf = '-';
-        if (typeof item.eps.perf !== 'undefined') {
+        if (isDefined(item.eps.perf)) {
             if (ms_style_output == true && item.eps.negativeCompQtr) {
                 epsPerf = 'N/A';
             } 
@@ -184,7 +221,7 @@ function epsDatesToHtml(epsDates) {
             }
         }
         let revPerf = '-';
-        if (typeof item.rev.perf !== 'undefined') {
+        if (isDefined(item.rev.perf)) {
             if (ms_style_output == true && item.rev.perf >= 1000) {
                     revPerf = '999';   
             }
@@ -206,7 +243,7 @@ function yearlyToHtml(annualEst) {
     html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found.</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -239,132 +276,8 @@ function yearlyToHtml(annualEst) {
     return html;
 }
 
-function toNum(str) {
-    let num = parseFloat(str);
-    if (str.endsWith('M')) {
-        num *= 1000000;
-    }
-    else if (str.endsWith('B')) {
-        num *= 1000000000;
-    }
-    return num;
-}
-
-function fromNum(num) {
-    let str = num.toFixed(2);
-    return str;
-}
-
-// to calculate eps performance (%Chg), compare with entry 4 qtrs back
-function calculateEpsPerf(dates) {
-   dates.map(function(qtr, index) {
-       if (index-4 >= 0 && dates[index-4].eps.eps != 0) {
-           qtr.eps.negativeCompQtr = false; 
-           qtr.eps.negativeTurnaround = false;
-           qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
-           if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
-                qtr.eps.negativeCompQtr = true;
-           }
-           else if (dates[index-4].eps.eps < 0) {
-                qtr.eps.negativeTurnaround = true;
-           }
-       }
-   });
-}
-
-// TO calculate annual performance (%Chg), compare with previous year
-function calculateAnnualPerf(dates) {
-   dates.map(function(item, index) {
-       if (index-1 >= 0) {
-           if (dates[index-1].eps != 0) {
-               item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
-           }
-           if (dates[index-1].rev != 0) {
-               item.revPerf = Math.round(100*((item.rev - dates[index-1].rev) / Math.abs(dates[index-1].rev)));
-           }
-       }
-   });
-}
-
-/*
-   Parse quaterly EPS string. String can be in the form:
-
-   Q2 2020 (Jun 2020) EPS of -$0.31 beat by $0.05/missed by $0.05
-   Q2 2020 (Jun 2020) GAAP EPS of $0.01
-
-*/
-function parseQtrEps(str) {
-    let eps = {};
-    let dPos = str.indexOf('$');
-
-    if (dPos > -1) {
-        let sign = '';
-        if (str.substr(dPos-1,1) == '-') {
-            sign = '-';
-        }
-
-        let sPos = str.indexOf(' ', dPos);
-        if (sPos == -1) {
-            eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
-        }
-        else {
-            eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
-            eps.beat = str.substr(sPos+1).trim();
-        }
-    }
-    return eps;
-}
-
-/*
-   Parse quaterly revenue string. String can be in the form:
-
-   Revenue of $112.33M (54.30% YoY) beat by $8.47M
-   Revenue of $112.33M beat by $8.47M
-   Revenue of $112.33M
-*/
-function parseQtrRev(str) {
-    let rev = {};
-    rev.rev = 0;
-    let revStr = '';
-
-    let pos = str.indexOf('(');
-    if (pos == -1) {
-        let sPos = str.indexOf(' ', 13);
-        if (sPos == -1) {
-            revStr = str.substr(13).trim();
-        } else {
-            revStr = str.substr(13, sPos-13).trim();
-            rev.beat = str.substr(sPos+1).trim();
-        }
-    }
-    else {
-        revStr = str.substr(12+1, pos-12-1).trim();
-        rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
-        rev.beat = str.substr(str.indexOf(')')+1).trim();
-    }
-
-    rev.rev = normalizeRevenue(revStr);
-    return rev;
-}
-
-function normalizeRevenue(revStr) {
-    revStr = revStr.trim();
-    if (revStr.endsWith('M')) {
-        return parseFloat(parseFloat(revStr).toFixed(1));
-    } else if (revStr.endsWith('K')) {
-        return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
-    } else if (revStr.endsWith('B')) {
-        return Math.round(parseFloat(revStr) * 1000);
-    }
-    else {
-        return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
-    }
-}
-
-function normalizeQtrName(str) {
-    let start = str.indexOf('(')+1;
-    let qtr = str.substr(start, str.indexOf(')')-start);
-    return qtr;
+function getDisplayQuarter(qtr) {
+    return qtr.substr(0,3) + '-' + qtr.substr(6);
 }
 
 /*
@@ -393,69 +306,112 @@ function getHighlightClass(num, str) {
 }
 
 function numberWithCommas(x) {
+    if (!isDefined(x) || x == null) { return '-'; }
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function getAnnualEstimateName(str) {
-    let start = str.indexOf(' ');
-    if (start > -1) {
-        return str.substr(start+1);
-    }
-    return start;
+function isDefined(smth) {
+    return typeof smth !== 'undefined';
 }
 
-function hideExtraContent() {
-    $('#main-nav-wrapper-row').hide();
-    $('#tab-content-header').hide();
-    $('#sp-center-menu').hide();
 
-    $('.symbol_title').hide();
+// end display
 
-    $('#estimates').hide();
-    $('#cresscap').hide();
 
-    $('.panel-body').hide();
-    $('#breaking-news').hide();
-    $('.col-xs-3').hide();
+//
+//
+// extraction/preparation
+//
+//
+function hideContent() {
+    if (default_ds == 1) {
+        // SA
+        $('#main-nav-wrapper-row').hide();
+        $('#tab-content-header').hide();
+        $('#sp-center-menu').hide();
+        $('.symbol_title').hide();
+        $('#estimates').hide();
+        $('#cresscap').hide();
+        $('.panel-body').hide();
+        $('#breaking-news').hide();
+        $('.col-xs-3').hide();
+    }
+    else if (default_ds == 2) {
+        //ZA
+        $('header.primary-nav--content').hide();
+        $('.header-logos').hide();
+        $('.user-menu_list').hide();
+        $('.clearfix top-header-section').hide();
+        $('#quote_ribbon_v2').hide();
+        $('#quote_sidebar_toggle+nav.left_subnav').hide();
+        $('.quote_body').hide();
+        $('.reserach_reports_cta_v2').hide();
+        $('.quote_body_full nav').hide();
+        $('#banner a').hide()
+        $('iframe').hide();
+        $('footer').hide();
+        $('.disclosure-fixed-slab').hide();
+    }
 }
 
 function extractContent() {
-    // add quarters
-    $('.panel-title.earning-title').each(function() {
-        let epsItem = {};
-        epsItem.name = normalizeQtrName($(this).find('.title-period').text());
-        epsItem.eps = parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
-        epsItem.rev = parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+    if (default_ds == 1) {
+        // add quarters
+        $('.panel-title.earning-title').each(function() {
+            let epsItem = {};
+            epsItem.name = sa_normalizeQtrName($(this).find('.title-period').text());
+            epsItem.eps = sa_parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+            epsItem.rev = sa_parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
 
-        if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
-            epsDates.unshift(epsItem);
-        }
-    });
-    calculateEpsPerf(epsDates);
-
-
-    // add annual eps estimates
-    $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
-        let annualItem = {};
-        $(this).children().each(function(index) {
-            if (index == 0) {
-                annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
-            } else if (index == 1) {
-                annualItem.eps = $(this).text().trim();
+            if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
+                epsDates.unshift(epsItem);
             }
         });
-        annualEst.push(annualItem);
-    });
 
-    // add annual revenue estimates
-    $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
-        $(this).children().each(function(index2) {
-            if (index2 == 1) {
-                annualEst[index].rev = normalizeRevenue($(this).text().trim());
-            }
+        // add annual eps estimates
+        $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
+            let annualItem = {};
+            $(this).children().each(function(index) {
+                if (index == 0) {
+                    annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
+                } else if (index == 1) {
+                    annualItem.eps = $(this).text().trim();
+                    annualItem.qtrs4Year = 4;
+                }
+            });
+            annualEst.push(annualItem);
+        });
+
+        // add annual revenue estimates
+        $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
+            $(this).children().each(function(index2) {
+                if (index2 == 1) {
+                    annualEst[index].rev = normalizeRevenue($(this).text().trim());
+                }
+            })
         })
-    })
-    
+    }
+    else if (default_ds == 2) {
+        let data = $('#earnings_announcements_tabs').next().html().trim();
+        data = data.substr(data.indexOf('{'));
+        data = data.substr(0, data.lastIndexOf('}')+1);
+        let dataObj = JSON.parse(data);
+        dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
+            let epsItem = {};
+            epsItem.name = za_normalizeQtrName(item[1]);
+            epsItem.eps = za_parseQtrEps(item[3]);
+            epsItem.rev = za_parseQtrRev(item[1], dataObj.earnings_announcements_sales_table);
+            if (!(typeof epsItem.name === 'undefined' || epsItem.name.length == 0 || typeof epsItem.eps.eps === 'undefined' || isNaN(epsItem.eps.eps))) {
+                epsDates.unshift(epsItem);
+            }
+        });
+    }
+    // with data extraction completed, do some calculations
+    calculateEpsPerf(epsDates);
+    calculateAnnual(epsDates, annualEst);
+}
+
+function calculateAnnual(epsDates, annualEst) {
     // calculate eps/revenue for previous years using existing quaterly data
     // getLatestYear to get year for latest quarter available (e.g. 2020)
     // attempt to find all quarters for given year
@@ -468,27 +424,144 @@ function extractContent() {
             annualItem.name = year;
             annualItem.eps = 0;
             annualItem.rev = 0;
-            let foundQtrs4Year = 0;
+            let qtrs4Year = 0;
 
             epsDates.forEach(function(qtr) {
                 if (qtr.name.indexOf(year.toString()) > -1) {
                     annualItem.eps += qtr.eps.eps;
                     annualItem.rev += qtr.rev.rev;
-                    ++foundQtrs4Year;
+                    ++qtrs4Year;
                 }
             })
 
-            if (foundQtrs4Year == 0) {
+            if (qtrs4Year == 0) {
                 break;
             }
 
             annualItem.eps = +annualItem.eps.toFixed(2);
             annualItem.rev = +annualItem.rev.toFixed(1);
+            annualItem.qtrs4Year = qtrs4Year;
             annualEst.unshift(annualItem);
             --year;
         }
     }
     calculateAnnualPerf(annualEst);
+}
+
+/*
+   Parse quaterly EPS string. String can be in the form:
+
+   Q2 2020 (Jun 2020) EPS of -$0.31 beat by $0.05/missed by $0.05
+   Q2 2020 (Jun 2020) GAAP EPS of $0.01
+
+*/
+function sa_parseQtrEps(str) {
+    let eps = {};
+    let dPos = str.indexOf('$');
+
+    if (dPos > -1) {
+        let sign = '';
+        if (str.substr(dPos-1,1) == '-') {
+            sign = '-';
+        }
+        let sPos = str.indexOf(' ', dPos);
+        if (sPos == -1) {
+            eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
+        }
+        else {
+            eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
+            eps.beat = str.substr(sPos+1).trim();
+        }
+    }
+    return eps;
+}
+
+function za_parseQtrEps(str) {
+    let eps = {};
+    eps.eps =  parseFloat(str.replace(/\$/, ''));
+    return eps;
+}
+
+/*
+   Parse quaterly revenue string. String can be in the form:
+
+   Revenue of $112.33M (54.30% YoY) beat by $8.47M
+   Revenue of $112.33M beat by $8.47M
+   Revenue of $112.33M
+*/
+function sa_parseQtrRev(str) {
+    let rev = {};
+    rev.rev = 0;
+    let revStr = '';
+
+    let pos = str.indexOf('(');
+    if (pos == -1) {
+        let sPos = str.indexOf(' ', 13);
+        if (sPos == -1) {
+            revStr = str.substr(13).trim();
+        } else {
+            revStr = str.substr(13, sPos-13).trim();
+            rev.beat = str.substr(sPos+1).trim();
+        }
+    }
+    else {
+        revStr = str.substr(12+1, pos-12-1).trim();
+        rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
+        rev.beat = str.substr(str.indexOf(')')+1).trim();
+    }
+
+    rev.rev = normalizeRevenue(revStr);
+    return rev;
+}
+
+function za_parseQtrRev(period, revData) {
+    let rev = {};
+    rev.rev = 0;
+    // find corresponding period in revData
+    revData.forEach(function(item) {
+        if (item[1] == period) {
+            rev.rev = parseFloat(item[3].replace(/[\$\,]/g, ''));
+            // round to 1 decimal
+            rev.rev = Math.round(rev.rev * 10) / 10;
+        }
+    });
+    return rev;
+}
+
+function normalizeRevenue(revStr) {
+    revStr = revStr.trim();
+    if (revStr.endsWith('M')) {
+        return parseFloat(parseFloat(revStr).toFixed(1));
+    } else if (revStr.endsWith('K')) {
+        return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
+    } else if (revStr.endsWith('B')) {
+        return Math.round(parseFloat(revStr) * 1000);
+    }
+    else {
+        return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
+    }
+}
+
+// extracts qtr name in the form mmm yyyy
+function sa_normalizeQtrName(str) {
+    let start = str.indexOf('(')+1;
+    let qtr = str.substr(start, str.indexOf(')')-start);
+    return qtr;
+}
+
+function za_normalizeQtrName(str) {
+    let parts = str.split('/');
+    let month = parseInt(parts[0]);
+    let year = parseInt(parts[1]);
+    return monthMap[month] + ' ' + year;
+}
+
+function getAnnualEstimateName(str) {
+    let start = str.indexOf(' ');
+    if (start > -1) {
+        return str.substr(start+1);
+    }
+    return start;
 }
 
 function getLatestQtrYear(epsDates) {
@@ -498,10 +571,40 @@ function getLatestQtrYear(epsDates) {
     return year;
 }
 
-function getDisplayQuarter(qtr) {
-    return qtr.substr(0,3) + '-' + qtr.substr(6);
+// to calculate eps performance (%Chg), compare with entry 4 qtrs back
+function calculateEpsPerf(dates) {
+   dates.map(function(qtr, index) {
+       if (index-4 >= 0) {
+            if (dates[index-4].eps.eps != 0) {
+               qtr.eps.negativeCompQtr = false; 
+               qtr.eps.negativeTurnaround = false;
+               qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
+               if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
+                    qtr.eps.negativeCompQtr = true;
+               }
+               else if (dates[index-4].eps.eps < 0) {
+                    qtr.eps.negativeTurnaround = true;
+               }
+           }
+           if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && dates[index-4].rev.rev != 0) {
+                qtr.rev.perf = Math.round(100*((qtr.rev.rev - dates[index-4].rev.rev) / Math.abs(dates[index-4].rev.rev)));
+           }
+       }
+   });
 }
 
-function isDefined(smth) {
-    return typeof smth !== 'undefined';
+// TO calculate annual performance (%Chg), compare with previous year
+function calculateAnnualPerf(dates) {
+   dates.map(function(item, index) {
+       if (index-1 >= 0 && item.qtrs4Year == 4 && dates[index-1].qtrs4Year == 4) {
+           // previous year available. present year and previous have 4 qtrs.
+           if (dates[index-1].eps != 0) {
+               item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
+           }
+           if (dates[index-1].rev != 0) {
+               item.revPerf = Math.round(100*((item.rev - dates[index-1].rev) / Math.abs(dates[index-1].rev)));
+           }
+       }
+   });
 }
+

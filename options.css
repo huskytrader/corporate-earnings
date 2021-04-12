@@ -3,10 +3,20 @@ body {
     font-size: 20px;
     font-size: max(20px, 1em);
     font-family: inherit;
-    padding: 0.10em;    
 }
 
 ul {
     list-style: none;
     padding-left:0;
+}
+
+.ds-select {    
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+#ds-label {
+  padding-left: 3px;
 }
