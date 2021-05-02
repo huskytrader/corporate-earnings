@@ -194,7 +194,7 @@ function displayContent() {
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">%Sur</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (epsDates.length == 0) {
         html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
@@ -231,6 +231,7 @@ function epsDatesToHtml(epsDates) {
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
         html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td class="myd">' + item.eps.surprisePerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
         html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
@@ -240,7 +241,7 @@ function epsDatesToHtml(epsDates) {
 
 function yearlyToHtml(annualEst) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Revenue(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
         html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
@@ -470,10 +471,24 @@ function sa_parseQtrEps(str) {
         }
         else {
             eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
-            eps.beat = str.substr(sPos+1).trim();
+            eps.surprisePerf = calculateSurprisePerf(str.substr(sPos+1).trim(), eps.eps);
         }
     }
     return eps;
+}
+
+function calculateSurprisePerf(str, eps) {
+    let dPos = str.indexOf('$');
+    if (dPos < 0) { return undefined; }
+
+    let sign = '';
+    if (str.substr(dPos-1,1) == '-') {
+        sign = '-';
+    }
+    let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
+    let projectedEps = eps - surprise;
+    let surprisePerf = Math.round(100*((eps - projectedEps) / Math.abs(projectedEps)));
+    return surprisePerf;
 }
 
 function za_parseQtrEps(str) {
