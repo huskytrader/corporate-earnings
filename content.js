@@ -120,12 +120,19 @@ function prepare() {
     .myt tbody tr:last-of-type {
         /*border-bottom: 2px solid #009879;*/
     }
-    .myt tbody tr .sgreen {
+    .myt tbody tr .sblue {
         color: #0000FF;
         font-weight: bold;
     }
-    .myt tbody tr .wgreen {
+    .myt tbody tr .wblue {
         color: #0000FF;
+    }
+    .myt tbody tr .sgreen {
+        color: #04c90a;
+        font-weight: bold;
+    }
+    .myt tbody tr .wgreen {
+        color: #04c90a;
     }
     .myt tbody tr .sred {
         color: #FF0000;
@@ -220,6 +227,11 @@ function epsDatesToHtml(epsDates) {
                 if (ms_style_output == true && item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
             }
         }
+        let surprisePerf = '-';
+        if (isDefined(item.eps.surprisePerf)) {
+            surprisePerf = item.eps.surprisePerf;
+            if (item.eps.surprisePerf > 0) { surprisePerf = '+' + surprisePerf; }
+        }
         let revPerf = '-';
         if (isDefined(item.rev.perf)) {
             if (ms_style_output == true && item.rev.perf >= 1000) {
@@ -231,7 +243,7 @@ function epsDatesToHtml(epsDates) {
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
         html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td class="myd">' + item.eps.surprisePerf + '</td>';
+        html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surprisePerf) + '">' + surprisePerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
         html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
@@ -283,26 +295,45 @@ function getDisplayQuarter(qtr) {
 
 /*
    Returns appropriate highlight class for EPS and revenue values
-   >= 30 : strong green
-   >0 && < 30 : weak green
-   <0 && >-20 : weak read
-   < -20 : strong red
+   >= 30 : bold positive 
+   >0 && < 30 : positive
+   <0 && >-20 : negative
+   < -20 : bold negative
 */
 function getHighlightClass(num, str) {
     let hclass = '';
     if (str === 'N/A') { return hclass; }
-    if (typeof num !== 'undefined') {
-        if (num >= 30) {
-            hclass = ' sgreen';
-        } else if (num > 0 && num < 30) {
-            hclass = ' wgreen';
-        } else if (num < 0 && num > -20) {
-            hclass = ' wred';
-        }
-        else if (num <= -20) {
-            hclass = ' sred';
-        }
+    if (! isDefined(num)) { return hclass; }
+
+    if (num >= 30) {
+        hclass = ' sblue';
+    } else if (num > 0 && num < 30) {
+        hclass = ' wblue';
+    } else if (num < 0 && num > -20) {
+        hclass = ' wred';
     }
+    else if (num <= -20) {
+        hclass = ' sred';
+    }
+    
+    return hclass;
+}
+function getHighlightClass4Surprise(num, str) {
+    let hclass = '';
+    if (str === 'N/A') { return hclass; }
+    if (! isDefined(num)) { return hclass; }
+
+    if (num >= 30) {
+        hclass = ' sgreen';
+    } else if (num > 0 && num < 30) {
+        hclass = ' wgreen';
+    } else if (num < 0 && num > -20) {
+        hclass = ' wred';
+    }
+    else if (num <= -20) {
+        hclass = ' sred';
+    }
+    
     return hclass;
 }
 
