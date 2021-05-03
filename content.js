@@ -201,7 +201,7 @@ function displayContent() {
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">%Sur</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">%Sur</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td><td class="myd">%Sur</td></tr></thead><tbody>';
     
     if (epsDates.length == 0) {
         html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
@@ -227,10 +227,10 @@ function epsDatesToHtml(epsDates) {
                 if (ms_style_output == true && item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
             }
         }
-        let surprisePerf = '-';
+        let surpriseEpsPerf = '-';
         if (isDefined(item.eps.surprisePerf)) {
-            surprisePerf = item.eps.surprisePerf;
-            if (item.eps.surprisePerf > 0) { surprisePerf = '+' + surprisePerf; }
+            surpriseEpsPerf = item.eps.surprisePerf;
+            if (item.eps.surprisePerf > 0) { surpriseEpsPerf = '+' + surpriseEpsPerf; }
         }
         let revPerf = '-';
         if (isDefined(item.rev.perf)) {
@@ -240,12 +240,19 @@ function epsDatesToHtml(epsDates) {
             else { revPerf = item.rev.perf; }
             if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
         }
+        let surpriseRevPerf = '-';
+        if (isDefined(item.rev.surprisePerf)) {
+            surpriseRevPerf = item.rev.surprisePerf;
+            if (item.rev.surprisePerf > 0) { surpriseRevPerf = '+' + surpriseRevPerf; }
+        }
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
         html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surprisePerf) + '">' + surprisePerf + '</td>';
+        html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td></tr>';
+        html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
+        html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
+        html += '</tr>';
     });
     html += '</tbody></table>';
     return html;
@@ -418,7 +425,7 @@ function extractContent() {
         $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
             $(this).children().each(function(index2) {
                 if (index2 == 1) {
-                    annualEst[index].rev = normalizeRevenue($(this).text().trim());
+                    annualEst[index].rev = revenueStringToFloat($(this).text().trim());
                 }
             })
         })
@@ -438,7 +445,7 @@ function extractContent() {
             }
         });
     }
-    // with data extraction completed, do some calculations
+    // with data extraction completed, perform calculations
     calculateEpsPerf(epsDates);
     calculateAnnual(epsDates, annualEst);
 }
@@ -504,13 +511,13 @@ function sa_parseQtrEps(str) {
         }
         else {
             eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
-            eps.surprisePerf = calculateSurprisePerf(str.substr(sPos+1).trim(), eps.eps);
+            eps.surprisePerf = calculateSurpriseEPSPerf(str.substr(sPos+1).trim(), eps.eps);
         }
     }
     return eps;
 }
 
-function calculateSurprisePerf(str, eps) {
+function calculateSurpriseEPSPerf(str, eps) {
     let dPos = str.indexOf('$');
     if (dPos < 0) { return undefined; }
 
@@ -549,17 +556,33 @@ function sa_parseQtrRev(str) {
             revStr = str.substr(13).trim();
         } else {
             revStr = str.substr(13, sPos-13).trim();
-            rev.beat = str.substr(sPos+1).trim();
+            rev.surprisePerf = str.substr(sPos+1).trim();
         }
     }
     else {
         revStr = str.substr(12+1, pos-12-1).trim();
         rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
-        rev.beat = str.substr(str.indexOf(')')+1).trim();
+        rev.surprisePerf = str.substr(str.indexOf(')')+1).trim();
     }
 
-    rev.rev = normalizeRevenue(revStr);
+    rev.rev = revenueStringToFloat(revStr);
+    rev.surprisePerf = calculateSurpriseRevPerf(rev.surprisePerf, rev.rev);
     return rev;
+}
+
+
+function calculateSurpriseRevPerf(str, rev) {
+    let dPos = str.indexOf('$');
+    if (dPos < 0) { return undefined; }
+
+    let sign = '';
+    if (str.substr(dPos-1,1) == '-') {
+        sign = '-';
+    }
+    let surprise = revenueStringToFloat((sign + str.substr(dPos+1)).trim());
+    let projectedRev = rev - surprise;
+    let surpriseRev = Math.round(100*((rev - projectedRev) / Math.abs(projectedRev)));
+    return surpriseRev;
 }
 
 function za_parseQtrRev(period, revData) {
@@ -576,7 +599,7 @@ function za_parseQtrRev(period, revData) {
     return rev;
 }
 
-function normalizeRevenue(revStr) {
+function revenueStringToFloat(revStr) {
     revStr = revStr.trim();
     if (revStr.endsWith('M')) {
         return parseFloat(parseFloat(revStr).toFixed(1));
