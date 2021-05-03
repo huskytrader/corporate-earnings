@@ -470,10 +470,12 @@ function calculateAnnual(epsDates, annualEst) {
                 break;
             }
 
-            annualItem.eps = +annualItem.eps.toFixed(2);
-            annualItem.rev = +annualItem.rev.toFixed(1);
-            annualItem.qtrs4Year = qtrs4Year;
-            annualEst.unshift(annualItem);
+            if (qtrs4Year == 4) {
+                annualItem.eps = +annualItem.eps.toFixed(2);
+                annualItem.rev = +annualItem.rev.toFixed(1);
+                annualItem.qtrs4Year = qtrs4Year;
+                annualEst.unshift(annualItem);
+            }
             --year;
         }
     }
