@@ -1,6 +1,7 @@
-const percentChangeColor = '#0000FF';
-const percentSurpriseColor = '#04c90a';
-const monthMap = {
+// constants
+const PERCENT_CHANGE_COLOR = '#0000FF';
+const PERCENT_SURPRISE_COLOR = '#04c90a';
+const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
     3: 'Mar',
@@ -15,7 +16,7 @@ const monthMap = {
     12: 'Dec'
 };
 
-// defaults
+// default options
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
@@ -125,18 +126,18 @@ function prepare() {
         /*border-bottom: 2px solid #009879;*/
     }
     .myt tbody tr .sblue {
-        color: ${percentChangeColor};
+        color: ${PERCENT_CHANGE_COLOR};
         font-weight: bold;
     }
     .myt tbody tr .wblue {
-        color: ${percentChangeColor};
+        color: ${PERCENT_CHANGE_COLOR};
     }
     .myt tbody tr .sgreen {
-        color: ${percentSurpriseColor};
+        color: ${PERCENT_SURPRISE_COLOR};
         font-weight: bold;
     }
     .myt tbody tr .wgreen {
-        color: ${percentSurpriseColor};
+        color: ${PERCENT_SURPRISE_COLOR};
     }
     .myt tbody tr .sred {
         color: #FF0000;
@@ -639,7 +640,7 @@ function za_normalizeQtrName(str) {
     let parts = str.split('/');
     let month = parseInt(parts[0]);
     let year = parseInt(parts[1]);
-    return monthMap[month] + ' ' + year;
+    return MONTH_MAP[month] + ' ' + year;
 }
 
 function getAnnualEstimateName(str) {
