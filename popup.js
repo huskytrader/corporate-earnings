@@ -3,7 +3,7 @@ const ds2_urlPrefix = "aHR0cHM6Ly93d3cuemFja3MuY29tL3N0b2NrL3Jlc2VhcmNoLw==";
 
 var open_new_tab = true;
 var default_ds = 1;
-chrome.storage.local.get(['open_new_tab', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
     if (isDefined(options.open_new_tab)) {open_new_tab = options.open_new_tab;}
     if (isDefined(options.default_ds)) {default_ds = options.default_ds;}
 });

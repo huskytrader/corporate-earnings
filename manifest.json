@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Displays corporate earnings in the easy to analyze format",
     "content_scripts": [
         {

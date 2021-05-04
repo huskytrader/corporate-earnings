@@ -1,3 +1,5 @@
+const percentChangeColor = '#0000FF';
+const percentSurpriseColor = '#04c90a';
 const monthMap = {
     1: 'Jan',
     2: 'Feb',
@@ -14,6 +16,7 @@ const monthMap = {
 };
 
 // defaults
+var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
 var limit_num_qtr = true;
@@ -22,7 +25,8 @@ var limit_num_qtr = true;
 var epsDates = [];
 var annualEst = [];
 
-chrome.storage.local.get(['ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+    if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
@@ -109,7 +113,7 @@ function prepare() {
     }
     .myt th,
     .myt td {
-       padding: 12px 15px;
+       padding: 12px 12px;
     }
     .myt tbody tr {
       border-bottom: 1px solid #dddddd;
@@ -121,18 +125,18 @@ function prepare() {
         /*border-bottom: 2px solid #009879;*/
     }
     .myt tbody tr .sblue {
-        color: #0000FF;
+        color: ${percentChangeColor};
         font-weight: bold;
     }
     .myt tbody tr .wblue {
-        color: #0000FF;
+        color: ${percentChangeColor};
     }
     .myt tbody tr .sgreen {
-        color: #04c90a;
+        color: ${percentSurpriseColor};
         font-weight: bold;
     }
     .myt tbody tr .wgreen {
-        color: #04c90a;
+        color: ${percentSurpriseColor};
     }
     .myt tbody tr .sred {
         color: #FF0000;
@@ -188,7 +192,6 @@ function prepare() {
     $('head').prepend(css);
 }
 
-
 //
 //
 // Display functions 
@@ -201,10 +204,18 @@ function displayContent() {
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">%Sur</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td><td class="myd">%Sur</td></tr></thead><tbody>';
+    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td>';
+    if (show_earnings_surprise) {
+        html += '<td class="myd">%Sur</td>';
+    }
+    html += '<td class="myd">Rev(Mil)</td><td class="myd">%Chg</td>';
+    if (show_earnings_surprise) {
+        html += '<td class="myd">%Sur</td>';
+    }
+    html += '</tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
+        html += '<tr class="myd"><td class="myd" colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -248,10 +259,14 @@ function epsDatesToHtml(epsDates) {
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
         html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
+        if (show_earnings_surprise) {
+            html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
+        }
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
         html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
-        html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
+        if (show_earnings_surprise) {
+            html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
+        }
         html += '</tr>';
     });
     html += '</tbody></table>';
