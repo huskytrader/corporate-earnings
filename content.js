@@ -546,6 +546,7 @@ function sa_parseQtrEps(str) {
 }
 
 function calculateSurpriseEPSPerf(str, eps) {
+    if (!isDefined(str)) { return undefined; }
     let dPos = str.indexOf('$');
     if (dPos < 0) { return undefined; }
 
@@ -600,6 +601,7 @@ function sa_parseQtrRev(str) {
 
 
 function calculateSurpriseRevPerf(str, rev) {
+    if (!isDefined(str)) { return undefined; }
     let dPos = str.indexOf('$');
     if (dPos < 0) { return undefined; }
 
