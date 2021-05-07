@@ -413,10 +413,10 @@ function extractContent() {
     if (default_ds == 1) {
         // add quarters
         $('.panel-title.earning-title').each(function() {
-            let epsItem = {};
-            epsItem.name = sa_normalizeQtrName($(this).find('.title-period').text());
-            epsItem.eps = sa_parseQtrEps($(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""));
-            epsItem.rev = sa_parseQtrRev($(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+            let epsItem = sa_createEpsItem(
+                $(this).find('.title-period').text(), 
+                $(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""), 
+                $(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
 
             if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
                 epsDates.unshift(epsItem);
@@ -462,7 +462,7 @@ function extractContent() {
         });
     }
     // with data extraction completed, perform calculations
-    calculateEpsPerf(epsDates);
+    calculateQuarterlyPerf(epsDates);
     calculateAnnual(epsDates, annualEst);
 }
 
@@ -503,6 +503,18 @@ function calculateAnnual(epsDates, annualEst) {
         }
     }
     calculateAnnualPerf(annualEst);
+}
+
+// TODO: refactor into seperate class
+function sa_createEpsItem(nameStr, epsStr, revStr) {
+    let epsItem = {};
+    let nameAttr = sa_parseQtrName(nameStr);
+    epsItem.name = nameAttr.name;
+    epsItem.month = nameAttr.month;
+    epsItem.year = parseInt(nameAttr.year);
+    epsItem.eps = sa_parseQtrEps(epsStr);
+    epsItem.rev = sa_parseQtrRev(revStr);
+    return epsItem;
 }
 
 /*
@@ -630,9 +642,12 @@ function revenueStringToFloat(revStr) {
 }
 
 // extracts qtr name in the form mmm yyyy
-function sa_normalizeQtrName(str) {
+function sa_parseQtrName(str) {
+    let qtr = {}
     let start = str.indexOf('(')+1;
-    let qtr = str.substr(start, str.indexOf(')')-start);
+    qtr.name = str.substr(start, str.indexOf(')')-start);
+    qtr.month = qtr.name.substr(0,3);
+    qtr.year = qtr.name.substr(4);
     return qtr;
 }
 
@@ -658,25 +673,27 @@ function getLatestQtrYear(epsDates) {
     return year;
 }
 
-// to calculate eps performance (%Chg), compare with entry 4 qtrs back
-function calculateEpsPerf(dates) {
+// to calculate quarterly performance (%Chg), compare with same quarter 1 year back
+function calculateQuarterlyPerf(dates) {
    dates.map(function(qtr, index) {
-       if (index-4 >= 0) {
-            if (dates[index-4].eps.eps != 0) {
+        let compQuarter = dates.find(q => q.name == getComparativeQuarterName(qtr));
+        if (isDefined(compQuarter)) {
+            if (compQuarter.eps.eps != 0) {
                qtr.eps.negativeCompQtr = false; 
                qtr.eps.negativeTurnaround = false;
-               qtr.eps.perf = Math.round(100*((qtr.eps.eps - dates[index-4].eps.eps) / Math.abs(dates[index-4].eps.eps)));
-               if (qtr.eps.eps < 0 && dates[index-4].eps.eps) {
+               qtr.eps.perf = Math.round(100*((qtr.eps.eps - compQuarter.eps.eps) / Math.abs(compQuarter.eps.eps)));
+               if (qtr.eps.eps < 0 && compQuarter.eps.eps) {
                     qtr.eps.negativeCompQtr = true;
                }
-               else if (dates[index-4].eps.eps < 0) {
+               else if (compQuarter.eps.eps < 0) {
                     qtr.eps.negativeTurnaround = true;
                }
            }
-           if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && dates[index-4].rev.rev != 0) {
-                qtr.rev.perf = Math.round(100*((qtr.rev.rev - dates[index-4].rev.rev) / Math.abs(dates[index-4].rev.rev)));
+           if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && compQuarter.rev.rev != 0) {
+                qtr.rev.perf = Math.round(100*((qtr.rev.rev - compQuarter.rev.rev) / Math.abs(compQuarter.rev.rev)));
            }
        }
+       
    });
 }
 
@@ -695,3 +712,6 @@ function calculateAnnualPerf(dates) {
    });
 }
 
+function getComparativeQuarterName(qtr) {
+    return qtr.month + ' ' + (qtr.year - 1);
+}
