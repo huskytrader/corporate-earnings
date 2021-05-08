@@ -103,7 +103,7 @@ function prepare() {
     .myt {
        float: left;
        border-collapse: collapse;
-       margin: 25px 50px 25px 0px;
+       margin: 25px 25px 25px 0px;
        padding-left: 15px;
        font-family: sans-serif;
        min-width: 400px;
@@ -112,11 +112,12 @@ function prepare() {
     .myt thead tr {
        background-color: #333333;
        color: #ffffff;
+       font-size: 0.85em;
        text-align: left;
     }
     .myt th,
     .myt td {
-       padding: 12px 12px;
+       padding: 12px 8px;
     }
     .myt tbody tr {
       border-bottom: 1px solid #dddddd;
@@ -158,7 +159,7 @@ function prepare() {
     }
     .column {
         float: left;
-        margin: 10px;
+        margin: 10px 5px;
         padding-bottom: 100%;
         margin-bottom: -100%;
     }
@@ -207,13 +208,13 @@ function displayContent() {
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Chg</td>';
+    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Sur</td>';
+        html += '<td class="myd">%Surprise</td>';
     }
-    html += '<td class="myd">Rev(Mil)</td><td class="myd">%Chg</td>';
+    html += '<td class="myd">Revenue(Mil)</td><td class="myd">%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Sur</td>';
+        html += '<td class="myd">%Surprise</td>';
     }
     html += '</tr></thead><tbody>';
     
@@ -278,7 +279,7 @@ function epsDatesToHtml(epsDates) {
 
 function yearlyToHtml(annualEst) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Chg</td><td class="myd">Rev(Mil)</td><td class="myd">%Chg</td></tr></thead><tbody>';
+    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Change</td><td class="myd">Revenue(Mil)</td><td class="myd">%Change</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
         html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
