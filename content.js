@@ -1,6 +1,8 @@
 // constants
-const PERCENT_CHANGE_COLOR = '#0000FF';
-const PERCENT_SURPRISE_COLOR = '#04c90a';
+const CHANGE_POSITIVE_COLOR = '#0000FF';
+const CHANGE_NEGATIVE_COLOR = '#FF0000';
+const SURPRISE_POSITIVE_COLOR = '#04C90A';
+
 const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
@@ -126,25 +128,25 @@ function prepare() {
         /*border-bottom: 2px solid #009879;*/
     }
     .myt tbody tr .sblue {
-        color: ${PERCENT_CHANGE_COLOR};
+        color: ${CHANGE_POSITIVE_COLOR};
         font-weight: bold;
     }
     .myt tbody tr .wblue {
-        color: ${PERCENT_CHANGE_COLOR};
+        color: ${CHANGE_POSITIVE_COLOR};
     }
     .myt tbody tr .sgreen {
-        color: ${PERCENT_SURPRISE_COLOR};
+        color: ${SURPRISE_POSITIVE_COLOR};
         font-weight: bold;
     }
     .myt tbody tr .wgreen {
-        color: ${PERCENT_SURPRISE_COLOR};
+        color: ${SURPRISE_POSITIVE_COLOR};
     }
     .myt tbody tr .sred {
-        color: #FF0000;
+        color: ${CHANGE_NEGATIVE_COLOR};
         font-weight: bold;
     }
     .myt tbody tr .wred {
-        color: #FF0000;
+        color: ${CHANGE_NEGATIVE_COLOR};
     }     
     .myd {
         text-align: right;
@@ -259,12 +261,12 @@ function epsDatesToHtml(epsDates) {
         }
         html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td class="myd">' + item.eps.eps + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td class="myd' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         if (show_earnings_surprise) {
             html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
         }
         html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
+        html += '<td class="myd' + getHighlightClass4Change(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
         if (show_earnings_surprise) {
             html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
         }
@@ -304,9 +306,9 @@ function yearlyToHtml(annualEst) {
 
         html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
         html += '<td class="myd">' + yearlyEps + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td class="myd' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
         html += '<td class="myd">' + numberWithCommas(yearlyRev) + '</td>';
-        html += '<td class="myd' + getHighlightClass(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        html += '<td class="myd' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
     html += '</tbody></table>';
     return html;
@@ -317,13 +319,13 @@ function getDisplayQuarter(qtr) {
 }
 
 /*
-   Returns appropriate highlight class for EPS and revenue values
+   Returns appropriate highlight class for EPS and revenue change values
    >= 30 : bold positive 
    >0 && < 30 : positive
    <0 && >-20 : negative
    < -20 : bold negative
 */
-function getHighlightClass(num, str) {
+function getHighlightClass4Change(num, str) {
     let hclass = '';
     if (str === 'N/A') { return hclass; }
     if (! isDefined(num)) { return hclass; }
