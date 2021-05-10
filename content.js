@@ -117,7 +117,7 @@ function prepare() {
     }
     .myt th,
     .myt td {
-       padding: 12px ${show_earnings_surprise ? 7 : 10}px;
+       padding: 12px ${show_earnings_surprise ? 8 : 12}px;
     }
     .myt tbody tr {
       border-bottom: 1px solid #dddddd;
@@ -128,25 +128,25 @@ function prepare() {
     .myt tbody tr:last-of-type {
         /*border-bottom: 2px solid #009879;*/
     }
-    .myt tbody tr .sblue {
+    .myt tbody tr .schg {
         color: ${CHANGE_POSITIVE_COLOR};
         font-weight: bold;
     }
-    .myt tbody tr .wblue {
+    .myt tbody tr .wchg {
         color: ${CHANGE_POSITIVE_COLOR};
     }
-    .myt tbody tr .sgreen {
+    .myt tbody tr .ssur {
         color: ${SURPRISE_POSITIVE_COLOR};
         font-weight: bold;
     }
-    .myt tbody tr .wgreen {
+    .myt tbody tr .wsur {
         color: ${SURPRISE_POSITIVE_COLOR};
     }
-    .myt tbody tr .sred {
+    .myt tbody tr .sneg {
         color: ${CHANGE_NEGATIVE_COLOR};
         font-weight: bold;
     }
-    .myt tbody tr .wred {
+    .myt tbody tr .wneg {
         color: ${CHANGE_NEGATIVE_COLOR};
     }     
     .myd {
@@ -331,32 +331,33 @@ function getHighlightClass4Change(num, str) {
     if (! isDefined(num)) { return hclass; }
 
     if (num >= 30) {
-        hclass = ' sblue';
+        hclass = ' schg';
     } else if (num > 0 && num < 30) {
-        hclass = ' wblue';
+        hclass = ' wchg';
     } else if (num < 0 && num > -20) {
-        hclass = ' wred';
+        hclass = ' wneg';
     }
     else if (num <= -20) {
-        hclass = ' sred';
+        hclass = ' sneg';
     }
     
     return hclass;
 }
+
 function getHighlightClass4Surprise(num, str) {
     let hclass = '';
     if (str === 'N/A') { return hclass; }
     if (! isDefined(num)) { return hclass; }
 
     if (num >= 30) {
-        hclass = ' sgreen';
+        hclass = ' ssur';
     } else if (num > 0 && num < 30) {
-        hclass = ' wgreen';
+        hclass = ' wsur';
     } else if (num < 0 && num > -20) {
-        hclass = ' wred';
+        hclass = ' wneg';
     }
     else if (num <= -20) {
-        hclass = ' sred';
+        hclass = ' sneg';
     }
     
     return hclass;
@@ -371,10 +372,7 @@ function isDefined(smth) {
     return typeof smth !== 'undefined';
 }
 
-
 // end display
-
-
 //
 //
 // extraction/preparation
@@ -741,4 +739,3 @@ function getLatestQtrYear(epsDates) {
     let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
     return year;
 }
-
