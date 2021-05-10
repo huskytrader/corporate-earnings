@@ -103,7 +103,7 @@ function prepare() {
     .myt {
        float: left;
        border-collapse: collapse;
-       margin: 25px 25px 25px 0px;
+       margin: 25px ${show_earnings_surprise ? 20 : 50}px 25px 0px;
        padding-left: 15px;
        font-family: sans-serif;
        min-width: 400px;
@@ -112,12 +112,12 @@ function prepare() {
     .myt thead tr {
        background-color: #333333;
        color: #ffffff;
-       font-size: 0.85em;
+       ${show_earnings_surprise ? 'font-size: 0.80em;' : ''}
        text-align: left;
     }
     .myt th,
     .myt td {
-       padding: 12px 8px;
+       padding: 12px ${show_earnings_surprise ? 7 : 10}px;
     }
     .myt tbody tr {
       border-bottom: 1px solid #dddddd;
@@ -159,7 +159,7 @@ function prepare() {
     }
     .column {
         float: left;
-        margin: 10px 5px;
+        margin: 10px;
         padding-bottom: 100%;
         margin-bottom: -100%;
     }
@@ -191,7 +191,6 @@ function prepare() {
         }
     }   
     </style>`;
-
     hideContent();
     $('head').prepend(css);
 }
