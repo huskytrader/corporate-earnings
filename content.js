@@ -576,7 +576,7 @@ function sa_calculateSurpriseRevPerf(str, rev) {
     }
     let surprise = revenueStringToFloat((sign + str.substr(dPos+1)).trim());
     let projectedRev = rev - surprise;
-    let surpriseRev = Math.round(100*((rev - projectedRev) / Math.abs(projectedRev)));
+    let surpriseRev = (projectedRev != 0) ? Math.round(100*((rev - projectedRev) / Math.abs(projectedRev))) : undefined;
     return surpriseRev;
 }
 // end SA
