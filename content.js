@@ -27,12 +27,22 @@ var limit_num_qtr = true;
 // init data structures
 var epsDates = [];
 var annualEst = [];
+var fundamentals = [];
 
 chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
+
+    // TODO: check if getfromfinviz option is enabled
+    chrome.runtime.sendMessage({symbol: 'yes'}, (response) => {
+        console.log("received response", response);
+        if (!response.error) {
+            fundamentals.push(response); 
+            waitForEl("#h_earnings", displayFundamentals, 30); 
+        }
+    })
 
     prepare();
     displayWaiting();
@@ -45,7 +55,7 @@ chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_nu
             $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
             return;
         }   
-        waitForEl("div.earning-title", displayWhenReady, 30);
+        waitForEl("div.earning-title", displayEarnings, 30);
     }
     else if (default_ds == 2) {
         // ZA
@@ -79,14 +89,20 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
   }, interval);
 }
 
-function displayWhenReady(el) {
+function displayFundamentals(el) {
+    if (fundamentals.length > 0) {
+       $('<div class="container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0]) + '</div></div>').insertAfter('#h_earnings');  
+    } 
+}
+
+function displayEarnings(el) {
     if(el == null) {
         $('#waiting').hide();
         $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
         return;
     }
     extractContent();
-    displayContent();  
+    displayContent();
 }
 
 function displayWaiting() {
@@ -152,6 +168,26 @@ function prepare() {
     .myd {
         text-align: right;
     }
+    .myf {
+       float: left;
+       border: 1px solid black;
+       border-collapse: collapse;
+       margin: 25px 20px 25px 0px;
+       padding-left: 15px;
+       font-family: sans-serif;
+       width: 900px;
+       box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    .myf tr{
+        border: 1px solid black;
+    }
+    .myf td{
+        border: 1px solid black;
+        padding: 10px 5px;
+    }
+    .fdata {
+        text-align: left;
+    }
     .container {
         overflow: hidden;
         margin-top: 6px;
@@ -202,23 +238,51 @@ function prepare() {
 //
 function displayContent() {
     $('#waiting').hide();
-    $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+    $('body').prepend('<div id="h_earnings" class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+}
+
+function fundamentalsToHtml(data) {
+    const html = `<table class="myf"><tbody>
+        <tr>
+            <td colspan="4">${data.title}</td>
+        </tr>
+        <tr>
+            <td colspan="4">${data.description}</td>
+        </tr>
+        <tr>
+            <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
+            <td>ADR%</td><td class="fdata">${data.adr}</td>
+        </tr>
+        <tr>
+            <td>Float</td><td class="fdata">${data.float}</td>
+            <td>Short Float</td><td class="fdata">${data.shorts}</td>
+        </tr>
+        <tr>
+            <td>Inst Own</td><td class="fdata">${data.instown}</td>
+            <td>Earnings</td><td class="fdata">${data.earnings}</td>
+        </tr>
+        <tr>
+            <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
+            <td>Rel Volume</td><td class="fdata">${data.relvolume}</td>
+        </tr>
+    </tbody></table>`;
+    return html;
 }
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Change</td>';
+    html += '<thead><tr><td>Quarter</td><td>EPS</td><td>%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Surprise</td>';
+        html += '<td>%Surprise</td>';
     }
-    html += '<td class="myd">Revenue(Mil)</td><td class="myd">%Change</td>';
+    html += '<td>Revenue(Mil)</td><td>%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Surprise</td>';
+        html += '<td>%Surprise</td>';
     }
     html += '</tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
+        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -259,16 +323,16 @@ function epsDatesToHtml(epsDates) {
             surpriseRevPerf = item.rev.surprisePerf;
             if (item.rev.surprisePerf > 0) { surpriseRevPerf = '+' + surpriseRevPerf; }
         }
-        html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
-        html += '<td class="myd">' + item.eps.eps + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<tr><td>' + getDisplayQuarter(item.name) + '</td>';
+        html += '<td>' + item.eps.eps + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         if (show_earnings_surprise) {
-            html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
+            html += '<td class="' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
         }
-        html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
+        html += '<td>' + numberWithCommas(item.rev.rev) + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
         if (show_earnings_surprise) {
-            html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
+            html += '<td class="' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
         }
         html += '</tr>';
     });
@@ -278,10 +342,10 @@ function epsDatesToHtml(epsDates) {
 
 function yearlyToHtml(annualEst) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Change</td><td class="myd">Revenue(Mil)</td><td class="myd">%Change</td></tr></thead><tbody>';
+    html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
+        html += '<tr><td colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -304,11 +368,11 @@ function yearlyToHtml(annualEst) {
             revPerf = item.revPerf > 0 ? ('+' + item.revPerf) : item.revPerf;
         }
 
-        html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
-        html += '<td class="myd">' + yearlyEps + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td class="myd">' + numberWithCommas(yearlyRev) + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        html += '<tr><td>' + item.name + '</td>';
+        html += '<td>' + yearlyEps + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td>' + numberWithCommas(yearlyRev) + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
     html += '</tbody></table>';
     return html;

@@ -29,6 +29,10 @@ function handleSubmit() {
         return;
     }
 
+ //   chrome.runtime.sendMessage({symbol: symbol.toUpperCase()}, (response) => {
+  //      console.log("received response", response);
+   // })
+
     let targetUrl = '';
     if (default_ds == 1) {
         targetUrl = decodeURIComponent(escape(window.atob(ds1_urlPrefix))) + symbol.toUpperCase() + "/earnings";
