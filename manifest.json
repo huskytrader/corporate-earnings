@@ -22,7 +22,8 @@
         "chrome_style": false
     },
     "background": { 
-        "scripts": ["jquery-3.6.0.min.js", "background.js"]
+        "scripts": ["jquery-3.6.0.min.js", "background.js"],
+        "persistent": false 
     },
-    "permissions": [ "storage", "tabs", "https://finviz.com/quote.ashx"]
+    "permissions": [ "storage", "tabs", "https://*.finviz.com/*"]
 }
