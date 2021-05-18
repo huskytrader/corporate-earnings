@@ -3,6 +3,9 @@ const CHANGE_POSITIVE_COLOR = '#0000FF';
 const CHANGE_NEGATIVE_COLOR = '#FF0000';
 const SURPRISE_POSITIVE_COLOR = '#04C90A';
 
+const LOW_ADR_THRESHOLD = 4.5;
+const LOW_ADR_COLOR = '#FF0000';
+
 const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
@@ -192,6 +195,9 @@ function prepare() {
         text-align: center;
         width: 25%;
     }
+    #f_ticker {
+        font-size: 1.2em;
+    }
     .fv_chart {
         width: 900px;
         height: 340px;
@@ -201,6 +207,7 @@ function prepare() {
         text-overflow: ellipsis;
         white-space: nowrap;
         max-width: 900px;
+        padding: 10px 0px;
     }
     .fv_description:hover {
             white-space: normal;
@@ -224,6 +231,9 @@ function prepare() {
         display: flex;
         align-items: flex-end;
         white-space: nowrap;
+    }
+    ul[data-tabs] li {
+        font-size: 0.7em;
     }
     .container {
         overflow: hidden;
@@ -300,7 +310,7 @@ function fundamentalsToHtml(data) {
             <div id="f_fundamentals">  
                 <table class="myf"><tbody>
                 <tr>
-                    <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a> ${data.exchange}<br/>
+                    <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
                     ${data.site}<br/>
                     <a target="_blank" href="${data.sectorHref}">${data.sector}</a> | <a target="_blank" href="${data.industryHref}">${data.industry}</a> | <a target="_blank" href="${data.countryHref}">${data.country}</a>
                     </td>
@@ -327,16 +337,17 @@ function fundamentalsToHtml(data) {
             </tbody></table>
             </div>
             <div id="f_chart">
-                <img class="fv_chart" src="data:image/png;base64, ${data.chart}" alt="${data.ticker} chart"/>
+                ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
+                                        : 'No data available'};
             </div>
             <div id="f_ratings">
-                ${data.ratings}
+                ${isDefined(data.ratings) ? data.ratings : 'No data available'}
             </div>
             <div id="f_news">
-                ${data.news}
+                ${isDefined(data.news) ? data.news : 'No data available'}
             </div>
             <div id="f_insiders">
-                ${data.insiders}
+                ${isDefined(data.insiders) ? data.insiders : 'No data available'}
             </div>`;
     return html;
 }
@@ -375,6 +386,7 @@ function epsDatesToHtml(epsDates) {
                 else { epsPerf = item.eps.perf; }
                 if (item.eps.perf > 0) { epsPerf = '+' + epsPerf; }
                 if (ms_style_output == true && item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
+                if (ms_style_output == true) { epsPerf = epsPerf + '%'; }
             }
         }
         let surpriseEpsPerf = '-';
@@ -389,6 +401,7 @@ function epsDatesToHtml(epsDates) {
             }
             else { revPerf = item.rev.perf; }
             if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
+            if (ms_style_output == true) { revPerf = revPerf + '%'; }
         }
         let surpriseRevPerf = '-';
         if (isDefined(item.rev.surprisePerf)) {
@@ -432,12 +445,14 @@ function yearlyToHtml(annualEst) {
             yearlyRev = item.rev.toString();
         }
         let epsPerf = '-';
-        if (typeof item.epsPerf !== 'undefined') {
+        if (isDefined(item.epsPerf)) {
             epsPerf = item.epsPerf > 0 ? ('+' + item.epsPerf) : item.epsPerf;
+            if (ms_style_output == true) { epsPerf = epsPerf + '%'; }
         }
         let revPerf = '-';
-        if (typeof item.revPerf !== 'undefined') {
+        if (isDefined(item.revPerf)) {
             revPerf = item.revPerf > 0 ? ('+' + item.revPerf) : item.revPerf;
+            if (ms_style_output == true) { revPerf = revPerf + '%'; }
         }
 
         html += '<tr><td>' + item.name + '</td>';
@@ -497,6 +512,10 @@ function getHighlightClass4Surprise(num, str) {
     }
     
     return hclass;
+}
+
+function getHighlightClass4ADR(adrStr) {
+
 }
 
 function numberWithCommas(x) {

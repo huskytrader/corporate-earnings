@@ -134,6 +134,7 @@ function stripChromePrefix(str) {
 // remove onmouse* events from insiders
 // prepend URL_PREFIX
 function processInsiders(str) {
+    if (!isDefined(str)) { return undefined; }
     let removed = str.replace(/ on\w+="[^"]*"/g, '');
     removed = removed.replace(/insidertrading\.ashx/g, URL_PREFIX + "insidertrading.ashx");
     return removed;
