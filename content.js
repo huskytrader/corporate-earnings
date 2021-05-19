@@ -3,6 +3,15 @@ const CHANGE_POSITIVE_COLOR = '#0000FF';
 const CHANGE_NEGATIVE_COLOR = '#FF0000';
 const SURPRISE_POSITIVE_COLOR = '#04C90A';
 
+const LOW_ADR_THRESHOLD = 4.5;
+const LOW_ADR_COLOR = '#FF0000';
+
+const HIGH_SHORT_INTEREST_THRESHOLD = 20;
+const HIGH_SHORT_INTEREST_COLOR = '#FF0000';
+
+const DAYS_BEFORE_EARNINGS_WARN_THRESHOLD = 3;
+const DAYS_BEFORE_EARNINGS_WARN_COLOR = '#FF0000';
+
 const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
@@ -18,7 +27,23 @@ const MONTH_MAP = {
     12: 'Dec'
 };
 
+const REVERSE_MONTH_MAP = {
+    'Jan': 0,
+    'Feb': 1,
+    'Mar': 2,
+    'Apr': 3,
+    'May': 4,
+    'Jun': 5,
+    'Jul': 6,
+    'Aug': 7,
+    'Sep': 8,
+    'Oct': 9,
+    'Nov': 10,
+    'Dec': 11
+};
+
 // default options
+var fetch_fundamental_data = false;
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
@@ -27,12 +52,23 @@ var limit_num_qtr = true;
 // init data structures
 var epsDates = [];
 var annualEst = [];
+var fundamentals = [];
 
-chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+chrome.storage.local.get(['fetch_fundamental_data', 'show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+    if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
+
+    if (fetch_fundamental_data == true) {
+        chrome.runtime.sendMessage({fetch: 'yes'}, (response) => {
+            if (!response.error) {
+                fundamentals.push(response); 
+                waitForEl("#h_earnings", displayFundamentals, 30); 
+            }
+        })
+    }
 
     prepare();
     displayWaiting();
@@ -45,7 +81,7 @@ chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_nu
             $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
             return;
         }   
-        waitForEl("div.earning-title", displayWhenReady, 30);
+        waitForEl("div.earning-title", displayEarnings, 30);
     }
     else if (default_ds == 2) {
         // ZA
@@ -79,14 +115,20 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
   }, interval);
 }
 
-function displayWhenReady(el) {
+function displayFundamentals(el) {
+    if (fundamentals.length > 0) {
+       $('<div class="container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0]) + '</div></div>').insertAfter('#h_earnings');  
+    } 
+}
+
+function displayEarnings(el) {
     if(el == null) {
         $('#waiting').hide();
         $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
         return;
     }
     extractContent();
-    displayContent();  
+    displayContent();
 }
 
 function displayWaiting() {
@@ -104,7 +146,7 @@ function prepare() {
        float: left;
        border-collapse: collapse;
        margin: 25px ${show_earnings_surprise ? 20 : 50}px 25px 0px;
-       padding-left: 15px;
+       padding-left: 5px;
        font-family: sans-serif;
        min-width: 400px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
@@ -149,8 +191,88 @@ function prepare() {
     .myt tbody tr .wneg {
         color: ${CHANGE_NEGATIVE_COLOR};
     }     
-    .myd {
+    .myt tbody tr td {
         text-align: right;
+    }
+    .myf {
+       float: left;
+       border: 1px solid #c9c9bb;
+       border-collapse: collapse;
+       margin: 15px 20px 25px 0px;
+       padding-left: 5px;
+       font-family: sans-serif;
+       width: 900px;
+       box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    .myf tr{
+        border: 1px solid #c9c9bb;
+    }
+    .myf td{
+        border: 1px solid #c9c9bb;
+        padding: 10px 5px;
+        width: 12%;
+    }
+    .fdata {
+        text-align: left;
+    }
+    .fdata.ladr {
+        color: ${LOW_ADR_COLOR};
+        font-weight: bold;
+    }
+    .fdata.hshorts {
+        color: ${HIGH_SHORT_INTEREST_COLOR};
+        font-weight: bold;
+    }
+    .fdata.learnings {
+        color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
+        font-weight: bold;
+    }
+    .ftitle {
+        text-align: center;
+        width: 25%;
+    }
+    #f_ticker {
+        font-size: 1.2em;
+    }
+    .fv_chart {
+        width: 900px;
+        height: 340px;
+    }
+    .fv_description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 900px;
+        padding: 10px 0px;
+    }
+    .fv_description:hover {
+            white-space: normal;
+        }
+    .body-table-rating-upgrade {
+        color: #04C90A;
+    }
+    .body-table-rating-downgrade {
+        color: #FF0000;
+    }
+    .news-link-container {
+        display: flex;
+    }
+    .news-link-left {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .news-link-right {
+        padding-left: 4px;
+        display: flex;
+        align-items: flex-end;
+        white-space: nowrap;
+    }
+    ul[data-tabs] li {
+        font-size: 0.7em;
+    }
+    .data-tab {
+        margin-top: 20px;
     }
     .container {
         overflow: hidden;
@@ -202,23 +324,87 @@ function prepare() {
 //
 function displayContent() {
     $('#waiting').hide();
-    $('body').prepend('<div class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+    $('body').prepend('<div id="h_earnings" class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+}
+
+function fundamentalsToHtml(data) {
+    const html = `
+        <style>
+            /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
+            [role=tablist]{border-bottom:1px solid #d3d3d3;list-style:none;margin:0;padding:0}[role=tablist] *{box-sizing:border-box}@media (min-width:30em){[role=tablist] li{display:inline-block}}[role=tab]{border:1px solid transparent;border-top-color:#d3d3d3;display:block;padding:.5em 1em;text-decoration:none}@media (min-width:30em){[role=tab]{border-top-color:transparent;border-top-left-radius:.5em;border-top-right-radius:.5em;display:inline-block;margin-bottom:-1px}}[role=tab][aria-selected=true]{background-color:#d3d3d3}@media (min-width:30em){[role=tab][aria-selected=true]{background-color:transparent;border:1px solid #d3d3d3;border-bottom-color:#fff}}[role=tab]:hover:not([aria-selected=true]){background-color:#f7f7f7}@media (min-width:30em){[role=tab]:hover:not([aria-selected=true]){border:1px solid #d3d3d3}}[hidden]{display:none}
+        </style>
+        <script>
+            /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
+            Element.prototype.matches||(Element.prototype.matches=Element.prototype.msMatchesSelector||Element.prototype.webkitMatchesSelector),Element.prototype.closest||(Element.prototype.matches||(Element.prototype.matches=Element.prototype.msMatchesSelector||Element.prototype.webkitMatchesSelector),Element.prototype.closest=function(e){var t=this;if(!document.documentElement.contains(this))return null;do{if(t.matches(e))return t;t=t.parentElement}while(null!==t);return null}),(function(e,t){"function"==typeof define&&define.amd?define([],(function(){return t(e)})):"object"==typeof exports?module.exports=t(e):e.Tabby=t(e)})("undefined"!=typeof global?global:"undefined"!=typeof window?window:this,(function(e){"use strict";var t={idPrefix:"tabby-toggle_",default:"[data-tabby-default]"},r=function(t){if(t&&"true"!=t.getAttribute("aria-selected")){var r=document.querySelector(t.hash);if(r){var o=(function(e){var t=e.closest('[role="tablist"]');if(!t)return{};var r=t.querySelector('[role="tab"][aria-selected="true"]');if(!r)return{};var o=document.querySelector(r.hash);return r.setAttribute("aria-selected","false"),r.setAttribute("tabindex","-1"),o?(o.setAttribute("hidden","hidden"),{previousTab:r,previousContent:o}):{previousTab:r}})(t);!(function(e,t){e.setAttribute("aria-selected","true"),e.setAttribute("tabindex","0"),t.removeAttribute("hidden"),e.focus()})(t,r),o.tab=t,o.content=r,(function(t,r){var o;"function"==typeof e.CustomEvent?o=new CustomEvent("tabby",{bubbles:!0,cancelable:!0,detail:r}):(o=document.createEvent("CustomEvent")).initCustomEvent("tabby",!0,!0,r),t.dispatchEvent(o)})(t,o)}}},o=function(e,t){var o=(function(e){var t=e.closest('[role="tablist"]'),r=t?t.querySelectorAll('[role="tab"]'):null;if(r)return{tabs:r,index:Array.prototype.indexOf.call(r,e)}})(e);if(o){var n,i=o.tabs.length-1;["ArrowUp","ArrowLeft","Up","Left"].indexOf(t)>-1?n=o.index<1?i:o.index-1:["ArrowDown","ArrowRight","Down","Right"].indexOf(t)>-1?n=o.index===i?0:o.index+1:"Home"===t?n=0:"End"===t&&(n=i),r(o.tabs[n])}};return function(n,i){var a,l,u={};u.destroy=function(){var e=l.querySelectorAll("a");Array.prototype.forEach.call(e,(function(e){var t=document.querySelector(e.hash);t&&(function(e,t,r){e.id.slice(0,r.idPrefix.length)===r.idPrefix&&(e.id=""),e.removeAttribute("role"),e.removeAttribute("aria-controls"),e.removeAttribute("aria-selected"),e.removeAttribute("tabindex"),e.closest("li").removeAttribute("role"),t.removeAttribute("role"),t.removeAttribute("aria-labelledby"),t.removeAttribute("hidden")})(e,t,a)})),l.removeAttribute("role"),document.documentElement.removeEventListener("click",c,!0),l.removeEventListener("keydown",s,!0),a=null,l=null},u.setup=function(){if(l=document.querySelector(n)){var e=l.querySelectorAll("a");l.setAttribute("role","tablist"),Array.prototype.forEach.call(e,(function(e){var t=document.querySelector(e.hash);t&&(function(e,t,r){e.id||(e.id=r.idPrefix+t.id),e.setAttribute("role","tab"),e.setAttribute("aria-controls",t.id),e.closest("li").setAttribute("role","presentation"),t.setAttribute("role","tabpanel"),t.setAttribute("aria-labelledby",e.id),e.matches(r.default)?e.setAttribute("aria-selected","true"):(e.setAttribute("aria-selected","false"),e.setAttribute("tabindex","-1"),t.setAttribute("hidden","hidden"))})(e,t,a)}))}},u.toggle=function(e){var t=e;"string"==typeof e&&(t=document.querySelector(n+' [role="tab"][href*="'+e+'"]')),r(t)};var c=function(e){var t=e.target.closest(n+' [role="tab"]');t&&(e.preventDefault(),r(t))},s=function(e){var t=document.activeElement;t.matches(n+' [role="tab"]')&&(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Up","Down","Left","Right","Home","End"].indexOf(e.key)<0||o(t,e.key))};return a=(function(){var e={};return Array.prototype.forEach.call(arguments,(function(t){for(var r in t){if(!t.hasOwnProperty(r))return;e[r]=t[r]}})),e})(t,i||{}),u.setup(),(function(t){if(!(e.location.hash.length<1)){var o=document.querySelector(t+' [role="tab"][href*="'+e.location.hash+'"]');r(o)}})(n),document.documentElement.addEventListener("click",c,!0),l.addEventListener("keydown",s,!0),u}}));
+            var f_tabs = new Tabby('[data-tabs]');
+        </script>
+        <ul data-tabs>
+            <li><a data-tabby-default href="#f_fundamentals" onmouseover="f_tabs.toggle('#f_fundamentals')">Fundamentals</a></li>
+            <li><a href="#f_chart" onmouseover="f_tabs.toggle('#f_chart')">Chart</a></li>
+            <li><a href="#f_ratings" onmouseover="f_tabs.toggle('#f_ratings')">Ratings</a></li>
+            <li><a href="#f_news" onmouseover="f_tabs.toggle('#f_news')">News</a></li>
+            <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
+        </ul>
+
+        <div class="data-tab" id="f_fundamentals">  
+            <table class="myf"><tbody>
+            <tr>
+                <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
+                ${data.site}<br/>
+                <a target="_blank" href="${data.sectorHref}">${data.sector}</a> | <a target="_blank" href="${data.industryHref}">${data.industry}</a> | <a target="_blank" href="${data.countryHref}">${data.country}</a>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><div class="fv_description">${data.description}</div></td>
+            </tr>
+            <tr>
+                <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
+                <td>ADR</td><td class="fdata${getHighlightClass4ADR(data.adr)}">${data.adr}</td>
+            </tr>
+            <tr>
+                <td>Float</td><td class="fdata">${data.float}</td>
+                <td>Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings)}">${data.earnings}</td>
+            </tr>
+            <tr>
+                <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
+                <td>Inst Own</td><td class="fdata">${data.instown}</td>
+            </tr>
+            <tr>
+                <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
+                <td>Rel Volume</td><td class="fdata">${data.relvolume}</td>
+            </tr>
+        </tbody></table>
+        </div>
+        <div class="data-tab" id="f_chart">
+            ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
+                                    : 'No data available'};
+        </div>
+        <div class="data-tab" id="f_ratings">
+            ${isDefined(data.ratings) ? data.ratings : 'No data available'}
+        </div>
+        <div class="data-tab" id="f_news">
+            ${isDefined(data.news) ? data.news : 'No data available'}
+        </div>
+        <div class="data-tab" id="f_insiders">
+            ${isDefined(data.insiders) ? data.insiders : 'No data available'}
+        </div>`;
+    return html;
 }
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Quarter</td><td class="myd">EPS</td><td class="myd">%Change</td>';
+    html += '<thead><tr><td>Quarter</td><td>EPS</td><td>%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Surprise</td>';
+        html += '<td>%Surprise</td>';
     }
-    html += '<td class="myd">Revenue(Mil)</td><td class="myd">%Change</td>';
+    html += '<td>Revenue(Mil)</td><td>%Change</td>';
     if (show_earnings_surprise) {
-        html += '<td class="myd">%Surprise</td>';
+        html += '<td>%Surprise</td>';
     }
     html += '</tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
+        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -239,12 +425,14 @@ function epsDatesToHtml(epsDates) {
                 else { epsPerf = item.eps.perf; }
                 if (item.eps.perf > 0) { epsPerf = '+' + epsPerf; }
                 if (ms_style_output == true && item.eps.negativeTurnaround) { epsPerf = '#'+epsPerf; }
+                if (ms_style_output == true) { epsPerf = epsPerf + '%'; }
             }
         }
         let surpriseEpsPerf = '-';
         if (isDefined(item.eps.surprisePerf)) {
             surpriseEpsPerf = item.eps.surprisePerf;
             if (item.eps.surprisePerf > 0) { surpriseEpsPerf = '+' + surpriseEpsPerf; }
+            if (ms_style_output == true) { surpriseEpsPerf = surpriseEpsPerf + '%'; }
         }
         let revPerf = '-';
         if (isDefined(item.rev.perf)) {
@@ -253,22 +441,24 @@ function epsDatesToHtml(epsDates) {
             }
             else { revPerf = item.rev.perf; }
             if (item.rev.perf > 0) { revPerf = '+' + revPerf; }
+            if (ms_style_output == true) { revPerf = revPerf + '%'; }
         }
         let surpriseRevPerf = '-';
         if (isDefined(item.rev.surprisePerf)) {
             surpriseRevPerf = item.rev.surprisePerf;
             if (item.rev.surprisePerf > 0) { surpriseRevPerf = '+' + surpriseRevPerf; }
+            if (ms_style_output == true) { surpriseRevPerf = surpriseRevPerf + '%'; }
         }
-        html += '<tr class="myd"><td class="myd">' + getDisplayQuarter(item.name) + '</td>';
-        html += '<td class="myd">' + item.eps.eps + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<tr><td>' + getDisplayQuarter(item.name) + '</td>';
+        html += '<td>' + item.eps.eps + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         if (show_earnings_surprise) {
-            html += '<td class="myd' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
+            html += '<td class="' + getHighlightClass4Surprise(item.eps.surprisePerf, surpriseEpsPerf) + '">' + surpriseEpsPerf + '</td>';
         }
-        html += '<td class="myd">' + numberWithCommas(item.rev.rev) + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
+        html += '<td>' + numberWithCommas(item.rev.rev) + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.rev.perf, revPerf) + '">' + revPerf  + '</td>';
         if (show_earnings_surprise) {
-            html += '<td class="myd' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
+            html += '<td class="' + getHighlightClass4Surprise(item.rev.surprisePerf, surpriseRevPerf) + '">' + surpriseRevPerf + '</td>';
         }
         html += '</tr>';
     });
@@ -278,10 +468,10 @@ function epsDatesToHtml(epsDates) {
 
 function yearlyToHtml(annualEst) {
     let html = '<table class="myt">';
-    html += '<thead><tr class="myd"><td class="myd">Year</td><td class="myd">EPS</td><td class="myd">%Change</td><td class="myd">Revenue(Mil)</td><td class="myd">%Change</td></tr></thead><tbody>';
+    html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
-        html += '<tr class="myd"><td class="myd" colspan="5">No data found</td></tr>';
+        html += '<tr><td colspan="5">No data found</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -296,19 +486,21 @@ function yearlyToHtml(annualEst) {
             yearlyRev = item.rev.toString();
         }
         let epsPerf = '-';
-        if (typeof item.epsPerf !== 'undefined') {
+        if (isDefined(item.epsPerf)) {
             epsPerf = item.epsPerf > 0 ? ('+' + item.epsPerf) : item.epsPerf;
+            if (ms_style_output == true) { epsPerf = epsPerf + '%'; }
         }
         let revPerf = '-';
-        if (typeof item.revPerf !== 'undefined') {
+        if (isDefined(item.revPerf)) {
             revPerf = item.revPerf > 0 ? ('+' + item.revPerf) : item.revPerf;
+            if (ms_style_output == true) { revPerf = revPerf + '%'; }
         }
 
-        html += '<tr class="myd"><td class="myd">' + item.name + '</td>';
-        html += '<td class="myd">' + yearlyEps + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td class="myd">' + numberWithCommas(yearlyRev) + '</td>';
-        html += '<td class="myd' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        html += '<tr><td>' + item.name + '</td>';
+        html += '<td>' + yearlyEps + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
+        html += '<td>' + numberWithCommas(yearlyRev) + '</td>';
+        html += '<td class="' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
     });
     html += '</tbody></table>';
     return html;
@@ -362,6 +554,62 @@ function getHighlightClass4Surprise(num, str) {
     
     return hclass;
 }
+
+function getHighlightClass4ADR(adrStr) {
+    let hclass = '';
+    if (! isDefined(adrStr) || adrStr.length == 0) { return hclass; }
+    let adr = parseFloat(adrStr.replace(/%$/, ""));
+    if (adr < LOW_ADR_THRESHOLD) {
+        hclass = ' ladr';
+    } 
+    return hclass;
+}
+
+function getHighlightClass4Shorts(shortsStr) {
+    let hclass = '';
+    if (! isDefined(shortsStr) || shortsStr.length == 0 || shortsStr == '-') { return hclass; }
+    let shorts = parseFloat(shortsStr.replace(/%$/, ""));
+    if (shorts > HIGH_SHORT_INTEREST_THRESHOLD) {
+        hclass = ' hshorts';
+    } 
+    return hclass;
+}
+
+function getHighlightClass4Earnings(earningsStr) {
+    let hclass = '';
+    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr.length == '-') { return hclass; }
+    let today = new Date();
+    today.setHours(0,0,0,0);
+    let parts = earningsStr.split(' ')
+    if (parts.length < 2) { return hclass; }
+    let earningsDate = new Date(today.getFullYear(), REVERSE_MONTH_MAP[parts[0]], parts[1]);
+    earningsDate.setHours(0,0,0,0);
+    if (today > earningsDate) { return hclass; }
+    let workingDays = getWorkingDays(today, earningsDate);
+    if (workingDays <= DAYS_BEFORE_EARNINGS_WARN_THRESHOLD) {
+        hclass = ' learnings';
+    } 
+    return hclass;
+}
+
+function getWorkingDays(startDate, endDate) {
+    var numWorkDays = 0;
+    var currentDate = new Date(startDate);
+    while (currentDate < endDate) {
+        // Skips Sunday and Saturday
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+            numWorkDays++;
+        }
+        currentDate = currentDate.addDays(1);
+    }
+    return numWorkDays;
+}
+
+Date.prototype.addDays = function (days) {
+    let date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+};
 
 function numberWithCommas(x) {
     if (!isDefined(x) || x == null) { return '-'; }
