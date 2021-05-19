@@ -6,6 +6,12 @@ const SURPRISE_POSITIVE_COLOR = '#04C90A';
 const LOW_ADR_THRESHOLD = 4.5;
 const LOW_ADR_COLOR = '#FF0000';
 
+const HIGH_SHORT_INTEREST_THRESHOLD = 20;
+const HIGH_SHORT_INTEREST_COLOR = '#FF0000';
+
+const DAYS_BEFORE_EARNINGS_WARN_THRESHOLD = 3;
+const DAYS_BEFORE_EARNINGS_WARN_COLOR = '#FF0000';
+
 const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
@@ -19,6 +25,21 @@ const MONTH_MAP = {
     10: 'Oct',
     11: 'Nov',
     12: 'Dec'
+};
+
+const REVERSE_MONTH_MAP = {
+    'Jan': 0,
+    'Feb': 1,
+    'Mar': 2,
+    'Apr': 3,
+    'May': 4,
+    'Jun': 5,
+    'Jul': 6,
+    'Aug': 7,
+    'Sep': 8,
+    'Oct': 9,
+    'Nov': 10,
+    'Dec': 11
 };
 
 // default options
@@ -122,7 +143,7 @@ function prepare() {
        float: left;
        border-collapse: collapse;
        margin: 25px ${show_earnings_surprise ? 20 : 50}px 25px 0px;
-       padding-left: 15px;
+       padding-left: 5px;
        font-family: sans-serif;
        min-width: 400px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
@@ -167,29 +188,41 @@ function prepare() {
     .myt tbody tr .wneg {
         color: ${CHANGE_NEGATIVE_COLOR};
     }     
-    .myd {
+    .myt tbody tr td {
         text-align: right;
     }
     .myf {
        float: left;
-       border: 1px solid #3c4144;
+       border: 1px solid #c9c9bb;
        border-collapse: collapse;
-       margin: 25px 20px 25px 0px;
-       padding-left: 15px;
+       margin: 15px 20px 25px 0px;
+       padding-left: 5px;
        font-family: sans-serif;
        width: 900px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
     .myf tr{
-        border: 1px solid #3c4144;
+        border: 1px solid #c9c9bb;
     }
     .myf td{
-        border: 1px solid #3c4144;
+        border: 1px solid #c9c9bb;
         padding: 10px 5px;
         width: 12%;
     }
     .fdata {
         text-align: left;
+    }
+    .fdata.ladr {
+        color: ${LOW_ADR_COLOR};
+        font-weight: bold;
+    }
+    .fdata.hshorts {
+        color: ${HIGH_SHORT_INTEREST_COLOR};
+        font-weight: bold;
+    }
+    .fdata.learnings {
+        color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
+        font-weight: bold;
     }
     .ftitle {
         text-align: center;
@@ -234,6 +267,9 @@ function prepare() {
     }
     ul[data-tabs] li {
         font-size: 0.7em;
+    }
+    .data-tab {
+        margin-top: 20px;
     }
     .container {
         overflow: hidden;
@@ -307,7 +343,7 @@ function fundamentalsToHtml(data) {
             <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
         </ul>
 
-            <div id="f_fundamentals">  
+            <div class="data-tab" id="f_fundamentals">  
                 <table class="myf"><tbody>
                 <tr>
                     <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
@@ -320,14 +356,14 @@ function fundamentalsToHtml(data) {
                 </tr>
                 <tr>
                     <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
-                    <td>ADR</td><td class="fdata">${data.adr}</td>
+                    <td>ADR</td><td class="fdata${getHighlightClass4ADR(data.adr)}">${data.adr}</td>
                 </tr>
                 <tr>
                     <td>Float</td><td class="fdata">${data.float}</td>
-                    <td>Earnings</td><td class="fdata">${data.earnings}</td>
+                    <td>Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings)}">${data.earnings}</td>
                 </tr>
                 <tr>
-                    <td>Short Float</td><td class="fdata">${data.shorts}</td>
+                    <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
                     <td>Inst Own</td><td class="fdata">${data.instown}</td>
                 </tr>
                 <tr>
@@ -336,17 +372,17 @@ function fundamentalsToHtml(data) {
                 </tr>
             </tbody></table>
             </div>
-            <div id="f_chart">
+            <div class="data-tab" id="f_chart">
                 ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
                                         : 'No data available'};
             </div>
-            <div id="f_ratings">
+            <div class="data-tab" id="f_ratings">
                 ${isDefined(data.ratings) ? data.ratings : 'No data available'}
             </div>
-            <div id="f_news">
+            <div class="data-tab" id="f_news">
                 ${isDefined(data.news) ? data.news : 'No data available'}
             </div>
-            <div id="f_insiders">
+            <div class="data-tab" id="f_insiders">
                 ${isDefined(data.insiders) ? data.insiders : 'No data available'}
             </div>`;
     return html;
@@ -515,8 +551,60 @@ function getHighlightClass4Surprise(num, str) {
 }
 
 function getHighlightClass4ADR(adrStr) {
-
+    let hclass = '';
+    if (! isDefined(adrStr) || adrStr.length == 0) { return hclass; }
+    let adr = parseFloat(adrStr.replace(/%$/, ""));
+    if (adr < LOW_ADR_THRESHOLD) {
+        hclass = ' ladr';
+    } 
+    return hclass;
 }
+
+function getHighlightClass4Shorts(shortsStr) {
+    let hclass = '';
+    if (! isDefined(shortsStr) || shortsStr.length == 0 || shortsStr == '-') { return hclass; }
+    let shorts = parseFloat(shortsStr.replace(/%$/, ""));
+    if (shorts > HIGH_SHORT_INTEREST_THRESHOLD) {
+        hclass = ' hshorts';
+    } 
+    return hclass;
+}
+
+function getHighlightClass4Earnings(earningsStr) {
+    let hclass = '';
+    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr.length == '-') { return hclass; }
+    let today = new Date();
+    today.setHours(0,0,0,0);
+    let parts = earningsStr.split(' ')
+    if (parts.length < 2) { return hclass; }
+    let earningsDate = new Date(today.getFullYear(), REVERSE_MONTH_MAP[parts[0]], parts[1]);
+    earningsDate.setHours(0,0,0,0);
+    if (today > earningsDate) { return hclass; }
+    let workingDays = getWorkingDays(today, earningsDate);
+    if (workingDays <= DAYS_BEFORE_EARNINGS_WARN_THRESHOLD) {
+        hclass = ' learnings';
+    } 
+    return hclass;
+}
+
+function getWorkingDays(startDate, endDate) {
+    var numWorkDays = 0;
+    var currentDate = new Date(startDate);
+    while (currentDate < endDate) {
+        // Skips Sunday and Saturday
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+            numWorkDays++;
+        }
+        currentDate = currentDate.addDays(1);
+    }
+    return numWorkDays;
+}
+
+Date.prototype.addDays = function (days) {
+    let date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+};
 
 function numberWithCommas(x) {
     if (!isDefined(x) || x == null) { return '-'; }
