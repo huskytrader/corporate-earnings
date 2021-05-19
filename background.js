@@ -31,12 +31,18 @@ function getFundamentals(symbol, sendResponse) {
     if (! isDefined(symbol)) { return undefined; }
     let results = {symbol: symbol};
 
+    let responseStatus = 0;
     fetch(decode(FETCH_URL)+symbol)
     .then(function(response) {
-        return response.text()
+        responseStatus = response.status;
+        return response.text();
     })
-    .then(function(html) {
-        let dom_nodes = $($.parseHTML(html));
+    .then(function(response) {
+        if (responseStatus != 200) {
+            sendResponse({error: 'failed to fetch fundamentals for symbol: ' + symbol});
+            return;
+        }
+        let dom_nodes = $($.parseHTML(response));
 
         found = dom_nodes.find('.fullview-title tr:eq(0) td');
         if (found.length > 0) {

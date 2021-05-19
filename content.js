@@ -346,48 +346,48 @@ function fundamentalsToHtml(data) {
             <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
         </ul>
 
-            <div class="data-tab" id="f_fundamentals">  
-                <table class="myf"><tbody>
-                <tr>
-                    <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
-                    ${data.site}<br/>
-                    <a target="_blank" href="${data.sectorHref}">${data.sector}</a> | <a target="_blank" href="${data.industryHref}">${data.industry}</a> | <a target="_blank" href="${data.countryHref}">${data.country}</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="4"><div class="fv_description">${data.description}</div></td>
-                </tr>
-                <tr>
-                    <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
-                    <td>ADR</td><td class="fdata${getHighlightClass4ADR(data.adr)}">${data.adr}</td>
-                </tr>
-                <tr>
-                    <td>Float</td><td class="fdata">${data.float}</td>
-                    <td>Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings)}">${data.earnings}</td>
-                </tr>
-                <tr>
-                    <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
-                    <td>Inst Own</td><td class="fdata">${data.instown}</td>
-                </tr>
-                <tr>
-                    <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
-                    <td>Rel Volume</td><td class="fdata">${data.relvolume}</td>
-                </tr>
-            </tbody></table>
-            </div>
-            <div class="data-tab" id="f_chart">
-                ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
-                                        : 'No data available'};
-            </div>
-            <div class="data-tab" id="f_ratings">
-                ${isDefined(data.ratings) ? data.ratings : 'No data available'}
-            </div>
-            <div class="data-tab" id="f_news">
-                ${isDefined(data.news) ? data.news : 'No data available'}
-            </div>
-            <div class="data-tab" id="f_insiders">
-                ${isDefined(data.insiders) ? data.insiders : 'No data available'}
-            </div>`;
+        <div class="data-tab" id="f_fundamentals">  
+            <table class="myf"><tbody>
+            <tr>
+                <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
+                ${data.site}<br/>
+                <a target="_blank" href="${data.sectorHref}">${data.sector}</a> | <a target="_blank" href="${data.industryHref}">${data.industry}</a> | <a target="_blank" href="${data.countryHref}">${data.country}</a>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><div class="fv_description">${data.description}</div></td>
+            </tr>
+            <tr>
+                <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
+                <td>ADR</td><td class="fdata${getHighlightClass4ADR(data.adr)}">${data.adr}</td>
+            </tr>
+            <tr>
+                <td>Float</td><td class="fdata">${data.float}</td>
+                <td>Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings)}">${data.earnings}</td>
+            </tr>
+            <tr>
+                <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
+                <td>Inst Own</td><td class="fdata">${data.instown}</td>
+            </tr>
+            <tr>
+                <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
+                <td>Rel Volume</td><td class="fdata">${data.relvolume}</td>
+            </tr>
+        </tbody></table>
+        </div>
+        <div class="data-tab" id="f_chart">
+            ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
+                                    : 'No data available'};
+        </div>
+        <div class="data-tab" id="f_ratings">
+            ${isDefined(data.ratings) ? data.ratings : 'No data available'}
+        </div>
+        <div class="data-tab" id="f_news">
+            ${isDefined(data.news) ? data.news : 'No data available'}
+        </div>
+        <div class="data-tab" id="f_insiders">
+            ${isDefined(data.insiders) ? data.insiders : 'No data available'}
+        </div>`;
     return html;
 }
 
@@ -432,6 +432,7 @@ function epsDatesToHtml(epsDates) {
         if (isDefined(item.eps.surprisePerf)) {
             surpriseEpsPerf = item.eps.surprisePerf;
             if (item.eps.surprisePerf > 0) { surpriseEpsPerf = '+' + surpriseEpsPerf; }
+            if (ms_style_output == true) { surpriseEpsPerf = surpriseEpsPerf + '%'; }
         }
         let revPerf = '-';
         if (isDefined(item.rev.perf)) {
@@ -446,6 +447,7 @@ function epsDatesToHtml(epsDates) {
         if (isDefined(item.rev.surprisePerf)) {
             surpriseRevPerf = item.rev.surprisePerf;
             if (item.rev.surprisePerf > 0) { surpriseRevPerf = '+' + surpriseRevPerf; }
+            if (ms_style_output == true) { surpriseRevPerf = surpriseRevPerf + '%'; }
         }
         html += '<tr><td>' + getDisplayQuarter(item.name) + '</td>';
         html += '<td>' + item.eps.eps + '</td>';
