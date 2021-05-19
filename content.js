@@ -43,6 +43,7 @@ const REVERSE_MONTH_MAP = {
 };
 
 // default options
+var fetch_fundamental_data = false;
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
@@ -53,19 +54,21 @@ var epsDates = [];
 var annualEst = [];
 var fundamentals = [];
 
-chrome.storage.local.get(['show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+chrome.storage.local.get(['fetch_fundamental_data', 'show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+    if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
-    // TODO: check if getfromfinviz option is enabled
-    chrome.runtime.sendMessage({symbol: 'yes'}, (response) => {
-        if (!response.error) {
-            fundamentals.push(response); 
-            waitForEl("#h_earnings", displayFundamentals, 30); 
-        }
-    })
+    if (fetch_fundamental_data == true) {
+        chrome.runtime.sendMessage({fetch: 'yes'}, (response) => {
+            if (!response.error) {
+                fundamentals.push(response); 
+                waitForEl("#h_earnings", displayFundamentals, 30); 
+            }
+        })
+    }
 
     prepare();
     displayWaiting();

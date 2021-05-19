@@ -1,6 +1,8 @@
 const SA_REGEX = /symbol\/([a-zA-Z]+)\/earnings/;
 const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-announcements/;
-const URL_PREFIX = 'https://finviz.com/';
+
+const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
+const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -29,7 +31,7 @@ function getFundamentals(symbol, sendResponse) {
     if (! isDefined(symbol)) { return undefined; }
     let results = {symbol: symbol};
 
-    fetch('https://finviz.com/quote.ashx?t='+symbol)
+    fetch(decode(FETCH_URL)+symbol)
     .then(function(response) {
         return response.text()
     })
@@ -37,17 +39,17 @@ function getFundamentals(symbol, sendResponse) {
         let dom_nodes = $($.parseHTML(html));
 
         found = dom_nodes.find('.fullview-title tr:eq(0) td');
-        if (found) {
+        if (found.length > 0) {
             results.ticker = found.children(':first-child').text();
             results.tickerHref = stripChromePrefix(found.children(':first-child').prop('href'));
             results.exchange = found.children(':first-child').next().text();
         }
         found = dom_nodes.find('.fullview-title tr:eq(1) td');
-        if (found) {
+        if (found.length > 0) {
             results.site = found.html();
         }
         found = dom_nodes.find('.fullview-title tr:eq(2) td');
-        if (found) {
+        if (found.length > 0) {
             results.sector = found.children(':first-child').text();
             results.sectorHref = stripChromePrefix(found.children(':first-child').prop('href'));
             results.industry = found.children(':first-child').next().text();
@@ -55,55 +57,54 @@ function getFundamentals(symbol, sendResponse) {
             results.country = found.children(':first-child').next().next().text();
             results.countryHref = stripChromePrefix(found.children(':first-child').next().next().prop('href'));
         }
-
         found = dom_nodes.find('td:contains("Short Float")');
-        if (found) {
+        if (found.length > 0) {
             results.shorts = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Shs Float")');
-        if (found) {
+        if (found.length > 0) {
             results.float = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Earnings")');
-        if (found) {
+        if (found.length > 0) {
             results.earnings = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Market Cap")');
-        if (found) {
+        if (found.length > 0) {
             results.mktcap = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Volatility")');
-        if (found) {
+        if (found.length > 0) {
             results.adr = found.next().text().trim().split(' ')[1];
         }
         found = dom_nodes.find('td:contains("Inst Own")');
-        if (found) {
+        if (found.length > 0) {
             results.instown = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Rel Volume")');
-        if (found) {
+        if (found.length > 0) {
             results.relvolume = found.next().text().trim();
         }
         found = dom_nodes.find('td:contains("Avg Volume")');
-        if (found) {
+        if (found.length > 0) {
             results.avgvolume = found.next().text().trim();
         }
         found = dom_nodes.find('.fullview-profile');
-        if (found) {
+        if (found.length > 0) {
             results.description = found.text().trim();
         }
         found = dom_nodes.find('.fullview-ratings-outer');
-        if (found) {
+        if (found.length > 0) {
             results.ratings = found.prop('outerHTML');
             results.ratings = results.ratings.replace(/<b>/g, "");
             results.ratings = results.ratings.replace(/<\/b>/g, "");
         }
         found = dom_nodes.find('.fullview-news-outer');
-        if (found) {
+        if (found.length > 0) {
             results.news = found.prop('outerHTML');
         }
         found = dom_nodes.find('td:contains("Insider Trading")');
-        if (found) {
+        if (found.length > 0) {
             results.insiders = processInsiders(found.closest('.body-table').prop('outerHTML'));
         }
 
@@ -128,7 +129,7 @@ function getFundamentals(symbol, sendResponse) {
 
 // Chrome prepends chrome-extension://adcd/
 function stripChromePrefix(str) {
-    return str.replace(CHROME_PREFIX_REGEX, URL_PREFIX);
+    return str.replace(CHROME_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
 }
 
 // remove onmouse* events from insiders
@@ -136,7 +137,7 @@ function stripChromePrefix(str) {
 function processInsiders(str) {
     if (!isDefined(str)) { return undefined; }
     let removed = str.replace(/ on\w+="[^"]*"/g, '');
-    removed = removed.replace(/insidertrading\.ashx/g, URL_PREFIX + "insidertrading.ashx");
+    removed = removed.replace(/insidertrading\.ashx/g, decode(FETCH_URL_PREFIX) + "insidertrading.ashx");
     return removed;
 }
 
@@ -152,4 +153,9 @@ function arrayBufferToBase64(buffer) {
         binary += String.fromCharCode(bytes[i]);
     }
     return window.btoa(binary);
+}
+
+function decode(str) {
+    if (!isDefined(str)) { return undefined; }
+    return decodeURIComponent(escape(window.atob(str)));
 }
