@@ -776,7 +776,7 @@ function sa_calculateSurpriseEPSPerf(str, eps) {
     }
     let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
     let projectedEps = eps - surprise;
-    let surprisePerf = Math.round(100*((eps - projectedEps) / Math.abs(projectedEps)));
+    let surprisePerf = (projectedEps != 0) ?  Math.round(100*((eps - projectedEps) / Math.abs(projectedEps))) : undefined;
     return surprisePerf;
 }
 
