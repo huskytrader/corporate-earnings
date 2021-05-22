@@ -261,12 +261,25 @@ function prepare() {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        padding: 2px 0px;
     }
     .news-link-right {
         padding-left: 4px;
         display: flex;
         align-items: flex-end;
         white-space: nowrap;
+    }
+    .insider-buy-row-1, .insider-buy-row-2 {
+        background-color: #b3f7a6;
+    }
+    .insider-sale-row-1, .insider-sale-row-2 {
+        background-color: #f5d384;
+    }
+    .body-table-news-gain {
+        color: #00FF00;
+    }
+    .body-table-news-loss {
+        color: #FF0000;
     }
     ul[data-tabs] li {
         font-size: 0.7em;
