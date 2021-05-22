@@ -3,6 +3,7 @@ const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-announcements/;
 
 const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
 const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
+const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -114,7 +115,7 @@ function getFundamentals(symbol, sendResponse) {
             results.insiders = processInsiders(found.closest('.body-table').prop('outerHTML'));
         }
 
-        fetch('https://charts2.finviz.com/chart.ashx?t='+symbol+'&ty=c&ta=1&p=d&s=l')
+        fetch(decode(IMAGE_URL)+symbol+'&ty=c&ta=1&p=d&s=l')
             .then(response => response.arrayBuffer())
             .then(buf => {
                     results.chart = arrayBufferToBase64(buf);
