@@ -18,7 +18,7 @@
 **Firefox**
 1. Click on .xpi file for latest release in https://github.com/huskytrader/corporate-earnings/releases
 1. Dialog will popup, click Continue to Installation.
-1. Dialog will popop asking to confirm permissions. Click Add.
+1. Dialog will popup asking to confirm permissions. Click Add.
 
 ### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
