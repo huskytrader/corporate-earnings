@@ -26,7 +26,7 @@
 
 ### Show your support
 * Star this repo. Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
-* If find this software useful, please support future development via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+* If you find this software useful, please support future development via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
 
 ### Disclaimer
 * This software is provided for educational purposes only and is provided "AS IS", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. in no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
