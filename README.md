@@ -14,6 +14,11 @@
 1. Enable Developer Mode
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
 1. Use the extension by pressing on extension icon to the right of address bar and entering a stock symbol in the popup dialog
+**Firefox**
+1. Download .xpi file from https://github.com/huskytrader/corporate-earnings/releases
+1. In Firefox go to the add-ons page (`about:addons`)
+1. Drag .xpi file anywhere on the page
+1. Dialog will popop asking to confirm permissions. Click Add.
 
 ### Troubleshooting
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
@@ -21,4 +26,7 @@
 
 ### Show your support
 * Star this repo. Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
-* If you wish to donate to support development, do so via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+* If find this software useful, please support future development via Paypal: https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD or with Bitcoin: 3NgGnbswqY2L7bQLnooAZcDwyJoKdcFsyV
+
+###Disclaimer
+* This software is provided for educational purposes only and is provided "AS IS", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. in no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
