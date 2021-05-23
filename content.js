@@ -273,7 +273,7 @@ function prepare() {
         background-color: #b3f7a6;
     }
     .insider-sale-row-1, .insider-sale-row-2 {
-        background-color: #f5d384;
+        background-color: #fac68e;
     }
     .body-table-news-gain {
         color: #00FF00;
