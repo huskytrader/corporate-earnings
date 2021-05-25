@@ -54,6 +54,7 @@ function getFundamentals(symbol, sendResponse) {
         found = dom_nodes.find('.fullview-title tr:eq(1) td');
         if (found.length > 0) {
             results.site = found.html();
+            results.name = found.text();
         }
         found = dom_nodes.find('.fullview-title tr:eq(2) td');
         if (found.length > 0) {
@@ -99,6 +100,10 @@ function getFundamentals(symbol, sendResponse) {
         found = dom_nodes.find('.fullview-profile');
         if (found.length > 0) {
             results.description = found.text().trim();
+            // chop off company name as it's redundant
+            if (results.description.startsWith(results.name)) {
+                results.description = results.description.substr(results.name.length + 1);
+            }
         }
         found = dom_nodes.find('.fullview-ratings-outer');
         if (found.length > 0) {
