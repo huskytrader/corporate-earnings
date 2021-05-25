@@ -6,6 +6,21 @@ const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
 const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 
+const REVERSE_MONTH_MAP = {
+    'Jan': 0,
+    'Feb': 1,
+    'Mar': 2,
+    'Apr': 3,
+    'May': 4,
+    'Jun': 5,
+    'Jul': 6,
+    'Aug': 7,
+    'Sep': 8,
+    'Oct': 9,
+    'Nov': 10,
+    'Dec': 11
+};
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         let symbol = "";
@@ -54,7 +69,7 @@ function getFundamentals(symbol, sendResponse) {
         found = dom_nodes.find('.fullview-title tr:eq(1) td');
         if (found.length > 0) {
             results.site = found.html();
-            results.name = found.text();
+            results.companyName = found.text();
         }
         found = dom_nodes.find('.fullview-title tr:eq(2) td');
         if (found.length > 0) {
@@ -75,7 +90,7 @@ function getFundamentals(symbol, sendResponse) {
         }
         found = dom_nodes.find('td:contains("Earnings")');
         if (found.length > 0) {
-            results.earnings = found.next().text().trim();
+            processEarnings(found.next().text().trim(), results);
         }
         found = dom_nodes.find('td:contains("Market Cap")');
         if (found.length > 0) {
@@ -101,8 +116,8 @@ function getFundamentals(symbol, sendResponse) {
         if (found.length > 0) {
             results.description = found.text().trim();
             // chop off company name as it's redundant
-            if (results.description.startsWith(results.name)) {
-                results.description = results.description.substr(results.name.length + 1);
+            if (results.description.startsWith(results.companyName)) {
+                results.description = results.description.substr(results.companyName.length + 1);
             }
         }
         found = dom_nodes.find('.fullview-ratings-outer');
@@ -152,6 +167,51 @@ function processInsiders(str) {
     removed = removed.replace(/insidertrading\.ashx/g, decode(FETCH_URL_PREFIX) + "insidertrading.ashx");
     return removed;
 }
+
+function processEarnings(str, results) {
+    results.earnings = str;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const parts = str.split(' ')
+    if (parts.length < 2) { return undefined; }
+    const earningsMonth = REVERSE_MONTH_MAP[parts[0]];
+    const earningsDate = new Date(today.getFullYear(), earningsMonth, parts[1]);
+    earningsDate.setHours(0,0,0,0);
+
+    if (earningsDate.getTime() < today.getTime()) {
+        results.earnings = '-';
+        return;
+    }
+
+    // if earnings month is 9,10,11 and today's months is 0,1,2 set earnings date to previous year
+    if ((earningsMonth == 9 || earningsMonth == 10 || earningsMonth == 11) &&
+        (today.getMonth() == 0 || today.getMonth == 1 || today.getMonth == 2)) {
+        earningsDate.setFullYear(today.getFullYear() - 1);
+    }
+
+    results.earningsDate = earningsDate;
+    results.daysToEarnings = getWorkingDays(today, earningsDate);
+}
+
+function getWorkingDays(startDate, endDate) {
+    var numWorkDays = 0;
+    var currentDate = new Date(startDate);
+    while (currentDate < endDate) {
+        // Skips Sunday and Saturday
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+            numWorkDays++;
+        }
+        currentDate = currentDate.addDays(1);
+    }
+    return numWorkDays;
+}
+
+Date.prototype.addDays = function (days) {
+    let date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+};
 
 function isDefined(smth) {
     return typeof smth !== 'undefined';

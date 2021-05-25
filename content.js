@@ -376,7 +376,7 @@ function fundamentalsToHtml(data) {
             </tr>
             <tr>
                 <td>Float</td><td class="fdata">${data.float}</td>
-                <td>Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings)}">${data.earnings}</td>
+                <td>Next Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings, data.daysToEarnings)}">${data.earnings}</td>
             </tr>
             <tr>
                 <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
@@ -588,41 +588,15 @@ function getHighlightClass4Shorts(shortsStr) {
     return hclass;
 }
 
-function getHighlightClass4Earnings(earningsStr) {
+function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
     let hclass = '';
-    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr.length == '-') { return hclass; }
-    let today = new Date();
-    today.setHours(0,0,0,0);
-    let parts = earningsStr.split(' ')
-    if (parts.length < 2) { return hclass; }
-    let earningsDate = new Date(today.getFullYear(), REVERSE_MONTH_MAP[parts[0]], parts[1]);
-    earningsDate.setHours(0,0,0,0);
-    if (today > earningsDate) { return hclass; }
-    let workingDays = getWorkingDays(today, earningsDate);
-    if (workingDays <= DAYS_BEFORE_EARNINGS_WARN_THRESHOLD) {
+    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr == '-') { return hclass; }
+    
+    if (isDefined(daysToEarnings) && daysToEarnings <= DAYS_BEFORE_EARNINGS_WARN_THRESHOLD) {
         hclass = ' learnings';
     } 
     return hclass;
 }
-
-function getWorkingDays(startDate, endDate) {
-    var numWorkDays = 0;
-    var currentDate = new Date(startDate);
-    while (currentDate < endDate) {
-        // Skips Sunday and Saturday
-        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
-            numWorkDays++;
-        }
-        currentDate = currentDate.addDays(1);
-    }
-    return numWorkDays;
-}
-
-Date.prototype.addDays = function (days) {
-    let date = new Date(this.valueOf());
-    date.setDate(date.getDate() + days);
-    return date;
-};
 
 function numberWithCommas(x) {
     if (!isDefined(x) || x == null) { return '-'; }
