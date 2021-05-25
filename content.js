@@ -687,24 +687,27 @@ function extractContent() {
         // add annual eps estimates
         $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
             let annualItem = {};
-            $(this).children().each(function(index) {
-                if (index == 0) {
-                    annualItem.name = "*" + getAnnualEstimateName($(this).text().trim());
-                } else if (index == 1) {
-                    annualItem.eps = $(this).text().trim();
-                    annualItem.qtrs4Year = 4;
-                }
-            });
+            annualItem.year = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
+            annualItem.name = "*" + getAnnualEstimateName($(this).children().eq(0).text().trim());
+            annualItem.eps = $(this).children().eq(1).text().trim();
+            annualItem.qtrs4Year = 4;           
             annualEst.push(annualItem);
         });
 
-        // add annual revenue estimates
-        $('#annual-rev-esimates-tbl tbody .row-content').each(function(index) {
-            $(this).children().each(function(index2) {
-                if (index2 == 1) {
-                    annualEst[index].rev = revenueStringToFloat($(this).text().trim());
-                }
-            })
+        // add annual revenue estimates to existing annual eps estimates or create new one if not found
+        $('#annual-rev-esimates-tbl tbody .row-content').each(function() {
+            const year = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
+            const foundYear = annualEst.find(q => q.year == year);
+            if (foundYear) {
+                foundYear.rev = revenueStringToFloat($(this).children().eq(1).text().trim());
+            }
+            else {
+                let annualItem = {}; 
+                annualItem.year = year;
+                annualItem.name = "*" + getAnnualEstimateName($(this).children().eq(0).text().trim());
+                annualItem.rev = revenueStringToFloat($(this).children().eq(1).text().trim());
+                annualEst.push(annualItem);
+            }
         })
     }
     else if (default_ds == 2) {
@@ -924,6 +927,7 @@ function calculateAnnual(epsDates, annualEst) {
         let year = getLatestQtrYear(epsDates);
         while (true) {
             let annualItem = {};
+            annualItem.year = year;
             annualItem.name = year;
             annualItem.eps = 0;
             annualItem.rev = 0;
@@ -954,15 +958,17 @@ function calculateAnnual(epsDates, annualEst) {
 }
 
 // TO calculate annual performance (%Chg), compare with previous year
-function calculateAnnualPerf(dates) {
-   dates.map(function(item, index) {
-       if (index-1 >= 0 && item.qtrs4Year == 4 && dates[index-1].qtrs4Year == 4) {
-           // previous year available. present year and previous have 4 qtrs.
-           if (dates[index-1].eps != 0) {
-               item.epsPerf = Math.round(100*((item.eps - dates[index-1].eps) / Math.abs(dates[index-1].eps)));
+function calculateAnnualPerf(years) {
+   years.map(function(item, index) {
+        const previousYear = years.find(q => q.year == (item.year - 1));
+        // check if previous year available. present year and previous have 4 qtrs.
+        if (isDefined(previousYear) && item.qtrs4Year == 4 && previousYear.qtrs4Year == 4) {
+           // avoid division by zero 
+           if (previousYear.eps != 0) {
+               item.epsPerf = Math.round(100*((item.eps - previousYear.eps) / Math.abs(previousYear.eps)));
            }
-           if (dates[index-1].rev != 0) {
-               item.revPerf = Math.round(100*((item.rev - dates[index-1].rev) / Math.abs(dates[index-1].rev)));
+           if (previousYear.rev != 0) {
+               item.revPerf = Math.round(100*((item.rev - previousYear.rev) / Math.abs(previousYear.rev)));
            }
        }
    });
