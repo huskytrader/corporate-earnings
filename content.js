@@ -766,7 +766,7 @@ function sa_calculateSurpriseEPSPerf(str, eps) {
     }
     let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
     let projectedEps = eps - surprise;
-    let surprisePerf = (projectedEps != 0) ?  Math.round(100*((eps - projectedEps) / Math.abs(projectedEps))) : undefined;
+    let surprisePerf = calculatePercentChange(eps, projectedEps);
     return surprisePerf;
 }
 
@@ -814,7 +814,7 @@ function sa_calculateSurpriseRevPerf(str, rev) {
     }
     let surprise = revenueStringToFloat((sign + str.substr(dPos+1)).trim());
     let projectedRev = rev - surprise;
-    let surpriseRev = (projectedRev != 0) ? Math.round(100*((rev - projectedRev) / Math.abs(projectedRev))) : undefined;
+    let surpriseRev = calculatePercentChange(rev, projectedRev);
     return surpriseRev;
 }
 // end SA
@@ -875,7 +875,7 @@ function calculateQuarterlyPerf(dates) {
             if (compQuarter.eps.eps != 0) {
                qtr.eps.negativeCompQtr = false; 
                qtr.eps.negativeTurnaround = false;
-               qtr.eps.perf = Math.round(100*((qtr.eps.eps - compQuarter.eps.eps) / Math.abs(compQuarter.eps.eps)));
+               qtr.eps.perf = calculatePercentChange(qtr.eps.eps, compQuarter.eps.eps);
                if (qtr.eps.eps < 0 && compQuarter.eps.eps) {
                     qtr.eps.negativeCompQtr = true;
                }
@@ -884,7 +884,7 @@ function calculateQuarterlyPerf(dates) {
                }
            }
            if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && compQuarter.rev.rev != 0) {
-                qtr.rev.perf = Math.round(100*((qtr.rev.rev - compQuarter.rev.rev) / Math.abs(compQuarter.rev.rev)));
+                qtr.rev.perf = calculatePercentChange(qtr.rev.rev, compQuarter.rev.rev); 
            }
        }
        
@@ -937,13 +937,8 @@ function calculateAnnualPerf(years) {
         const previousYear = years.find(q => q.year == (item.year - 1));
         // check if previous year available. present year and previous have 4 qtrs.
         if (isDefined(previousYear) && item.qtrs4Year == 4 && previousYear.qtrs4Year == 4) {
-           // avoid division by zero 
-           if (previousYear.eps != 0) {
-               item.epsPerf = Math.round(100*((item.eps - previousYear.eps) / Math.abs(previousYear.eps)));
-           }
-           if (previousYear.rev != 0) {
-               item.revPerf = Math.round(100*((item.rev - previousYear.rev) / Math.abs(previousYear.rev)));
-           }
+            item.epsPerf = calculatePercentChange(item.eps, previousYear.eps);
+            item.revPerf = calculatePercentChange(item.rev, previousYear.rev);
        }
    });
 }
@@ -979,4 +974,9 @@ function getLatestQtrYear(epsDates) {
     let lastQtrName = epsDates[epsDates.length-1].name;
     let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
     return year;
+}
+
+function calculatePercentChange(current, previous) {
+    if (previous == 0) { return undefined; }
+    return Math.round(100*((current - previous) / Math.abs(previous)));
 }
