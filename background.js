@@ -5,6 +5,7 @@ const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
 const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
 const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
+const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
 
 const REVERSE_MONTH_MAP = {
     'Jan': 0,
@@ -63,7 +64,7 @@ function getFundamentals(symbol, sendResponse) {
         found = dom_nodes.find('.fullview-title tr:eq(0) td');
         if (found.length > 0) {
             results.ticker = found.children(':first-child').text();
-            results.tickerHref = stripChromePrefix(found.children(':first-child').prop('href'));
+            results.tickerHref = stripBrowserPrefix(found.children(':first-child').prop('href'));
             results.exchange = found.children(':first-child').next().text();
         }
         found = dom_nodes.find('.fullview-title tr:eq(1) td');
@@ -74,11 +75,11 @@ function getFundamentals(symbol, sendResponse) {
         found = dom_nodes.find('.fullview-title tr:eq(2) td');
         if (found.length > 0) {
             results.sector = found.children(':first-child').text();
-            results.sectorHref = stripChromePrefix(found.children(':first-child').prop('href'));
+            results.sectorHref = stripBrowserPrefix(found.children(':first-child').prop('href'));
             results.industry = found.children(':first-child').next().text();
-            results.industryHref = stripChromePrefix(found.children(':first-child').next().prop('href'));
+            results.industryHref = stripBrowserPrefix(found.children(':first-child').next().prop('href'));
             results.country = found.children(':first-child').next().next().text();
-            results.countryHref = stripChromePrefix(found.children(':first-child').next().next().prop('href'));
+            results.countryHref = stripBrowserPrefix(found.children(':first-child').next().next().prop('href'));
         }
         found = dom_nodes.find('td:contains("Short Float")');
         if (found.length > 0) {
@@ -155,8 +156,11 @@ function getFundamentals(symbol, sendResponse) {
 }
 
 // Chrome prepends chrome-extension://adcd/
-function stripChromePrefix(str) {
-    return str.replace(CHROME_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
+// Firefox prepends mozilla-extension://uuid/
+function stripBrowserPrefix(str) {
+    let res = str.replace(CHROME_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
+    res = res.replace(FIREFOX_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
+    return res;
 }
 
 // remove onmouse* events from insiders
