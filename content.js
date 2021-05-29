@@ -977,6 +977,6 @@ function getLatestQtrYear(epsDates) {
 }
 
 function calculatePercentChange(current, previous) {
-    if (previous == 0) { return undefined; }
+    if (!isDefined(current) || !isDefined(previous) || previous == 0) { return undefined; }
     return Math.round(100*((current - previous) / Math.abs(previous)));
 }
