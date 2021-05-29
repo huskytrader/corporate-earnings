@@ -1,3 +1,4 @@
+//options
 var fetch_fundamental_data = false;
 var show_earnings_surprise = false;
 var open_new_tab = true;
@@ -5,12 +6,14 @@ var ms_style_output = true;
 var limit_num_qtr = true;
 var default_ds = 1;
 
+
 $(document).ready(init);
 
 function init() {
   restore_options();
   $('.checkbox').change(save_options);
   $('#ds-switch').change(save_options);
+  $('#version').text(chrome.runtime.getManifest().version);
 }
 
 // Restores checkbox state using the options stored in chrome.storage.

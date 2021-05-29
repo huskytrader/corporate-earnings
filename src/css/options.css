@@ -20,3 +20,8 @@ ul {
 #ds-label {
   padding-left: 3px;
 }
+
+#title {
+    font-size: 12px;
+    text-align: center;
+}
