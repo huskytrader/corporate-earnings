@@ -1,7 +1,7 @@
 const ds1_urlPrefix = "aHR0cHM6Ly9zZWVraW5nYWxwaGEuY29tL3N5bWJvbC8=";
 const ds2_urlPrefix = "aHR0cHM6Ly93d3cuemFja3MuY29tL3N0b2NrL3Jlc2VhcmNoLw==";
 
-var open_new_tab = true;
+var open_new_tab = false;
 var default_ds = 1;
 chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
     if (isDefined(options.open_new_tab)) {open_new_tab = options.open_new_tab;}

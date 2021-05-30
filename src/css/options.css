@@ -11,7 +11,7 @@ ul {
 }
 
 .ds-select {    
-    display: inline-block;
+    font-size: 10px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     margin-bottom: 10px;
     width: 100%;
@@ -24,4 +24,10 @@ ul {
 #title {
     font-size: 12px;
     text-align: center;
+}
+
+#chart-select {
+    display: none;
+    font-size: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
 }

@@ -42,8 +42,17 @@ const REVERSE_MONTH_MAP = {
     'Dec': 11
 };
 
+const CHART_TYPE = {
+    NONE: 1,
+    WEEKLY : 2,
+    DAILY: 3,
+    BOTH: 4
+};
+Object.freeze(CHART_TYPE);
+
 // default options
 var fetch_fundamental_data = false;
+var chart_type = 1;
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
@@ -54,15 +63,22 @@ var epsDates = [];
 var annualEst = [];
 var fundamentals = [];
 
-chrome.storage.local.get(['fetch_fundamental_data', 'show_earnings_surprise', 'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
+chrome.storage.local.get(['chart_type', 
+                          'fetch_fundamental_data', 
+                          'show_earnings_surprise', 
+                          'ms_style_output', 
+                          'limit_num_qtr', 
+                          'default_ds'], 
+                          function(options) {
     if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
+    if (isDefined(options.chart_type)) { chart_type = options.chart_type; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
     if (fetch_fundamental_data == true) {
-        chrome.runtime.sendMessage({fetch: 'yes'}, (response) => {
+        chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {
                 fundamentals.push(response); 
                 waitForEl("#h_earnings", displayFundamentals, 30); 
@@ -353,7 +369,10 @@ function fundamentalsToHtml(data) {
         </script>
         <ul data-tabs>
             <li><a data-tabby-default href="#f_fundamentals" onmouseover="f_tabs.toggle('#f_fundamentals')">Fundamentals</a></li>
-            <li><a href="#f_chart" onmouseover="f_tabs.toggle('#f_chart')">Chart</a></li>
+            ${ chart_type != CHART_TYPE.NONE ?
+                '<li><a href="#f_chart" onmouseover="f_tabs.toggle(\'#f_chart\')">Chart</a></li>'
+                : ''
+            }
             <li><a href="#f_ratings" onmouseover="f_tabs.toggle('#f_ratings')">Ratings</a></li>
             <li><a href="#f_news" onmouseover="f_tabs.toggle('#f_news')">News</a></li>
             <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
@@ -389,8 +408,14 @@ function fundamentalsToHtml(data) {
         </tbody></table>
         </div>
         <div class="data-tab" id="f_chart">
-            ${isDefined(data.chart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.chart + '" alt="' + data.ticker + ' chart"/>') 
-                                    : 'No data available'};
+            ${ chart_type == CHART_TYPE.WEEKLY || chart_type == CHART_TYPE.BOTH ?
+                isDefined(data.weeklyChart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.weeklyChart + '" alt="' + data.ticker + ' chart"/>') 
+                                    : 'No data available'
+                : '' }
+            ${ chart_type == CHART_TYPE.DAILY || chart_type == CHART_TYPE.BOTH ?    
+                isDefined(data.dailyChart) ? ('<br/><img class="fv_chart" src="data:image/png;base64, ' + data.dailyChart + '" alt="' + data.ticker + ' chart"/>') 
+                                    : 'No data available'
+               : '' }
         </div>
         <div class="data-tab" id="f_ratings">
             ${isDefined(data.ratings) ? data.ratings : 'No data available'}

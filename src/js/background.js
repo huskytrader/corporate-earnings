@@ -22,57 +22,55 @@ const REVERSE_MONTH_MAP = {
     'Dec': 11
 };
 
+const CHART_TYPE = {
+    NONE: 1,
+    WEEKLY : 2,
+    DAILY: 3,
+    BOTH: 4
+};
+Object.freeze(CHART_TYPE);
+
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        let symbol = "";
-        let url = tabs[0].url;
-        let res = SA_REGEX.exec(url);
-        if (res != null) {
-            symbol = res[1];
-            getFundamentals(symbol, sendResponse);
-            return true;
-        } 
-        res = ZA_REGEX.exec(url);
-        if (res != null) {
-            symbol = res[1];
-            getFundamentals(symbol, sendResponse);
-            return true;
-        }
-        sendResponse({error: 'failed to fetch fundamentals'});
-
+        let url = tabs[0].url;            
+        const symbol = getSymbol(url);
+        fetchFundamentals(symbol, message, sendResponse);
     });     
     return true;        
 });
 
-function getFundamentals(symbol, sendResponse) {
+function fetchFundamentals(symbol, message, sendResponse) {
     if (! isDefined(symbol)) { return undefined; }
-    let results = {symbol: symbol};
+    let charType = CHART_TYPE.NONE;
+    if (isDefined(message.chart_type)) { chartType = parseInt(message.chart_type); }
 
+    const results = {symbol: symbol};
     let responseStatus = 0;
     fetch(decode(FETCH_URL)+symbol)
     .then(function(response) {
         responseStatus = response.status;
         return response.text();
     })
-    .then(function(response) {
+    .then(async function(response) {
         if (responseStatus != 200) {
             sendResponse({error: 'failed to fetch fundamentals for symbol: ' + symbol});
             return;
         }
-        let dom_nodes = $($.parseHTML(response));
+        let dom = $($.parseHTML(response));
 
-        found = dom_nodes.find('.fullview-title tr:eq(0) td');
+        found = dom.find('.fullview-title tr:eq(0) td');
         if (found.length > 0) {
             results.ticker = found.children(':first-child').text();
             results.tickerHref = stripBrowserPrefix(found.children(':first-child').prop('href'));
             results.exchange = found.children(':first-child').next().text();
         }
-        found = dom_nodes.find('.fullview-title tr:eq(1) td');
+        found = dom.find('.fullview-title tr:eq(1) td');
         if (found.length > 0) {
             results.site = found.html();
             results.companyName = found.text();
         }
-        found = dom_nodes.find('.fullview-title tr:eq(2) td');
+        found = dom.find('.fullview-title tr:eq(2) td');
         if (found.length > 0) {
             results.sector = found.children(':first-child').text();
             results.sectorHref = stripBrowserPrefix(found.children(':first-child').prop('href'));
@@ -81,78 +79,107 @@ function getFundamentals(symbol, sendResponse) {
             results.country = found.children(':first-child').next().next().text();
             results.countryHref = stripBrowserPrefix(found.children(':first-child').next().next().prop('href'));
         }
-        found = dom_nodes.find('td:contains("Short Float")');
+        found = dom.find('td:contains("Short Float")');
         if (found.length > 0) {
             results.shorts = found.next().text().trim();
         }
-        found = dom_nodes.find('td:contains("Shs Float")');
+        found = dom.find('td:contains("Shs Float")');
         if (found.length > 0) {
             results.float = found.next().text().trim();
         }
-        found = dom_nodes.find('td:contains("Earnings")');
+        found = dom.find('td:contains("Earnings")');
         if (found.length > 0) {
             processEarnings(found.next().text().trim(), results);
         }
-        found = dom_nodes.find('td:contains("Market Cap")');
+        found = dom.find('td:contains("Market Cap")');
         if (found.length > 0) {
             results.mktcap = found.next().text().trim();
         }
-        found = dom_nodes.find('td:contains("Volatility")');
+        found = dom.find('td:contains("Volatility")');
         if (found.length > 0) {
             results.adr = found.next().text().trim().split(' ')[1];
         }
-        found = dom_nodes.find('td:contains("Inst Own")');
+        found = dom.find('td:contains("Inst Own")');
         if (found.length > 0) {
             results.instown = found.next().text().trim();
         }
-        found = dom_nodes.find('td:contains("Rel Volume")');
+        found = dom.find('td:contains("Rel Volume")');
         if (found.length > 0) {
             results.relvolume = found.next().text().trim();
         }
-        found = dom_nodes.find('td:contains("Avg Volume")');
+        found = dom.find('td:contains("Avg Volume")');
         if (found.length > 0) {
             results.avgvolume = found.next().text().trim();
         }
-        found = dom_nodes.find('.fullview-profile');
+        found = dom.find('.fullview-profile');
         if (found.length > 0) {
             results.description = found.text().trim();
-            // chop off company name as it's redundant
-            if (results.description.startsWith(results.companyName)) {
-                results.description = results.description.substr(results.companyName.length + 1);
-            }
+            // chop off company name and optional 'together with its subsidiaries, '
+            const regex = new RegExp('^'+results.companyName+',? (together with its subsidiaries, )?');
+            results.description = results.description.replace(regex, '');
         }
-        found = dom_nodes.find('.fullview-ratings-outer');
+        found = dom.find('.fullview-ratings-outer');
         if (found.length > 0) {
             results.ratings = found.prop('outerHTML');
-            results.ratings = results.ratings.replace(/<b>/g, "");
-            results.ratings = results.ratings.replace(/<\/b>/g, "");
+            results.ratings = results.ratings.replace(/<\/?b>/g, '');
         }
-        found = dom_nodes.find('.fullview-news-outer');
+        found = dom.find('.fullview-news-outer');
         if (found.length > 0) {
             results.news = found.prop('outerHTML');
         }
-        found = dom_nodes.find('td:contains("Insider Trading")');
+        found = dom.find('td:contains("Insider Trading")');
         if (found.length > 0) {
             results.insiders = processInsiders(found.closest('.body-table').prop('outerHTML'));
         }
-
-        fetch(decode(IMAGE_URL)+symbol+'&ty=c&ta=1&p=d&s=l')
-            .then(response => response.arrayBuffer())
-            .then(buf => {
-                    results.chart = arrayBufferToBase64(buf);
-                    sendResponse(results);
-                })
-            .catch (err => {
-                console.log('Failed to fetch image: ', err);
-                sendResponse(results);
-            });
-
+     
+        const charts = await fetchImages(symbol, chartType, sendResponse);
+        if (isDefined(charts)) {
+            switch(chartType) {
+                case CHART_TYPE.WEEKLY:
+                    results.weeklyChart = charts[0];
+                    break;
+                case CHART_TYPE.DAILY:
+                    results.dailyChart = charts[0];
+                    break;
+                case CHART_TYPE.BOTH:
+                    results.weeklyChart = charts[0];
+                    results.dailyChart = charts[1];
+                    break;
+            }
+        }
+        sendResponse(results);
     })
     .catch(function(err) {  
         console.log('Failed to fetch page: ', err);  
         results.error = err;
         sendResponse({error: 'failed to fetch fundamentals for symbol: ' + symbol});
     });
+}
+
+async function fetchImages(symbol, chartType) {
+    let urls = [];
+    switch(chartType) {
+        case CHART_TYPE.WEEKLY:
+        case CHART_TYPE.BOTH:
+            urls.push(decode(IMAGE_URL)+symbol+'&ty=c&ta=0&p=w&s=l');
+        case CHART_TYPE.DAILY:
+        case CHART_TYPE.BOTH:
+            urls.push(decode(IMAGE_URL)+symbol+'&ty=c&ta=1&p=d&s=l');
+    }
+    if (urls.length == 0) { return undefined; }
+    try {
+        let data = await Promise.all(
+            urls.map(url =>
+                fetch(url)
+                .then((response) => response.arrayBuffer())
+                .then(buf => arrayBufferToBase64(buf))
+        ));
+        return (data)
+
+    } catch (error) {
+        console.log(error)
+        throw (error)
+    }
 }
 
 // Chrome prepends chrome-extension://adcd/
@@ -222,6 +249,7 @@ function isDefined(smth) {
 }
 
 function arrayBufferToBase64(buffer) {
+    if (!buffer || buffer.length == 0) { return undefined; }
     let binary = '';
     let bytes = new Uint8Array(buffer);
     let len = bytes.byteLength;
@@ -234,4 +262,18 @@ function arrayBufferToBase64(buffer) {
 function decode(str) {
     if (!isDefined(str)) { return undefined; }
     return decodeURIComponent(escape(window.atob(str)));
+}
+
+function getSymbol(url) {
+    // extract current symbol from url
+    let res = SA_REGEX.exec(url);
+    if (res != null) {
+        return res[1];
+    } else {
+        res = ZA_REGEX.exec(url);
+        if (res != null) {
+            return res[1];
+        }
+    }
+    return undefined;
 }
