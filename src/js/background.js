@@ -132,7 +132,7 @@ function fetchFundamentals(symbol, message, sendResponse) {
             results.insiders = processInsiders(found.closest('.body-table').prop('outerHTML'));
         }
      
-        const charts = await fetchImages(symbol, chartType, sendResponse);
+        const charts = await fetchImages(symbol, chartType);
         if (isDefined(charts)) {
             switch(chartType) {
                 case CHART_TYPE.WEEKLY:
