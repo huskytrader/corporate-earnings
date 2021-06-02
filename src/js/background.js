@@ -114,8 +114,8 @@ function fetchFundamentals(symbol, message, sendResponse) {
         found = dom.find('.fullview-profile');
         if (found.length > 0) {
             results.description = found.text().trim();
-            // chop off company name and optional 'together with its subsidiaries, '
-            const regex = new RegExp('^'+results.companyName+',? (together with its subsidiaries, )?');
+            // crop off company name and optional 'together with its subsidiaries, ' or 'through its subsidiaries, '
+            const regex = new RegExp('^'+results.companyName+',? (together with its subsidiaries, )?(through its subsidiaries, )?');
             results.description = results.description.replace(regex, '');
         }
         found = dom.find('.fullview-ratings-outer');
