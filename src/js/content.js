@@ -50,7 +50,7 @@ const CHART_TYPE = {
 };
 Object.freeze(CHART_TYPE);
 
-// default options
+// init options to default values
 var fetch_fundamental_data = false;
 var chart_type = 1;
 var show_earnings_surprise = false;
@@ -101,7 +101,7 @@ chrome.storage.local.get(['chart_type',
     }
     else if (default_ds == 2) {
         // ZA
-        extractContent();
+        extractAndProcess();
         displayContent();
     }
  });
@@ -143,7 +143,7 @@ function displayEarnings(el) {
         $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
         return;
     }
-    extractContent();
+    extractAndProcess();
     displayContent();
 }
 
@@ -544,10 +544,6 @@ function yearlyToHtml(annualEst) {
     return html;
 }
 
-function getDisplayQuarter(qtr) {
-    return qtr.substr(0,3) + '-' + qtr.substr(6);
-}
-
 /*
    Returns appropriate highlight class for EPS and revenue change values
    >= 30 : bold positive 
@@ -623,20 +619,8 @@ function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
     return hclass;
 }
 
-function numberWithCommas(x) {
-    if (!isDefined(x) || x == null) { return '-'; }
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function isDefined(smth) {
-    return typeof smth !== 'undefined';
-}
-
-// end display
-//
 //
 // extraction/preparation
-//
 //
 function hideContent() {
     if (default_ds == 1) {
@@ -669,43 +653,45 @@ function hideContent() {
     }
 }
 
-function extractContent() {
+function extractAndProcess() {
     if (default_ds == 1) {
         // add quarters
         $('.panel-title.earning-title').each(function() {
-            let epsItem = sa_createEpsItem(
-                $(this).find('.title-period').text(), 
-                $(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""), 
-                $(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
+            let quarter = new SAQarter(
+                                $(this).find('.title-period').text(),
+                                $(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""), 
+                                $(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
 
-            if (!(epsItem.name === undefined || epsItem.name.length == 0 || epsItem.eps.eps === undefined || isNaN(epsItem.eps.eps))) {
-                epsDates.unshift(epsItem);
+            if (isQuarterValid(quarter)) {
+                epsDates.unshift(quarter);
             }
         });
 
         // add annual eps estimates
         $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
-            let annualItem = {};
-            annualItem.year = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
-            annualItem.name = "*" + getAnnualEstimateName($(this).children().eq(0).text().trim());
-            annualItem.eps = $(this).children().eq(1).text().trim();
-            annualItem.qtrs4Year = 4;           
-            annualEst.push(annualItem);
+            let year = new Year(
+                parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim())),
+                "*" + getAnnualEstimateName($(this).children().eq(0).text().trim()),
+                $(this).children().eq(1).text().trim());
+            year.qtrs4Year = 4;           
+            annualEst.push(year);
         });
 
         // add annual revenue estimates to existing annual eps estimates or create new one if not found
         $('#annual-rev-esimates-tbl tbody .row-content').each(function() {
-            const year = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
-            const foundYear = annualEst.find(q => q.year == year);
+            const yearInt = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
+            const foundYear = annualEst.find(q => q.year == yearInt);
             if (foundYear) {
                 foundYear.rev = revenueStringToFloat($(this).children().eq(1).text().trim());
             }
             else {
-                let annualItem = {}; 
-                annualItem.year = year;
-                annualItem.name = "*" + getAnnualEstimateName($(this).children().eq(0).text().trim());
-                annualItem.rev = revenueStringToFloat($(this).children().eq(1).text().trim());
-                annualEst.push(annualItem);
+                let year = new Year(
+                    yearInt,
+                    "*" + getAnnualEstimateName($(this).children().eq(0).text().trim()),
+                    undefined,
+                    revenueStringToFloat($(this).children().eq(1).text().trim()));
+
+                annualEst.push(year);
             }
         })
     }
@@ -715,187 +701,28 @@ function extractContent() {
         data = data.substr(0, data.lastIndexOf('}')+1);
         let dataObj = JSON.parse(data);
         dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
-            let epsItem = za_createEpsItem(
+            let quarter = new ZAQarter(
                 item[1],
                 item[3],
                 item[5], 
-                dataObj.earnings_announcements_sales_table);        
-            if (!(typeof epsItem.name === 'undefined' || epsItem.name.length == 0 || typeof epsItem.eps.eps === 'undefined' || isNaN(epsItem.eps.eps))) {
-                epsDates.unshift(epsItem);
+                dataObj.earnings_announcements_sales_table);
+   
+            if (isQuarterValid(quarter)) {
+                epsDates.unshift(quarter);
             }
         });
     }
-    // with data extraction completed, perform calculations
-    calculateQuarterlyPerf(epsDates);
-    calculateAnnual(epsDates, annualEst);
+
+    calculateQuarterlyPerf(epsDates);   
+    fillAnnual(epsDates, annualEst);
+    calculateAnnualPerf(annualEst);
 }
 
-// SA
-// TODO: refactor into separate class
-function sa_createEpsItem(nameStr, epsStr, revStr) {
-    let epsItem = {};
-    let nameAttr = sa_parseQtrName(nameStr);
-    epsItem.name = nameAttr.name;
-    epsItem.month = nameAttr.month;
-    epsItem.year = parseInt(nameAttr.year);
-    epsItem.eps = sa_parseQtrEps(epsStr);
-    epsItem.rev = sa_parseQtrRev(revStr);
-    return epsItem;
-}
-
-// extracts qtr name in the form mmm yyyy
-function sa_parseQtrName(str) {
-    let qtr = {}
-    let start = str.indexOf('(')+1;
-    qtr.name = str.substr(start, str.indexOf(')')-start);
-    qtr.month = qtr.name.substr(0,3);
-    qtr.year = qtr.name.substr(4);
-    return qtr;
-}
-
-/*
-   Parse quaterly EPS string. String can be in the form:
-
-   Q2 2020 (Jun 2020) EPS of -$0.31 beat by $0.05/missed by $0.05
-   Q2 2020 (Jun 2020) GAAP EPS of $0.01
-
-*/
-function sa_parseQtrEps(str) {
-    let eps = {};
-    let dPos = str.indexOf('$');
-    if (dPos > -1) {
-        let sign = '';
-        if (str.substr(dPos-1,1) == '-') {
-            sign = '-';
-        }
-        let sPos = str.indexOf(' ', dPos);
-        if (sPos == -1) {
-            eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
-        }
-        else {
-            eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
-            eps.surprisePerf = sa_calculateSurpriseEPSPerf(str.substr(sPos+1).trim(), eps.eps);
-        }
-    }
-    return eps;
-}
-
-function sa_calculateSurpriseEPSPerf(str, eps) {
-    if (!isDefined(str)) { return undefined; }
-    let dPos = str.indexOf('$');
-    if (dPos < 0) { return undefined; }
-
-    let sign = '';
-    if (str.substr(dPos-1,1) == '-') {
-        sign = '-';
-    }
-    let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
-    let projectedEps = eps - surprise;
-    let surprisePerf = calculatePercentChange(eps, projectedEps);
-    return surprisePerf;
-}
-
-/*
-   Parse quaterly revenue string. String can be in the form:
-
-   Revenue of $112.33M (54.30% YoY) beat by $8.47M
-   Revenue of $112.33M beat by $8.47M
-   Revenue of $112.33M
-*/
-function sa_parseQtrRev(str) {
-    let rev = {};
-    rev.rev = 0;
-    let revStr = '';
-
-    let pos = str.indexOf('(');
-    if (pos == -1) {
-        let sPos = str.indexOf(' ', 13);
-        if (sPos == -1) {
-            revStr = str.substr(13).trim();
-        } else {
-            revStr = str.substr(13, sPos-13).trim();
-            rev.surprisePerf = str.substr(sPos+1).trim();
-        }
-    }
-    else {
-        revStr = str.substr(12+1, pos-12-1).trim();
-        rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
-        rev.surprisePerf = str.substr(str.indexOf(')')+1).trim();
-    }
-
-    rev.rev = revenueStringToFloat(revStr);
-    rev.surprisePerf = sa_calculateSurpriseRevPerf(rev.surprisePerf, rev.rev);
-    return rev;
-}
-
-function sa_calculateSurpriseRevPerf(str, rev) {
-    if (!isDefined(str)) { return undefined; }
-    let dPos = str.indexOf('$');
-    if (dPos < 0) { return undefined; }
-
-    let sign = '';
-    if (str.substr(dPos-1,1) == '-') {
-        sign = '-';
-    }
-    let surprise = revenueStringToFloat((sign + str.substr(dPos+1)).trim());
-    let projectedRev = rev - surprise;
-    let surpriseRev = calculatePercentChange(rev, projectedRev);
-    return surpriseRev;
-}
-// end SA
-// ZA
-function za_createEpsItem(nameStr, epsStr, epsSurpriseStr, revData) {
-    let epsItem = {};
-    let nameAttr = za_parseQtrName(nameStr);
-    epsItem.name = nameAttr.name;
-    epsItem.month = nameAttr.month;
-    epsItem.year = parseInt(nameAttr.year);
-    epsItem.eps = za_parseQtrEps(epsStr, epsSurpriseStr);
-    epsItem.rev = za_parseQtrRev(nameStr, revData);
-    return epsItem;
-}
-
-function za_parseQtrName(str) {
-    let qtr = {};
-    let parts = str.split('/');
-    let month = parseInt(parts[0]);
-    let year = parseInt(parts[1]);
-    qtr.name = MONTH_MAP[month] + ' ' + year;
-    qtr.month = MONTH_MAP[month];
-    qtr.year = year;
-    return qtr;
-}
-
-function za_parseQtrEps(epsStr, epsSurpriseStr) {
-    let eps = {};
-    eps.eps =  parseFloat(epsStr.replace(/\$/, ''));
-    epsSurpriseStr = epsSurpriseStr.substr(epsSurpriseStr.indexOf('>') + 2).slice(0, -7);
-    eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
-    return eps;
-}
-
-function za_parseQtrRev(period, revData) {
-    let rev = {};
-    rev.rev = 0;
-    // find corresponding period in revData
-    revData.forEach(function(item) {
-        if (item[1] == period) {
-            rev.rev = parseFloat(item[3].replace(/[\$\,]/g, ''));
-            // round to 1 decimal
-            rev.rev = Math.round(rev.rev * 10) / 10;
-            
-            let revSurprise = item[5].substr(item[5].indexOf('>') + 2).slice(0, -7);
-            rev.surprisePerf = Math.round(parseFloat(revSurprise));
-        }
-    });
-    return rev;
-}
-// end ZA
-
-// to calculate quarterly performance (%Chg), compare with same quarter 1 year back
-function calculateQuarterlyPerf(dates) {
-   dates.map(function(qtr, index) {
-        let compQuarter = dates.find(q => q.name == getComparativeQuarterName(qtr));
+// Calculations
+// calculates quarterly performance (%Chg) based on comparative quarter
+function calculateQuarterlyPerf(qrts) {
+   qrts.map(function(qtr, index) {
+        let compQuarter = qrts.find(q => q.name == getComparativeQuarterName(qtr));
         if (isDefined(compQuarter)) {
             if (compQuarter.eps.eps != 0) {
                qtr.eps.negativeCompQtr = false; 
@@ -908,55 +735,48 @@ function calculateQuarterlyPerf(dates) {
                     qtr.eps.negativeTurnaround = true;
                }
            }
-           if (qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && compQuarter.rev.rev != 0) {
-                qtr.rev.perf = calculatePercentChange(qtr.rev.rev, compQuarter.rev.rev); 
+           if (isAbleToCalculateQtrRevChange(qtr, compQuarter)) {
+                qtr.rev.perf = calculatePercentChange(qtr.rev.rev, compQuarter.rev.rev);
            }
-       }
-       
+       }       
    });
 }
 
-function calculateAnnual(epsDates, annualEst) {
-    // calculate eps/revenue for previous years using existing quaterly data
-    // getLatestYear to get year for latest quarter available (e.g. 2020)
-    // attempt to find all quarters for given year
-    // if found 0 quarters, exit
-    let numAttempts = 0;
-    if (epsDates.length > 0) {
-        let year = getLatestQtrYear(epsDates);
-        while (true) {
-            let annualItem = {};
-            annualItem.year = year;
-            annualItem.name = year;
-            annualItem.eps = 0;
-            annualItem.rev = 0;
-            let qtrs4Year = 0;
+// Fill eps/revenue for previous years using existing quaterly data
+// getLatestYear to get year for latest quarter available (e.g. 2020)
+// attempt to find all quarters for given year
+// when found 0 quarters, exit
+function fillAnnual(epsDates, annualEst) {
+    if (epsDates.length == 0) { return; }
+    let year = getLatestQtrYear(epsDates);
+    while (true) {
+        let yearItem = new Year(year, year, 0, 0);
+        let qtrs4Year = 0;
 
-            epsDates.forEach(function(qtr) {
-                if (qtr.name.indexOf(year.toString()) > -1) {
-                    annualItem.eps += qtr.eps.eps;
-                    annualItem.rev += qtr.rev.rev;
-                    ++qtrs4Year;
-                }
-            })
-
-            if (qtrs4Year == 0) {
-                break;
+        // find all quarters for given year
+        epsDates.forEach(function(qtr) {
+            if (qtr.name.indexOf(year.toString()) > -1) {
+                yearItem.eps += qtr.eps.eps;
+                yearItem.rev += qtr.rev.rev;
+                ++qtrs4Year;
             }
+        })
 
-            if (qtrs4Year == 4) {
-                annualItem.eps = +annualItem.eps.toFixed(2);
-                annualItem.rev = +annualItem.rev.toFixed(1);
-                annualItem.qtrs4Year = qtrs4Year;
-                annualEst.unshift(annualItem);
-            }
-            --year;
+        if (qtrs4Year == 0) {
+            break;
         }
+
+        if (qtrs4Year == 4) {
+            yearItem.eps = +yearItem.eps.toFixed(2);
+            yearItem.rev = +yearItem.rev.toFixed(1);
+            yearItem.qtrs4Year = qtrs4Year;
+            annualEst.unshift(yearItem);
+        }
+        --year;
     }
-    calculateAnnualPerf(annualEst);
 }
 
-// TO calculate annual performance (%Chg), compare with previous year
+// Calculates annual performance (%Chg) for each year by comparing with previous year
 function calculateAnnualPerf(years) {
    years.map(function(item, index) {
         const previousYear = years.find(q => q.year == (item.year - 1));
@@ -968,8 +788,13 @@ function calculateAnnualPerf(years) {
    });
 }
 
+// Helpers
 function getComparativeQuarterName(qtr) {
     return qtr.month + ' ' + (qtr.year - 1);
+}
+
+function getDisplayQuarter(qtr) {
+    return qtr.substr(0,3) + '-' + qtr.substr(6);
 }
 
 function revenueStringToFloat(revStr) {
@@ -1004,4 +829,208 @@ function getLatestQtrYear(epsDates) {
 function calculatePercentChange(current, previous) {
     if (!isDefined(current) || !isDefined(previous) || previous == 0) { return undefined; }
     return Math.round(100*((current - previous) / Math.abs(previous)));
+}
+
+function isQuarterValid(qtr) {
+    return isDefined(qtr.name) && qtr.name.length > 0 && isDefined(qtr.eps.eps) && !isNaN(qtr.eps.eps);
+}
+
+function isAbleToCalculateQtrRevChange(qtr, compQuarter) {
+    return qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && compQuarter.rev.rev != 0;
+}
+
+function numberWithCommas(x) {
+    if (!isDefined(x) || x == null) { return '-'; }
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function isDefined(smth) {
+    return typeof smth !== 'undefined';
+}
+
+// Classes
+class Quarter {
+    constructor() {}
+}
+
+class SAQarter extends Quarter {
+    constructor (nameStr, epsStr, revStr) {
+        super();
+        const nameAttr = SAQarter.parseQtrName(nameStr);
+        super.name = nameAttr.name;
+        super.month = nameAttr.month;
+        super.year = parseInt(nameAttr.year);
+        super.eps = SAQarter.parseQtrEps(epsStr);
+        super.rev = SAQarter.parseQtrRev(revStr);
+    }
+
+    // extracts qtr name in the form mmm yyyy
+    static parseQtrName(str) {
+        let qtr = {}
+        let start = str.indexOf('(')+1;
+        qtr.name = str.substr(start, str.indexOf(')')-start);
+        qtr.month = qtr.name.substr(0,3);
+        qtr.year = qtr.name.substr(4);
+        return qtr;
+    }
+
+    /*
+       Parse quaterly EPS string. String can be in the form:
+
+       Q2 2020 (Jun 2020) EPS of -$0.31 beat by $0.05/missed by $0.05
+       Q2 2020 (Jun 2020) GAAP EPS of $0.01
+
+    */
+    static parseQtrEps(str) {
+        let eps = {};
+        let dPos = str.indexOf('$');
+        if (dPos > -1) {
+            let sign = '';
+            if (str.substr(dPos-1,1) == '-') {
+                sign = '-';
+            }
+            let sPos = str.indexOf(' ', dPos);
+            if (sPos == -1) {
+                eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
+            }
+            else {
+                eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
+                eps.surprisePerf = SAQarter.calculateSurpriseEPSPerf(str.substr(sPos+1).trim(), eps.eps);
+            }
+        }
+        return eps;
+    }
+
+    static calculateSurpriseEPSPerf(str, eps) {
+        if (!isDefined(str)) { return undefined; }
+        let dPos = str.indexOf('$');
+        if (dPos < 0) { return undefined; }
+
+        let sign = '';
+        if (str.substr(dPos-1,1) == '-') {
+            sign = '-';
+        }
+        let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
+        let projectedEps = eps - surprise;
+        let surprisePerf = calculatePercentChange(eps, projectedEps);
+        return surprisePerf;
+    }
+
+    /*
+        Parse quaterly revenue string. String can be in the form:
+
+        Revenue of $112.33M (54.30% YoY) beat by $8.47M
+        Revenue of $112.33M beat by $8.47M
+        Revenue of $112.33M
+    */
+    static parseQtrRev(str) {
+        let rev = {};
+        rev.rev = 0;
+        let revStr = '';
+
+        let pos = str.indexOf('(');
+        if (pos == -1) {
+            let sPos = str.indexOf(' ', 13);
+            if (sPos == -1) {
+                revStr = str.substr(13).trim();
+            } else {
+                revStr = str.substr(13, sPos-13).trim();
+                rev.surprisePerf = str.substr(sPos+1).trim();
+            }
+        }
+        else {
+            revStr = str.substr(12+1, pos-12-1).trim();
+            rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
+            rev.surprisePerf = str.substr(str.indexOf(')')+1).trim();
+        }
+        rev.rev = SAQarter.revenueStringToFloat(revStr);
+        rev.surprisePerf = SAQarter.calculateSurpriseRevPerf(rev.surprisePerf, rev.rev);
+        return rev;
+    }
+
+    static calculateSurpriseRevPerf(str, rev) {
+        if (!isDefined(str)) { return undefined; }
+        let dPos = str.indexOf('$');
+        if (dPos < 0) { return undefined; }
+
+        let sign = '';
+        if (str.substr(dPos-1,1) == '-') {
+            sign = '-';
+        }
+        let surprise = SAQarter.revenueStringToFloat((sign + str.substr(dPos+1)).trim());
+        let projectedRev = rev - surprise;
+        let surpriseRev = calculatePercentChange(rev, projectedRev);
+        return surpriseRev;
+    }
+
+    static revenueStringToFloat(revStr) {
+        revStr = revStr.trim();
+        if (revStr.endsWith('M')) {
+            return parseFloat(parseFloat(revStr).toFixed(1));
+        } else if (revStr.endsWith('K')) {
+            return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
+        } else if (revStr.endsWith('B')) {
+            return Math.round(parseFloat(revStr) * 1000);
+        }
+        else {
+            return parseFloat((parseFloat(revStr) / 1000).toFixed(2));
+        }
+    }
+}
+
+class ZAQarter extends Quarter {
+    constructor (nameStr, epsStr, epsSurpriseStr, revData) {
+        super();
+        const nameAttr = ZAQarter.parseQtrName(nameStr);
+        super.name = nameAttr.name;
+        super.month = nameAttr.month;
+        super.year = parseInt(nameAttr.year);
+        super.eps = ZAQarter.parseQtrEps(epsStr, epsSurpriseStr);
+        super.rev = ZAQarter.parseQtrRev(nameStr, revData);
+    }
+
+    static parseQtrName(str) {
+        let qtr = {};
+        let parts = str.split('/');
+        let month = parseInt(parts[0]);
+        let year = parseInt(parts[1]);
+        qtr.name = MONTH_MAP[month] + ' ' + year;
+        qtr.month = MONTH_MAP[month];
+        qtr.year = year;
+        return qtr;
+    }
+
+    static parseQtrEps(epsStr, epsSurpriseStr) {
+        let eps = {};
+        eps.eps =  parseFloat(epsStr.replace(/\$/, ''));
+        epsSurpriseStr = epsSurpriseStr.substr(epsSurpriseStr.indexOf('>') + 2).slice(0, -7);
+        eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
+        return eps;
+    }
+
+    static parseQtrRev(period, revData) {
+        let rev = {};
+        rev.rev = 0;
+        // find corresponding period in revData
+        revData.forEach(function(item) {
+            if (item[1] == period) {
+                rev.rev = parseFloat(item[3].replace(/[\$\,]/g, ''));
+                // round to 1 decimal
+                rev.rev = Math.round(rev.rev * 10) / 10;
+                
+                let revSurprise = item[5].substr(item[5].indexOf('>') + 2).slice(0, -7);
+                rev.surprisePerf = Math.round(parseFloat(revSurprise));
+            }
+        });
+        return rev;
+    }
+}
+
+class Year {
+    constructor (year, name, eps, rev) {
+        this.year = year;
+        this.name = name;
+        this.eps = eps;
+        this.rev = rev;
+    }
 }
