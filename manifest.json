@@ -7,7 +7,7 @@
         {
             "matches":[
                 "https://seekingalpha.com/symbol/*/earnings",
-                "https://www.zacks.com/stock/research/*/earnings-announcements"
+                "https://www.zacks.com/stock/research/*/earnings-calendar"
             ],
             "js":[
                 "src/js/jquery-3.6.0.min.js",
