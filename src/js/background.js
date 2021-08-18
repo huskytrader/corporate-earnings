@@ -1,5 +1,5 @@
 const SA_REGEX = /symbol\/([a-zA-Z]+)\/earnings/;
-const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-announcements/;
+const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-calendar/;
 
 const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
 const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
@@ -83,6 +83,10 @@ function fetchFundamentals(symbol, message, sendResponse) {
         if (found.length > 0) {
             results.shorts = found.next().text().trim();
         }
+        found = dom.find('td:contains("Short Ratio")');
+        if (found.length > 0) {
+            results.daystocover = found.next().text().trim();
+        }
         found = dom.find('td:contains("Shs Float")');
         if (found.length > 0) {
             results.float = found.next().text().trim();
@@ -102,6 +106,10 @@ function fetchFundamentals(symbol, message, sendResponse) {
         found = dom.find('td:contains("Inst Own")');
         if (found.length > 0) {
             results.instown = found.next().text().trim();
+        }
+        found = dom.find('td:contains("Inst Trans")');
+        if (found.length > 0) {
+            results.instchange = found.next().text().trim();
         }
         found = dom.find('td:contains("Rel Volume")');
         if (found.length > 0) {

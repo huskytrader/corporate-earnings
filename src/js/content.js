@@ -12,6 +12,9 @@ const HIGH_SHORT_INTEREST_COLOR = '#FF0000';
 const DAYS_BEFORE_EARNINGS_WARN_THRESHOLD = 3;
 const DAYS_BEFORE_EARNINGS_WARN_COLOR = '#FF0000';
 
+const HIGH_INST_CHANGE_THRESHOLD = 10;
+const HIGH_INST_CHANGE_COLOR = '#00FF00';
+
 const MONTH_MAP = {
     1: 'Jan',
     2: 'Feb',
@@ -243,6 +246,10 @@ function prepare() {
         color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
         font-weight: bold;
     }
+    .fdata.hinstchange {
+        color: ${HIGH_INST_CHANGE_COLOR};
+        font-weight: bold;
+    }
     .ftitle {
         text-align: center;
         width: 25%;
@@ -400,6 +407,10 @@ function fundamentalsToHtml(data) {
             <tr>
                 <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
                 <td>Inst Own</td><td class="fdata">${data.instown}</td>
+            </tr>
+            <tr>
+                <td>Days to cover</td><td class="fdata">${data.daystocover}</td>
+                <td>Inst Trans (3mo)</td><td class="fdata${getHighlightClass4InstChange(data.instchange)}">${data.instchange}</td>
             </tr>
             <tr>
                 <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
@@ -605,6 +616,16 @@ function getHighlightClass4Shorts(shortsStr) {
     let shorts = parseFloat(shortsStr.replace(/%$/, ""));
     if (shorts > HIGH_SHORT_INTEREST_THRESHOLD) {
         hclass = ' hshorts';
+    } 
+    return hclass;
+}
+
+function getHighlightClass4InstChange(instChangeStr) {
+    let hclass = '';
+    if (! isDefined(instChangeStr) || instChangeStr.length == 0 || instChangeStr == '-') { return hclass; }
+    let instChange = parseFloat(instChangeStr.replace(/%$/, ""));
+    if (instChange > HIGH_INST_CHANGE_THRESHOLD) {
+        hclass = ' hinstchange';
     } 
     return hclass;
 }

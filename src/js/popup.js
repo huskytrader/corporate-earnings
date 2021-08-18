@@ -33,7 +33,7 @@ function handleSubmit() {
     if (default_ds == 1) {
         targetUrl = decodeURIComponent(escape(window.atob(ds1_urlPrefix))) + symbol.toUpperCase() + "/earnings";
     } else if (default_ds == 2) {
-        targetUrl = decodeURIComponent(escape(window.atob(ds2_urlPrefix))) + symbol.toUpperCase() + "/earnings-announcements";
+        targetUrl = decodeURIComponent(escape(window.atob(ds2_urlPrefix))) + symbol.toUpperCase() + "/earnings-calendar";
     }
 
     if (open_new_tab) {
