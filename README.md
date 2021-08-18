@@ -16,7 +16,7 @@
 1. Use the extension by pressing on extension icon to the right of address bar and entering a stock symbol in the popup dialog
 
 **Firefox**
-1. Click on .xpi file for latest release in https://github.com/huskytrader/corporate-earnings/releases
+1. Click on latest .xpi file in [releases](https://github.com/huskytrader/corporate-earnings/releases)
 1. Dialog will popup, click Continue to Installation.
 1. Dialog will popup asking to confirm permissions. Click Add.
 
