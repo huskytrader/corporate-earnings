@@ -1,9 +1,9 @@
-*Frequently Asked Questions*
+# Frequently Asked Questions
 
-### Adding more features/data points ###
+### Adding more features/data points
 * I am open to suggestions but also feel free to add them yourself
 
-### Changing data thresholds and colors ###
+### Changing data thresholds and colors
 * You can change a few variables that control presentation. They are located on top of [src/js/content.js](https://github.com/huskytrader/corporate-earnings/tree/main/src/js/content.js) file
 ```javascript
 const CHANGE_POSITIVE_COLOR = '#0000FF';
@@ -23,5 +23,5 @@ const HIGH_INST_CHANGE_THRESHOLD = 10;
 const HIGH_INST_CHANGE_COLOR = '#00FF00';
 ``` 
 
-### How about dark mode? ###
+### How about dark mode?
 * You can add it through third-party extensions. For example, Dark Reader works very well.
