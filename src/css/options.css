@@ -31,3 +31,13 @@ ul {
     font-size: 10px;
     border: 1px solid rgba(0, 0, 0, 0.2);
 }
+
+#copy-on-click-select {
+    display: none;
+    font-size: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#open_new_tab {
+    margin-top: 5px;
+}

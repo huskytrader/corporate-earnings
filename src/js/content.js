@@ -54,6 +54,9 @@ const CHART_TYPE = {
 Object.freeze(CHART_TYPE);
 
 // init options to default values
+var enable_copy_on_click = false;
+// chart type: 1=desc first sentence, 2=full desc
+var data_to_copy = 1;
 var fetch_fundamental_data = false;
 var chart_type = 1;
 var show_earnings_surprise = false;
@@ -66,13 +69,18 @@ var epsDates = [];
 var annualEst = [];
 var fundamentals = [];
 
-chrome.storage.local.get(['chart_type', 
+chrome.storage.local.get(['enable_copy_on_click', 
+                          'data_to_copy',
+                          'chart_type', 
                           'fetch_fundamental_data', 
                           'show_earnings_surprise', 
                           'ms_style_output', 
                           'limit_num_qtr', 
                           'default_ds'], 
                           function(options) {
+
+    if (isDefined(options.enable_copy_on_click)) {enable_copy_on_click = options.enable_copy_on_click;}
+    if (isDefined(options.data_to_copy)) {data_to_copy = options.data_to_copy;}                        
     if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
     if (isDefined(options.chart_type)) { chart_type = options.chart_type; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
@@ -136,7 +144,10 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
 
 function displayFundamentals(el) {
     if (fundamentals.length > 0) {
-       $('<div class="container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0]) + '</div></div>').insertAfter('#h_earnings');  
+       $('<div class="container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
+                                                                                        enable_copy_on_click, 
+                                                                                        data_to_copy == 1) + 
+       '</div></div>').insertAfter('#h_earnings');  
     } 
 }
 
@@ -363,7 +374,7 @@ function displayContent() {
     $('body').prepend('<div id="h_earnings" class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
 }
 
-function fundamentalsToHtml(data) {
+function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
     const html = `
         <style>
             /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
@@ -410,7 +421,7 @@ function fundamentalsToHtml(data) {
             </tr>
             <tr>
                 <td>Days to cover</td><td class="fdata">${data.daystocover}</td>
-                <td>Inst Trans (3mo)</td><td class="fdata${getHighlightClass4InstChange(data.instchange)}">${data.instchange}</td>
+                <td>Inst Trans (3mo)</td><td class="fdata${getHighlightClass4InstChange(data.instchange)}">${strToNum(data.instchange) > 0 ? "+"+data.instchange : data.instchange}</td>
             </tr>
             <tr>
                 <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
@@ -436,7 +447,32 @@ function fundamentalsToHtml(data) {
         </div>
         <div class="data-tab" id="f_insiders">
             ${isDefined(data.insiders) ? data.insiders : 'No data available'}
-        </div>`;
+        </div>
+        <script>
+            var descriptionInterval = undefined;
+            function copyOnDocumentFocus() {
+                if (${enable_copy_on_click} && document.hasFocus()) {
+                    clearInterval(descriptionInterval);
+                    copyDescription(${short_description});
+                }
+            } 
+            function copyDescription(short_description) {
+                let desc = $(".fv_description").text();
+                const match = /\\.\ [A-Z]/.exec(desc);
+                if (short_description && match) {
+                    desc = desc.substr(0, match.index);
+                }
+                toClipboard(desc);                
+            }           
+            function toClipboard(text) {
+                navigator.clipboard.writeText(text).then(function(){}, function(err) {
+                    console.log("Failed to copy description to clipboard", err);
+                });
+            }
+
+            descriptionInterval = ${enable_copy_on_click} && setInterval(copyOnDocumentFocus, 300);
+        </script>
+        `;
     return html;
 }
 
@@ -628,6 +664,13 @@ function getHighlightClass4InstChange(instChangeStr) {
         hclass = ' hinstchange';
     } 
     return hclass;
+}
+
+function strToNum(str) {
+    if (!isDefined(str)) return 0;
+    str = str.replace(/[^\d.-]/g, '');
+    if (str == '') return 0;
+    return parseFloat(str);
 }
 
 function getHighlightClass4Earnings(earningsStr, daysToEarnings) {

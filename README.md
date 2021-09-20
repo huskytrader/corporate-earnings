@@ -21,6 +21,7 @@
 1. Dialog will popup asking to confirm permissions. Click Add.
 
 ### Troubleshooting
+* Make sure to read [FAQ](FAQ.md)
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
 * On Windows make sure you have extracted the ZIP file not just listed it: right click on the ZIP and select 'Extract All...'. You may end up with an extra corporate-earnings-main folder. Make sure that folder that you drag into Chrome contains manifest.json file.
 

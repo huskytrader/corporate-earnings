@@ -23,21 +23,31 @@
             </div> 
           </div>
         </li>
-         <li><input type="checkbox" id="fetch_fundamental_data" class="checkbox"><label for="fetch_fundamental_data">Fetch fundamental data</label></li>
+        <li><input type="checkbox" id="show_earnings_surprise" class="checkbox"><label for="show_earnings_surprise">Show earnings surprise</label></li>
+        <li><input type="checkbox" id="fetch_fundamental_data" class="checkbox"><label for="fetch_fundamental_data">Fetch fundamental data</label></li>
          <div id="chart-select"> 
             <label id="chart-label" for="chart-switch">Chart</label>
             <div id="chart-switch">
               <input type="radio" id="chart_type_1" name="chart" value="1" />
-              <label for="chart_one">None</label>
+              <label for="chart_type_1">None</label>
               <input type="radio" id="chart_type_2" name="chart" value="2" />
-              <label for="chart_two">Weekly</label>
+              <label for="chart_type_2">Weekly</label>
               <input type="radio" id="chart_type_3" name="chart" value="3" />
-              <label for="chart_three">Daily</label>
+              <label for="chart_type_3">Daily</label>
               <input type="radio" id="chart_type_4" name="chart" value="4" />
-              <label for="chart_four">Both</label>
+              <label for="chart_type_4">Both</label>
             </div> 
          </div>
-         <li><input type="checkbox" id="show_earnings_surprise" class="checkbox"><label for="show_earnings_surprise">Show earnings surprise</label></li>
+         <li><input type="checkbox" id="enable_copy_on_click" class="checkbox"><label for="enable_click_on_copy">Enable copy on click</label></li>
+         <div id="copy-on-click-select"> 
+            <label id="copy-on-click-label" for="copy-switch">Stock description</label>
+            <div id="copy-switch">
+              <input type="radio" id="copy_type_1" name="copy" value="1" />
+              <label for="copy_type_1">1st sentence</label>
+              <input type="radio" id="copy_type_2" name="copy" value="2" />
+              <label for="copy_type_2">Full</label>
+            </div> 
+         </div>
          <li><input type="checkbox" id="open_new_tab" class="checkbox"><label for="open_new_tab">New tab per symbol</label></li>
          <li><input type="checkbox" id="ms_style_output" class="checkbox"><label for="ms-style-output">MS style %Chg output</label></li>
          <li><input type="checkbox" id="limit_num_qtr" class="checkbox"><label for="limit-num-qtr">Limit quarters to 8</label></li>
