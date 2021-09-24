@@ -900,7 +900,7 @@ function isQuarterValid(qtr) {
 }
 
 function isAbleToCalculateQtrRevChange(qtr, compQuarter) {
-    return qtr.rev.rev != 0 && !isDefined(qtr.rev.perf) && compQuarter.rev.rev != 0;
+    return qtr.rev.rev != 0 && compQuarter.rev.rev != 0;
 }
 
 function numberWithCommas(x) {
