@@ -88,7 +88,8 @@ chrome.storage.local.get(['enable_copy_on_click',
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
-    if (fetch_fundamental_data == true) {
+
+    if (fetch_fundamental_data == true && default_ds != 1) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {
                 fundamentals.push(response); 
@@ -96,6 +97,7 @@ chrome.storage.local.get(['enable_copy_on_click',
             }
         })
     }
+
 
     prepare();
     displayWaiting();
@@ -108,7 +110,7 @@ chrome.storage.local.get(['enable_copy_on_click',
             $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
             return;
         }   
-        waitForEl("div.earning-title", displayEarnings, 30);
+        waitForEl('div>:contains("FQ1")', displayEarnings, 30);
     }
     else if (default_ds == 2) {
         // ZA
@@ -689,6 +691,7 @@ function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
 function hideContent() {
     if (default_ds == 1) {
         // SA
+        $('header').hide();
         $('#main-nav-wrapper-row').hide();
         $('#tab-content-header').hide();
         $('#sp-center-menu').hide();
@@ -717,47 +720,73 @@ function hideContent() {
     }
 }
 
+function collectChildText(elem) {
+    let rows = [];
+    elem.children().each(function() {
+        let cells = [];
+        $(this).children().each(function() {
+            cells.push($(this).text());
+        });
+        if (cells.length > 0 && cells[0] != '') {
+            rows.push(cells);
+        }
+    });   
+    return rows;
+}
+
 function extractAndProcess() {
     if (default_ds == 1) {
         // add quarters
-        $('.panel-title.earning-title').each(function() {
-            let quarter = new SAQarter(
-                                $(this).find('.title-period').text(),
-                                $(this).find('.eps').text().trim().replace(/(\r\n|\n|\r)/gm, ""), 
-                                $(this).find('.revenue').contents().text().trim().replace(/(\r\n|\n|\r)/gm, ""));
-
-            if (isQuarterValid(quarter)) {
-                epsDates.unshift(quarter);
+        let dataBlockCount = 1;
+        $('[data-test-id="table-body"]').each(function() {
+            let rows = [];
+            switch(dataBlockCount++) {
+                case 1:
+                    break;
+                case 2: 
+                    // eps estimates
+                    rows = collectChildText($(this));
+                    for (const row of rows) {
+                        let year = new Year(
+                            getAnnualEstimateYear(row[0]),
+                            "*" + getAnnualEstimateYear(row[0]),
+                            row[1]);
+                        year.qtrs4Year = 4;           
+                        annualEst.push(year);
+                    }
+                    break;
+                case 3: 
+                    // revenue estimates
+                    rows = collectChildText($(this));
+                    for (const row of rows) {
+                        let year = getAnnualEstimateYear(row[0]);
+                        const foundYear = annualEst.find(q => q.year == year);
+                        if (foundYear) {
+                            foundYear.rev = revenueStringToFloat(row[1]);
+                        }
+                        else {
+                            let year = new Year(
+                                year,
+                                "*" + year,
+                                undefined,
+                                revenueStringToFloat(row[1]));
+                            annualEst.push(year);
+                        }
+                    }
+                    break;
+                case 4:
+                    // earnings data
+                    rows = collectChildText($(this));
+                    for (const row of rows) {
+                        let q = new SAQarter(row);
+                        if (isQuarterValid(q)) {
+                            epsDates.unshift(q);
+                        }
+                    };
+                    break;
             }
         });
-
-        // add annual eps estimates
-        $('#annual-eps-esimates-tbl tbody .row-content').each(function() {
-            let year = new Year(
-                parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim())),
-                "*" + getAnnualEstimateName($(this).children().eq(0).text().trim()),
-                $(this).children().eq(1).text().trim());
-            year.qtrs4Year = 4;           
-            annualEst.push(year);
-        });
-
-        // add annual revenue estimates to existing annual eps estimates or create new one if not found
-        $('#annual-rev-esimates-tbl tbody .row-content').each(function() {
-            const yearInt = parseInt(getAnnualEstimateName($(this).children().eq(0).text().trim()));
-            const foundYear = annualEst.find(q => q.year == yearInt);
-            if (foundYear) {
-                foundYear.rev = revenueStringToFloat($(this).children().eq(1).text().trim());
-            }
-            else {
-                let year = new Year(
-                    yearInt,
-                    "*" + getAnnualEstimateName($(this).children().eq(0).text().trim()),
-                    undefined,
-                    revenueStringToFloat($(this).children().eq(1).text().trim()));
-
-                annualEst.push(year);
-            }
-        })
+        
     }
     else if (default_ds == 2) {
         let data = $('#earnings_announcements_tabs').next().html().trim();
@@ -875,12 +904,12 @@ function revenueStringToFloat(revStr) {
     }
 }
 
-function getAnnualEstimateName(str) {
+function getAnnualEstimateYear(str) {
     let start = str.indexOf(' ');
     if (start > -1) {
-        return str.substr(start+1);
+        return parseInt(str.substr(start+1));
     }
-    return start;
+    return parseInt(start);
 }
 
 function getLatestQtrYear(epsDates) {
@@ -918,14 +947,14 @@ class Quarter {
 }
 
 class SAQarter extends Quarter {
-    constructor (nameStr, epsStr, revStr) {
+    constructor (cells) {
         super();
-        const nameAttr = SAQarter.parseQtrName(nameStr);
+        const nameAttr = SAQarter.parseQtrName(cells[0]);
         super.name = nameAttr.name;
         super.month = nameAttr.month;
         super.year = parseInt(nameAttr.year);
-        super.eps = SAQarter.parseQtrEps(epsStr);
-        super.rev = SAQarter.parseQtrRev(revStr);
+        super.eps = SAQarter.parseQtrEps(cells[1], cells[2]);
+        super.rev = SAQarter.parseQtrRev(cells[3], cells[5]);
     }
 
     // extracts qtr name in the form mmm yyyy
@@ -945,8 +974,9 @@ class SAQarter extends Quarter {
        Q2 2020 (Jun 2020) GAAP EPS of $0.01
 
     */
-    static parseQtrEps(str) {
+    static parseQtrEps(epsStr, surpriseStr) {
         let eps = {};
+        /*
         let dPos = str.indexOf('$');
         if (dPos > -1) {
             let sign = '';
@@ -962,24 +992,15 @@ class SAQarter extends Quarter {
                 eps.surprisePerf = SAQarter.calculateSurpriseEPSPerf(str.substr(sPos+1).trim(), eps.eps);
             }
         }
+        */
+        eps.eps = parseFloat(epsStr);
+        if (isDefined(surpriseStr) && surpriseStr != '-') {
+            eps.surprisePerf = SAQarter.calculateSurprisePercent(parseFloat(surpriseStr), eps.eps);
+        }
         return eps;
     }
 
-    static calculateSurpriseEPSPerf(str, eps) {
-        if (!isDefined(str)) { return undefined; }
-        let dPos = str.indexOf('$');
-        if (dPos < 0) { return undefined; }
-
-        let sign = '';
-        if (str.substr(dPos-1,1) == '-') {
-            sign = '-';
-        }
-        let surprise = parseFloat((sign + str.substr(dPos+1)).trim());
-        let projectedEps = eps - surprise;
-        let surprisePerf = calculatePercentChange(eps, projectedEps);
-        return surprisePerf;
-    }
-
+ 
     /*
         Parse quaterly revenue string. String can be in the form:
 
@@ -987,9 +1008,10 @@ class SAQarter extends Quarter {
         Revenue of $112.33M beat by $8.47M
         Revenue of $112.33M
     */
-    static parseQtrRev(str) {
+    static parseQtrRev(revStr, surpriseStr) {
         let rev = {};
         rev.rev = 0;
+    /*
         let revStr = '';
 
         let pos = str.indexOf('(');
@@ -1009,12 +1031,20 @@ class SAQarter extends Quarter {
         }
         rev.rev = SAQarter.revenueStringToFloat(revStr);
         rev.surprisePerf = SAQarter.calculateSurpriseRevPerf(rev.surprisePerf, rev.rev);
+        */
+        rev.rev = SAQarter.revenueStringToFloat(revStr);
+        if (isDefined(surpriseStr) && surpriseStr != '-') {
+            rev.surprisePerf = SAQarter.calculateSurprisePercent(SAQarter.revenueStringToFloat(surpriseStr), rev.rev);
+        }
+
+
         return rev;
     }
 
-    static calculateSurpriseRevPerf(str, rev) {
-        if (!isDefined(str)) { return undefined; }
-        let dPos = str.indexOf('$');
+    static calculateSurprisePercent(surprise, measure) {
+        if (!isDefined(surprise)) { return undefined; }
+        
+        /*let dPos = str.indexOf('$');
         if (dPos < 0) { return undefined; }
 
         let sign = '';
@@ -1022,9 +1052,11 @@ class SAQarter extends Quarter {
             sign = '-';
         }
         let surprise = SAQarter.revenueStringToFloat((sign + str.substr(dPos+1)).trim());
-        let projectedRev = rev - surprise;
-        let surpriseRev = calculatePercentChange(rev, projectedRev);
-        return surpriseRev;
+        */
+
+        let projected = measure - surprise;
+        let surprisePercent = calculatePercentChange(measure, projected);
+        return surprisePercent;
     }
 
     static revenueStringToFloat(revStr) {
