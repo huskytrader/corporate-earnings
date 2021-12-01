@@ -140,7 +140,7 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
     clearInterval(poller);
     setTimeout(function() {
             callback(el || null);
-    }, 250);
+    }, 1000);
   }, interval);
 }
 
@@ -323,10 +323,14 @@ function prepare() {
     .data-tab {
         margin-top: 20px;
     }
-    .container {
+    #h_inner {
+        margin: 0 auto;
+    }   
+    .h_container {
         overflow: hidden;
         margin-top: 6px;
         margin-bottom: 50px;
+        width:100%;
     }
     .column {
         float: left;
@@ -373,7 +377,9 @@ function prepare() {
 //
 function displayContent() {
     $('#waiting').hide();
-    $('body').prepend('<div id="h_earnings" class="container"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div>');
+    $('body').prepend('<div id="h_earnings" class="e_container">' + 
+        '<div class="e_inner"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + 
+        '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div></div>');
 }
 
 function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
@@ -747,6 +753,7 @@ function extractAndProcess() {
                     // eps estimates
                     rows = collectChildText($(this));
                     for (const row of rows) {
+                        if (!isDefined(row[0]) || row[0] == '') continue;
                         let year = new Year(
                             getAnnualEstimateYear(row[0]),
                             "*" + getAnnualEstimateYear(row[0]),
@@ -759,14 +766,15 @@ function extractAndProcess() {
                     // revenue estimates
                     rows = collectChildText($(this));
                     for (const row of rows) {
-                        let year = getAnnualEstimateYear(row[0]);
-                        const foundYear = annualEst.find(q => q.year == year);
+                        if (!isDefined(row[0]) || row[0] == '') continue;
+                        let yearInt = getAnnualEstimateYear(row[0]);
+                        const foundYear = annualEst.find(q => q.year == yearInt);
                         if (foundYear) {
                             foundYear.rev = revenueStringToFloat(row[1]);
                         }
                         else {
                             let year = new Year(
-                                year,
+                                yearInt,
                                 "*" + year,
                                 undefined,
                                 revenueStringToFloat(row[1]));
@@ -778,6 +786,7 @@ function extractAndProcess() {
                     // earnings data
                     rows = collectChildText($(this));
                     for (const row of rows) {
+                        if (!isDefined(row[0]) || row[0] == '' || !row[0].startsWith('FQ')) continue;
                         let q = new SAQarter(row);
                         if (isQuarterValid(q)) {
                             epsDates.unshift(q);
@@ -976,23 +985,6 @@ class SAQarter extends Quarter {
     */
     static parseQtrEps(epsStr, surpriseStr) {
         let eps = {};
-        /*
-        let dPos = str.indexOf('$');
-        if (dPos > -1) {
-            let sign = '';
-            if (str.substr(dPos-1,1) == '-') {
-                sign = '-';
-            }
-            let sPos = str.indexOf(' ', dPos);
-            if (sPos == -1) {
-                eps.eps = parseFloat((sign + str.substr(dPos+1)).trim());
-            }
-            else {
-                eps.eps = parseFloat((sign + str.substr(dPos+1, sPos-dPos)).trim());
-                eps.surprisePerf = SAQarter.calculateSurpriseEPSPerf(str.substr(sPos+1).trim(), eps.eps);
-            }
-        }
-        */
         eps.eps = parseFloat(epsStr);
         if (isDefined(surpriseStr) && surpriseStr != '-') {
             eps.surprisePerf = SAQarter.calculateSurprisePercent(parseFloat(surpriseStr), eps.eps);
@@ -1011,49 +1003,17 @@ class SAQarter extends Quarter {
     static parseQtrRev(revStr, surpriseStr) {
         let rev = {};
         rev.rev = 0;
-    /*
-        let revStr = '';
 
-        let pos = str.indexOf('(');
-        if (pos == -1) {
-            let sPos = str.indexOf(' ', 13);
-            if (sPos == -1) {
-                revStr = str.substr(13).trim();
-            } else {
-                revStr = str.substr(13, sPos-13).trim();
-                rev.surprisePerf = str.substr(sPos+1).trim();
-            }
-        }
-        else {
-            revStr = str.substr(12+1, pos-12-1).trim();
-            rev.perf = Math.round(parseFloat(str.substr(pos+1, str.indexOf('%')-1-pos)));
-            rev.surprisePerf = str.substr(str.indexOf(')')+1).trim();
-        }
-        rev.rev = SAQarter.revenueStringToFloat(revStr);
-        rev.surprisePerf = SAQarter.calculateSurpriseRevPerf(rev.surprisePerf, rev.rev);
-        */
         rev.rev = SAQarter.revenueStringToFloat(revStr);
         if (isDefined(surpriseStr) && surpriseStr != '-') {
             rev.surprisePerf = SAQarter.calculateSurprisePercent(SAQarter.revenueStringToFloat(surpriseStr), rev.rev);
         }
-
 
         return rev;
     }
 
     static calculateSurprisePercent(surprise, measure) {
         if (!isDefined(surprise)) { return undefined; }
-        
-        /*let dPos = str.indexOf('$');
-        if (dPos < 0) { return undefined; }
-
-        let sign = '';
-        if (str.substr(dPos-1,1) == '-') {
-            sign = '-';
-        }
-        let surprise = SAQarter.revenueStringToFloat((sign + str.substr(dPos+1)).trim());
-        */
-
         let projected = measure - surprise;
         let surprisePercent = calculatePercentChange(measure, projected);
         return surprisePercent;
