@@ -89,7 +89,7 @@ chrome.storage.local.get(['enable_copy_on_click',
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
 
-    if (fetch_fundamental_data == true && default_ds != 1) {
+    if (fetch_fundamental_data == true) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {
                 fundamentals.push(response); 
@@ -146,7 +146,7 @@ function waitForEl(selector, callback, maxtries = false, interval = 100) {
 
 function displayFundamentals(el) {
     if (fundamentals.length > 0) {
-       $('<div class="container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
+       $('<div class="f_container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
                                                                                         enable_copy_on_click, 
                                                                                         data_to_copy == 1) + 
        '</div></div>').insertAfter('#h_earnings');  
@@ -383,7 +383,7 @@ function displayContent() {
 }
 
 function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
-    const html = `
+    const tabs = `
         <style>
             /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
             [role=tablist]{border-bottom:1px solid #d3d3d3;list-style:none;margin:0;padding:0}[role=tablist] *{box-sizing:border-box}@media (min-width:30em){[role=tablist] li{display:inline-block}}[role=tab]{border:1px solid transparent;border-top-color:#d3d3d3;display:block;padding:.5em 1em;text-decoration:none}@media (min-width:30em){[role=tab]{border-top-color:transparent;border-top-left-radius:.5em;border-top-right-radius:.5em;display:inline-block;margin-bottom:-1px}}[role=tab][aria-selected=true]{background-color:#d3d3d3}@media (min-width:30em){[role=tab][aria-selected=true]{background-color:transparent;border:1px solid #d3d3d3;border-bottom-color:#fff}}[role=tab]:hover:not([aria-selected=true]){background-color:#f7f7f7}@media (min-width:30em){[role=tab]:hover:not([aria-selected=true]){border:1px solid #d3d3d3}}[hidden]{display:none}
@@ -403,7 +403,9 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
             <li><a href="#f_news" onmouseover="f_tabs.toggle('#f_news')">News</a></li>
             <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
         </ul>
+    `;
 
+    const html = `
         <div class="data-tab" id="f_fundamentals">  
             <table class="myf"><tbody>
             <tr>
@@ -481,7 +483,7 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
             descriptionInterval = ${enable_copy_on_click} && setInterval(copyOnDocumentFocus, 300);
         </script>
         `;
-    return html;
+    return (default_ds == 1) ? html : (tabs + html);
 }
 
 function epsDatesToHtml(epsDates) {
