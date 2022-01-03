@@ -480,7 +480,7 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
                 });
             }
 
-            descriptionInterval = ${enable_copy_on_click} && setInterval(copyOnDocumentFocus, 300);
+            descriptionInterval = false && setInterval(copyOnDocumentFocus, 300);
         </script>
         `;
     return (default_ds == 1) ? html : (tabs + html);
@@ -788,7 +788,7 @@ function extractAndProcess() {
                     // earnings data
                     rows = collectChildText($(this));
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '' || !row[0].startsWith('FQ')) continue;
+                        if (!isDefined(row[0]) || row[0] == '' || !row[0].includes('FQ')) continue;
                         let q = new SAQarter(row);
                         if (isQuarterValid(q)) {
                             epsDates.unshift(q);
@@ -796,8 +796,7 @@ function extractAndProcess() {
                     };
                     break;
             }
-        });
-        
+        });  
     }
     else if (default_ds == 2) {
         let data = $('#earnings_announcements_tabs').next().html().trim();
