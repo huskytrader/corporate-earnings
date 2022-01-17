@@ -230,7 +230,12 @@ function processEarnings(str, results) {
     }
 
     results.earningsDate = earningsDate;
-    results.daysToEarnings = getWorkingDays(today, earningsDate);
+    if (today.getFullYear() != earningsDate.getFullYear()) {
+        results.daysToEarnings = 185;
+    }
+    else {
+        results.daysToEarnings = getWorkingDays(today, earningsDate);
+    }
 }
 
 function getWorkingDays(startDate, endDate) {
