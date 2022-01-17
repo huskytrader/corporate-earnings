@@ -699,7 +699,7 @@ function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
 function hideContent() {
     if (default_ds == 1) {
         // SA
-        $('header').children().hide();
+        $('header').hide();
         $('nav[aria-label="Main"]').children().hide();
         $('#main-nav-wrapper-row').hide();
         $('#tab-content-header').hide();
