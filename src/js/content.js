@@ -488,7 +488,9 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
 
 function epsDatesToHtml(epsDates) {
     let html = '<table class="myt">';
-    html += '<thead><tr><td>Quarter</td><td>EPS</td><td>%Change</td>';
+    html += '<thead><tr>';
+    if (default_ds == 2) html += '<td>Date</td>';
+    html += '<td>Quarter</td><td>EPS</td><td>%Change</td>';
     if (show_earnings_surprise) {
         html += '<td>%Surprise</td>';
     }
@@ -544,7 +546,9 @@ function epsDatesToHtml(epsDates) {
             if (item.rev.surprisePerf > 0) { surpriseRevPerf = '+' + surpriseRevPerf; }
             if (ms_style_output == true) { surpriseRevPerf = surpriseRevPerf + '%'; }
         }
-        html += '<tr><td>' + getDisplayQuarter(item.name) + '</td>';
+        html += '<tr>';
+        if (default_ds == 2) html += '<td>' + item.date + '</td>';
+        html += '<td>' + getDisplayQuarter(item.name) + '</td>';
         html += '<td>' + item.eps.eps + '</td>';
         html += '<td class="' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         if (show_earnings_surprise) {
@@ -806,6 +810,7 @@ function extractAndProcess() {
         let dataObj = JSON.parse(data);
         dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
             let quarter = new ZAQarter(
+                item[0],
                 item[1],
                 item[3],
                 item[5], 
@@ -1037,9 +1042,10 @@ class SAQarter extends Quarter {
 }
 
 class ZAQarter extends Quarter {
-    constructor (nameStr, epsStr, epsSurpriseStr, revData) {
+    constructor (dateStr, nameStr, epsStr, epsSurpriseStr, revData) {
         super();
         const nameAttr = ZAQarter.parseQtrName(nameStr);
+        super.date = dateStr;
         super.name = nameAttr.name;
         super.month = nameAttr.month;
         super.year = parseInt(nameAttr.year);
