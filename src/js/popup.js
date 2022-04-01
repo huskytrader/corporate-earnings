@@ -8,7 +8,7 @@ chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
     if (isDefined(options.default_ds)) {default_ds = options.default_ds;}
 });
 
-$( document ).ready(function() {
+document.addEventListener("DOMContentLoaded", function() {
     $("#symbol").focus();
     $("#symbol").on('keyup', function (e) {
       if (e.key === 'Enter' || e.keyCode === 13) {

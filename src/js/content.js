@@ -51,7 +51,16 @@ const CHART_TYPE = {
     DAILY: 3,
     BOTH: 4
 };
-Object.freeze(CHART_TYPE);
+
+const SA_REGEX = /symbol\/([a-zA-Z]+)\/earnings/;
+const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-calendar/;
+
+const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
+const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
+const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
+const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
+const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
+
 
 // init options to default values
 var enable_copy_on_click = false;
@@ -91,13 +100,13 @@ chrome.storage.local.get(['enable_copy_on_click',
 
     if (fetch_fundamental_data == true) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
-            if (!response.error) {
-                fundamentals.push(response); 
+            if (!response.error) {     
+                response = parseFundamentalsData(response.raw, response);
+                fundamentals.push(response)
                 waitForEl("#h_earnings", displayFundamentals, 30); 
             }
-        })
+        });
     }
-
 
     prepare();
     displayWaiting();
@@ -483,7 +492,7 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
             descriptionInterval = false && setInterval(copyOnDocumentFocus, 300);
         </script>
         `;
-    return (default_ds == 1) ? html : (tabs + html);
+    return html; // (default_ds == 1) ? html : (tabs + html);
 }
 
 function epsDatesToHtml(epsDates) {
@@ -704,7 +713,7 @@ function hideContent() {
     if (default_ds == 1) {
         // SA
         $('header').hide();
-        $('nav[aria-label="Main"]').children().hide();
+        $('nav[aria-label="Main"] div').hide();
         $('#main-nav-wrapper-row').hide();
         $('#tab-content-header').hide();
         $('#sp-center-menu').hide();
@@ -1097,4 +1106,159 @@ class Year {
         this.eps = eps;
         this.rev = rev;
     }
+}
+
+
+function parseFundamentalsData(raw, results) {
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(raw, 'text/html');
+
+    const tickerNode = dom.querySelector('.fullview-ticker');
+    results.ticker = tickerNode.textContent;
+    results.tickerHref = fixExternalLink(tickerNode.getAttribute('href'));
+    results.exchange = tickerNode.nextElementSibling.textContent;
+
+    const secondRowNode = tickerNode.parentElement.parentElement.nextElementSibling;
+    const siteNode = secondRowNode.querySelector('a');
+    results.site = siteNode.outerHTML;
+    results.companyName = siteNode.textContent;
+
+    const thirdRowNode = secondRowNode.nextElementSibling;
+    const thirdRowLinks = thirdRowNode.querySelectorAll('a');
+    results.sector = thirdRowLinks[0].textContent;
+    results.sectorHref = fixExternalLink(thirdRowLinks[0].getAttribute('href'));
+    results.industry = thirdRowLinks[1].textContent;
+    results.industryHref = fixExternalLink(thirdRowLinks[1].getAttribute('href'));
+    results.country = thirdRowLinks[2].textContent;
+    results.countryHref = fixExternalLink(thirdRowLinks[2].getAttribute('href'));
+
+    const tds = Array.from(dom.querySelectorAll('td'));
+    results.shorts = getSiblingText(tds, 'Short Float');
+    results.daystocover = getSiblingText(tds, 'Short Ratio');
+    results.float = getSiblingText(tds, 'Shs Float');
+    processEarnings(getSiblingText(tds, 'Earnings'), results);
+    results.mktcap = getSiblingText(tds, 'Market Cap');
+    results.adr = getSiblingText(tds, 'Volatility').split(' ')[1];
+    results.instown = getSiblingText(tds, 'Inst Own');
+    results.instchange = getSiblingText(tds, 'Inst Trans');
+    results.relvolume = getSiblingText(tds, 'Rel Volume');
+    results.avgvolume = getSiblingText(tds, 'Avg Volume');
+    
+    results.description = dom.querySelector('.fullview-profile').textContent;
+    if (isDefined(results.companyName)) {
+        const regex = new RegExp('^'+results.companyName+',? (together with its subsidiaries, )?(through its subsidiaries, )?');
+        results.description = results.description.replace(regex, '');
+    }
+
+    results.ratings = dom.querySelector('.fullview-ratings-outer').outerHTML;
+    results.ratings = results.ratings.replace(/<\/?b>/g, '');
+
+    results.news = dom.querySelector('.fullview-news-outer').outerHTML;
+    
+    const bds = dom.querySelectorAll('.body-table');
+    results.insiders = bds[bds.length-1].outerHTML;
+
+    return results;
+}
+
+// Chrome prepends chrome-extension://adcd/
+// Firefox prepends mozilla-extension://uuid/
+function fixExternalLink(str) {
+    let res = str.replace(CHROME_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
+    res = res.replace(FIREFOX_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
+    if (! res.startsWith('http')) res = decode(FETCH_URL_PREFIX) + res;
+    return res;
+}
+
+// remove onmouse* events from insiders
+// prepend URL_PREFIX
+function processInsiders(str) {
+    if (!isDefined(str)) { return undefined; }
+    let removed = str.replace(/ on\w+="[^"]*"/g, '');
+    removed = removed.replace(/insidertrading\.ashx/g, decode(FETCH_URL_PREFIX) + "insidertrading.ashx");
+    return removed;
+}
+
+function processEarnings(str, results) {
+    results.earnings = str;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const parts = str.split(' ')
+    if (parts.length < 2) { return undefined; }
+    const earningsMonth = REVERSE_MONTH_MAP[parts[0]];
+    const earningsDate = new Date(today.getFullYear(), earningsMonth, parts[1]);
+    earningsDate.setHours(0,0,0,0);
+
+    if (earningsDate.getTime() < today.getTime()) {
+        results.earnings = '-';
+        return;
+    }
+
+    // if earnings month is 9,10,11 and today's months is 0,1,2 set earnings date to previous year
+    if ((earningsMonth == 9 || earningsMonth == 10 || earningsMonth == 11) &&
+        (today.getMonth() == 0 || today.getMonth == 1 || today.getMonth == 2)) {
+        earningsDate.setFullYear(today.getFullYear() - 1);
+    }
+
+    results.earningsDate = earningsDate;
+    if (today.getFullYear() != earningsDate.getFullYear()) {
+        results.daysToEarnings = 185;
+    }
+    else {
+        results.daysToEarnings = getWorkingDays(today, earningsDate);
+    }
+}
+
+function getWorkingDays(startDate, endDate) {
+    var numWorkDays = 0;
+    var currentDate = new Date(startDate);
+    while (currentDate < endDate) {
+        // Skips Sunday and Saturday
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+            numWorkDays++;
+        }
+        currentDate = currentDate.addDays(1);
+    }
+    return numWorkDays;
+}
+
+Date.prototype.addDays = function (days) {
+    let date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+};
+
+function arrayBufferToBase64(buffer) {
+    if (!buffer || buffer.length == 0) { return undefined; }
+    let binary = '';
+    let bytes = new Uint8Array(buffer);
+    let len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+}
+
+function decode(str) {
+    if (!isDefined(str)) { return undefined; }
+    return decodeURIComponent(escape(atob(str)));
+}
+
+function getSymbol(url) {
+    // extract current symbol from url
+    let res = SA_REGEX.exec(url);
+    if (res != null) {
+        return res[1];
+    } else {
+        res = ZA_REGEX.exec(url);
+        if (res != null) {
+            return res[1];
+        }
+    }
+    return undefined;
+}
+
+function getSiblingText(arr, txt) {
+   return arr[arr.findIndex(el => el.textContent === txt) + 1].textContent; 
 }

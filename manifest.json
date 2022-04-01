@@ -1,5 +1,5 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "Corporate Earnings",
     "version": "2.4.0",
     "description": "Displays corporate earnings in the easy to analyze format",
@@ -16,24 +16,21 @@
             "run_at": "document_end"
         }
     ],
-    "browser_action": {
+    "action": {
         "default_icon": "src/images/icon.png",
         "default_popup": "src/html/popup.html"
     },
     "options_ui": {
-        "page": "src/html/options.html",
-        "chrome_style": false
+        "page": "src/html/options.html"
     },
-    "background": { 
-        "scripts": [
-            "src/js/jquery-3.6.0.min.js",
-            "src/js/background.js"
-        ],
-        "persistent": false 
+    "background": {
+        "service_worker": "src/js/background.js"
     },
-    "permissions": [ 
+    "permissions": [
         "storage",
-        "tabs",
+        "tabs"
+    ],
+    "host_permissions": [
         "https://*.finviz.com/*"
     ]
 }
