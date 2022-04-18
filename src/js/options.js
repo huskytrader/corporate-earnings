@@ -11,12 +11,9 @@ var ms_style_output = true;
 var limit_num_qtr = true;
 var default_ds = 1;
 
-
-$(document).ready(init);
-
-function init() {
+document.addEventListener("DOMContentLoaded", () => {
   restore_options();
-}
+});
 
 // Restores checkbox state using the options stored in chrome.storage.
 function restore_options() {
@@ -38,64 +35,64 @@ function restore_options() {
 }
 
 function restore_ui() {
-  $('#enable_copy_on_click').prop('checked', enable_copy_on_click);
-  $('#copy_type_'+data_to_copy).prop('checked', true);
-  $('#fetch_fundamental_data').prop('checked', fetch_fundamental_data);
-  $('#chart_type_'+chart_type).prop('checked', true);
-  $('#show_earnings_surprise').prop('checked', show_earnings_surprise);
-  $('#open_new_tab').prop('checked', open_new_tab);
-  $('#ms_style_output').prop('checked', ms_style_output);
-  $('#limit_num_qtr').prop('checked', limit_num_qtr);
+  document.getElementById('enable_copy_on_click').checked = enable_copy_on_click;
+  document.getElementById('copy_type_'+data_to_copy).checked = true;
+  document.getElementById('fetch_fundamental_data').checked = fetch_fundamental_data;
+  document.getElementById('chart_type_'+chart_type).checked = true;
+  document.getElementById('show_earnings_surprise').checked = show_earnings_surprise;
+  document.getElementById('open_new_tab').checked = open_new_tab;
+  document.getElementById('ms_style_output').checked = ms_style_output;
+  document.getElementById('limit_num_qtr').checked = limit_num_qtr;
   if (default_ds == 2) {
-    $('#ds_two').prop('checked', true);
+    document.getElementById('ds_two').checked = true;
   }
   else {
-    $('#ds_one').prop('checked', true);
+    document.getElementById('ds_one').checked = true;
   }
 
   // attach event handlers
-  $('.checkbox').change(save_options);
-  $('#ds-switch').change(save_options);
-  $('#chart-select').change(save_options);
-  $('#copy-on-click-select').change(save_options);
+  document.querySelector('.checkbox').addEventListener('change', save_options);
+  document.querySelector('#ds-switch').addEventListener('change', save_options);
+  document.querySelector('#chart-select').addEventListener('change', save_options);
+  document.querySelector('#copy-on-click-select').addEventListener('change', save_options);
 
   // set version
-  $('#version').text(chrome.runtime.getManifest().version);
+  document.getElementById('version').textContent = chrome.runtime.getManifest().version;
 
   // show/hide chart selector
   if (fetch_fundamental_data == true) {
-    $('#chart-select').show();
+    show(document.getElementById("chart-select"));
   }
   else {
-    $('#chart-select').hide();
+    hide(document.getElementById("chart-select"));
   }
 
   // show/hide copy selector
   if (enable_copy_on_click == true) {
-    $('#copy-on-click-select').show();
+    show(document.getElementById("copy-on-click-select"));
   }
   else {
-    $('#copy-on-click-select').hide();
+    hide(document.getElementById("copy-on-click-select"));
   }
 }
 
 // Saves options to storage
 function save_options() {
-  let enable_copy_on_click = $('#enable_copy_on_click').is(":checked");
-  let fetch_fundamental_data = $('#fetch_fundamental_data').is(":checked");
-  let show_earnings_surprise = $('#show_earnings_surprise').is(":checked");
-  let open_new_tab = $('#open_new_tab').is(":checked");
-  let ms_style_output = $('#ms_style_output').is(":checked");
-  let limit_num_qtr = $('#limit_num_qtr').is(":checked");
+  let enable_copy_on_click = document.getElementById('enable_copy_on_click').checked;
+  let fetch_fundamental_data = document.getElementById('fetch_fundamental_data').checked;
+  let show_earnings_surprise = document.getElementById('show_earnings_surprise').checked;
+  let open_new_tab = document.getElementById('open_new_tab').checked;
+  let ms_style_output = document.getElementById('ms_style_output').checked;
+  let limit_num_qtr = document.getElementById('limit_num_qtr').checked;
   let default_ds = 1;
-  if ($('#ds_one').is(":checked")) {
+  if (document.getElementById('ds_one').checked) {
     default_ds = 1;
   }
-  else if ($('#ds_two').is(":checked")) {
+  else if (document.getElementById('ds_two').checked) {
     default_ds = 2;
   }
-  let chart_type = $("input[name='chart']:checked").val();
-  let copy_type = $("input[name='copy']:checked").val();
+  let chart_type = document.querySelector('input[name="chart"]:checked').value;
+  let copy_type = document.querySelector('input[name="copy"]:checked').value;
   
   chrome.storage.local.set({
     enable_copy_on_click: enable_copy_on_click,
@@ -110,21 +107,32 @@ function save_options() {
   });
 
   if (fetch_fundamental_data == false) {
-    $('#chart-select').hide();
+    hide(document.getElementById("chart-select"));
   }
   else {
-    $('#chart-select').show();
+    show(document.getElementById("chart-select"));
   }
 
    // show/hide copy selector
   if (enable_copy_on_click == false) {
-    $('#copy-on-click-select').hide();
+    hide(document.getElementById("copy-on-click-select"));
   }
   else {
-    $('#copy-on-click-select').show();
+    show(document.getElementById("copy-on-click-select"));
   }
 }
 
 function isDefined(smth) {
     return typeof smth !== 'undefined';
+}
+
+const hide = (element) => {
+    if (element != null && element.style != null)
+        element.style.display = "none";
+}
+
+// show an element
+const show = (element) => {
+    if (element != null && element.style != null)
+        element.style.display = "block";    
 }

@@ -8,10 +8,10 @@ chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
     if (isDefined(options.default_ds)) {default_ds = options.default_ds;}
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-    $("#symbol").focus();
-    $("#symbol").on('keyup', function (e) {
-      if (e.key === 'Enter' || e.keyCode === 13) {
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("symbol").focus();
+    document.getElementById("symbol").addEventListener("keyup", event => {
+      if (event.key === 'Enter' || event.keyCode === 13) {
         handleSubmit();
       }
     });
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function handleSubmit() {
     let stockRegex = /^[a-zA-Z\s]*$/;
-    let symbol = $("#symbol").val().trim();
+    let symbol = document.getElementById("symbol").value
     if (symbol==null || symbol=="") {
         alert("Symbol must not be blank");
         return;
@@ -44,7 +44,7 @@ function handleSubmit() {
             let tab = tabs[0];
             chrome.tabs.update(tab.id, {url: targetUrl});
         });
-        $("#symbol").select();
+        document.getElementById("symbol").focus();
     }
 }
 

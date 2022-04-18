@@ -108,23 +108,24 @@ chrome.storage.local.get(['enable_copy_on_click',
         });
     }
 
-    prepare();
+    insertCSS();
     displayWaiting();
 
     if (default_ds == 1) {
         // SA
-        const noData = $(document).find('#history .no-data').length == 1;
-        if(noData) {
-            $('#waiting').hide();
-            $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
-            return;
-        }   
-        waitForEl('div>:contains("FQ1")', displayEarnings, 30);
+        //const noData = document.querySelector('#history .no-data') == null;
+        //if(noData) {
+        //    hide(document.querySelector('#waiting'));
+        //    bodyPrepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+        //    return;
+        //}   
+        waitForEarningsData(displayEarnings, 30);
     }
     else if (default_ds == 2) {
+        displayEarnings(true);
         // ZA
-        extractAndProcess();
-        displayContent();
+        //extractAndProcess();
+        //displayContent();
     }
  });
 
@@ -136,52 +137,73 @@ chrome.storage.local.get(['enable_copy_on_click',
  * Wait for the specified element to appear in the DOM. When the element appears,
  * provide it to the callback. Will wait additional 250ms where callback.
  *
- * @param selector a jQuery selector (eg, 'div.container img')
+ * @param selector 
  * @param callback function that takes selected element (null if timeout)
  * @param maxtries number of times to try (return null after maxtries, false to disable, if 0 will still try once)
  * @param interval ms wait between each try
  */
-function waitForEl(selector, callback, maxtries = false, interval = 100) {
+function waitForEarningsData(callback, maxtries = false, interval = 100) {
   const poller = setInterval(() => {
-    const el = jQuery(selector);
+    const isContains = contains('span', 'Earnings history')
     const retry = maxtries === false || maxtries-- > 0;
-    if (retry && el.length < 1) return; // will try again
+    if (retry && !isContains) return; // will try again
     clearInterval(poller);
     setTimeout(function() {
-            callback(el || null);
+            callback(isContains);
+    }, 1000);
+  }, interval);
+}
+
+function waitForEl(el, callback, maxtries = false, interval = 100) {
+  const poller = setInterval(() => {
+    const isContains = document.querySelector(el)
+    const retry = maxtries === false || maxtries-- > 0;
+    if (retry && !isContains) return; // will try again
+    clearInterval(poller);
+    setTimeout(function() {
+            callback(isContains);
     }, 1000);
   }, interval);
 }
 
 function displayFundamentals(el) {
-    if (fundamentals.length > 0) {
-       $('<div class="f_container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
+    if (fundamentals.length > 0) {        
+       let html = '<div class="f_container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
                                                                                         enable_copy_on_click, 
                                                                                         data_to_copy == 1) + 
-       '</div></div>').insertAfter('#h_earnings');  
+       '</div></div>';  
+
+        if (document.querySelector('#h_earnings'))
+            document.querySelector('#h_earnings').insertAdjacentHTML('beforeend', html);
+
     } 
 }
 
-function displayEarnings(el) {
-    if(el == null) {
-        $('#waiting').hide();
-        $('body').prepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+function displayEarnings(isContains) {
+    if(!isContains) {
+        hide(document.querySelector('#waiting'));
+        bodyPrepend('<div class="mymsg">No earnings data available for this symbol.</div>');
         return;
     }
     extractAndProcess();
+    hideClientContent()
     displayContent();
 }
 
 function displayWaiting() {
-    $('body').prepend('<div class="container" id="waiting"><p class="loading_msg">Loading earnings data</p></div>');
+    bodyPrepend('<div class="container" id="waiting"><p class="loading_msg">Loading</p></div>');
 }
 
-function prepare() {
+function insertCSS() {
     const css = `<style>
     .mymsg, #waiting {
-       padding: 20px;
        font-size: 1em;
        font-style: italic;
+       z-index: 9999;
+       color: #39ff14;
+       background-color: #000000;
+       padding: 20px;
+       font-weight: bold;
     }
     .myt {
        float: left;
@@ -375,8 +397,7 @@ function prepare() {
         }
     }   
     </style>`;
-    hideContent();
-    $('head').prepend(css);
+    headPrepend(css);
 }
 
 //
@@ -385,35 +406,13 @@ function prepare() {
 //
 //
 function displayContent() {
-    $('#waiting').hide();
-    $('body').prepend('<div id="h_earnings" class="e_container">' + 
+    hide(document.querySelector('#waiting'));
+    bodyPrepend('<div id="h_earnings" class="e_container">' + 
         '<div class="e_inner"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + 
         '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div></div>');
 }
 
 function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
-    const tabs = `
-        <style>
-            /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
-            [role=tablist]{border-bottom:1px solid #d3d3d3;list-style:none;margin:0;padding:0}[role=tablist] *{box-sizing:border-box}@media (min-width:30em){[role=tablist] li{display:inline-block}}[role=tab]{border:1px solid transparent;border-top-color:#d3d3d3;display:block;padding:.5em 1em;text-decoration:none}@media (min-width:30em){[role=tab]{border-top-color:transparent;border-top-left-radius:.5em;border-top-right-radius:.5em;display:inline-block;margin-bottom:-1px}}[role=tab][aria-selected=true]{background-color:#d3d3d3}@media (min-width:30em){[role=tab][aria-selected=true]{background-color:transparent;border:1px solid #d3d3d3;border-bottom-color:#fff}}[role=tab]:hover:not([aria-selected=true]){background-color:#f7f7f7}@media (min-width:30em){[role=tab]:hover:not([aria-selected=true]){border:1px solid #d3d3d3}}[hidden]{display:none}
-        </style>
-        <script>
-            /*! tabbyjs v12.0.3 | (c) 2019 Chris Ferdinandi | MIT License | http://github.com/cferdinandi/tabby */
-            Element.prototype.matches||(Element.prototype.matches=Element.prototype.msMatchesSelector||Element.prototype.webkitMatchesSelector),Element.prototype.closest||(Element.prototype.matches||(Element.prototype.matches=Element.prototype.msMatchesSelector||Element.prototype.webkitMatchesSelector),Element.prototype.closest=function(e){var t=this;if(!document.documentElement.contains(this))return null;do{if(t.matches(e))return t;t=t.parentElement}while(null!==t);return null}),(function(e,t){"function"==typeof define&&define.amd?define([],(function(){return t(e)})):"object"==typeof exports?module.exports=t(e):e.Tabby=t(e)})("undefined"!=typeof global?global:"undefined"!=typeof window?window:this,(function(e){"use strict";var t={idPrefix:"tabby-toggle_",default:"[data-tabby-default]"},r=function(t){if(t&&"true"!=t.getAttribute("aria-selected")){var r=document.querySelector(t.hash);if(r){var o=(function(e){var t=e.closest('[role="tablist"]');if(!t)return{};var r=t.querySelector('[role="tab"][aria-selected="true"]');if(!r)return{};var o=document.querySelector(r.hash);return r.setAttribute("aria-selected","false"),r.setAttribute("tabindex","-1"),o?(o.setAttribute("hidden","hidden"),{previousTab:r,previousContent:o}):{previousTab:r}})(t);!(function(e,t){e.setAttribute("aria-selected","true"),e.setAttribute("tabindex","0"),t.removeAttribute("hidden"),e.focus()})(t,r),o.tab=t,o.content=r,(function(t,r){var o;"function"==typeof e.CustomEvent?o=new CustomEvent("tabby",{bubbles:!0,cancelable:!0,detail:r}):(o=document.createEvent("CustomEvent")).initCustomEvent("tabby",!0,!0,r),t.dispatchEvent(o)})(t,o)}}},o=function(e,t){var o=(function(e){var t=e.closest('[role="tablist"]'),r=t?t.querySelectorAll('[role="tab"]'):null;if(r)return{tabs:r,index:Array.prototype.indexOf.call(r,e)}})(e);if(o){var n,i=o.tabs.length-1;["ArrowUp","ArrowLeft","Up","Left"].indexOf(t)>-1?n=o.index<1?i:o.index-1:["ArrowDown","ArrowRight","Down","Right"].indexOf(t)>-1?n=o.index===i?0:o.index+1:"Home"===t?n=0:"End"===t&&(n=i),r(o.tabs[n])}};return function(n,i){var a,l,u={};u.destroy=function(){var e=l.querySelectorAll("a");Array.prototype.forEach.call(e,(function(e){var t=document.querySelector(e.hash);t&&(function(e,t,r){e.id.slice(0,r.idPrefix.length)===r.idPrefix&&(e.id=""),e.removeAttribute("role"),e.removeAttribute("aria-controls"),e.removeAttribute("aria-selected"),e.removeAttribute("tabindex"),e.closest("li").removeAttribute("role"),t.removeAttribute("role"),t.removeAttribute("aria-labelledby"),t.removeAttribute("hidden")})(e,t,a)})),l.removeAttribute("role"),document.documentElement.removeEventListener("click",c,!0),l.removeEventListener("keydown",s,!0),a=null,l=null},u.setup=function(){if(l=document.querySelector(n)){var e=l.querySelectorAll("a");l.setAttribute("role","tablist"),Array.prototype.forEach.call(e,(function(e){var t=document.querySelector(e.hash);t&&(function(e,t,r){e.id||(e.id=r.idPrefix+t.id),e.setAttribute("role","tab"),e.setAttribute("aria-controls",t.id),e.closest("li").setAttribute("role","presentation"),t.setAttribute("role","tabpanel"),t.setAttribute("aria-labelledby",e.id),e.matches(r.default)?e.setAttribute("aria-selected","true"):(e.setAttribute("aria-selected","false"),e.setAttribute("tabindex","-1"),t.setAttribute("hidden","hidden"))})(e,t,a)}))}},u.toggle=function(e){var t=e;"string"==typeof e&&(t=document.querySelector(n+' [role="tab"][href*="'+e+'"]')),r(t)};var c=function(e){var t=e.target.closest(n+' [role="tab"]');t&&(e.preventDefault(),r(t))},s=function(e){var t=document.activeElement;t.matches(n+' [role="tab"]')&&(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Up","Down","Left","Right","Home","End"].indexOf(e.key)<0||o(t,e.key))};return a=(function(){var e={};return Array.prototype.forEach.call(arguments,(function(t){for(var r in t){if(!t.hasOwnProperty(r))return;e[r]=t[r]}})),e})(t,i||{}),u.setup(),(function(t){if(!(e.location.hash.length<1)){var o=document.querySelector(t+' [role="tab"][href*="'+e.location.hash+'"]');r(o)}})(n),document.documentElement.addEventListener("click",c,!0),l.addEventListener("keydown",s,!0),u}}));
-            var f_tabs = new Tabby('[data-tabs]');
-        </script>
-        <ul data-tabs>
-            <li><a data-tabby-default href="#f_fundamentals" onmouseover="f_tabs.toggle('#f_fundamentals')">Fundamentals</a></li>
-            ${ chart_type != CHART_TYPE.NONE ?
-                '<li><a href="#f_chart" onmouseover="f_tabs.toggle(\'#f_chart\')">Chart</a></li>'
-                : ''
-            }
-            <li><a href="#f_ratings" onmouseover="f_tabs.toggle('#f_ratings')">Ratings</a></li>
-            <li><a href="#f_news" onmouseover="f_tabs.toggle('#f_news')">News</a></li>
-            <li><a href="#f_insiders" onmouseover="f_tabs.toggle('#f_insiders')">Insiders</a></li>
-        </ul>
-    `;
-
     const html = `
         <div class="data-tab" id="f_fundamentals">  
             <table class="myf"><tbody>
@@ -476,7 +475,7 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
                 }
             } 
             function copyDescription(short_description) {
-                let desc = $(".fv_description").text();
+                let desc = document.querySelector('.fv_description').textContent
                 const match = /\\.\ [A-Z]/.exec(desc);
                 if (short_description && match) {
                     desc = desc.substr(0, match.index);
@@ -492,7 +491,7 @@ function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
             descriptionInterval = false && setInterval(copyOnDocumentFocus, 300);
         </script>
         `;
-    return html; // (default_ds == 1) ? html : (tabs + html);
+    return html;
 }
 
 function epsDatesToHtml(epsDates) {
@@ -709,45 +708,47 @@ function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
 //
 // extraction/preparation
 //
-function hideContent() {
+function hideClientContent() {
     if (default_ds == 1) {
         // SA
-        $('header').hide();
-        $('nav[aria-label="Main"] div').hide();
-        $('#main-nav-wrapper-row').hide();
-        $('#tab-content-header').hide();
-        $('#sp-center-menu').hide();
-        $('.symbol_title').hide();
-        $('#estimates').hide();
-        $('#cresscap').hide();
-        $('.panel-body').hide();
-        $('#breaking-news').hide();
-        $('.col-xs-3').hide();
+        hide(document.querySelector('#root'));
+        hide(document.querySelector('nav[aria-label="Main"] div'))
+        hide(document.querySelector('#main-nav-wrapper-row'));
+        hide(document.querySelector('#tab-content-header'));
+        hide(document.querySelector('#sp-center-menu'));
+        hide(document.querySelector('.symbol_title'));
+        hide(document.querySelector('#estimates'));
+        hide(document.querySelector('#cresscap'));
+        hide(document.querySelector('.panel-body'));
+        hide(document.querySelector('#breaking-news'));
+        hide(document.querySelector('.col-xs-3'));
     }
     else if (default_ds == 2) {
         //ZA
-        $('header.primary-nav--content').hide();
-        $('.header-logos').hide();
-        $('.user-menu_list').hide();
-        $('.clearfix top-header-section').hide();
-        $('#quote_ribbon_v2').hide();
-        $('#quote_sidebar_toggle+nav.left_subnav').hide();
-        $('.quote_body').hide();
-        $('.reserach_reports_cta_v2').hide();
-        $('.quote_body_full nav').hide();
-        $('#banner a').hide()
-        $('iframe').hide();
-        $('footer').hide();
-        $('.disclosure-fixed-slab').hide();
+        hide(document.querySelector('header'));
+        hide(document.querySelector('.primary-nav--content'));
+        hide(document.querySelector('#primary'));
+        hide(document.querySelector('.header-logos'));
+        hide(document.querySelector('.user-menu_list'));
+        hide(document.querySelector('.clearfix top-header-section'));
+        hide(document.querySelector('#quote_ribbon_v2'));
+        hide(document.querySelector('#quote_sidebar_toggle+nav.left_subnav'));
+        hide(document.querySelector('.quote_body'));
+        hide(document.querySelector('.reserach_reports_cta_v2'));
+        hide(document.querySelector('.quote_body_full nav'));
+        hide(document.querySelector('#banner a'));
+        hide(document.querySelector('iframe'));
+        hide(document.querySelector('footer'));
+        hide(document.querySelector('div.disclosure-fixed-slab'));
     }
 }
 
 function collectChildText(elem) {
     let rows = [];
-    elem.children().each(function() {
+    Array.from(elem.children).forEach((child) => {
         let cells = [];
-        $(this).children().each(function() {
-            cells.push($(this).text());
+        Array.from(child.children).forEach((subChild) => {
+            cells.push(subChild.textContent);
         });
         if (cells.length > 0 && cells[0] != '') {
             rows.push(cells);
@@ -760,14 +761,15 @@ function extractAndProcess() {
     if (default_ds == 1) {
         // add quarters
         let dataBlockCount = 1;
-        $('[data-test-id="table-body"]').each(function() {
+        const blocks = document.querySelectorAll('[data-test-id="table-body"]')
+        blocks.forEach(block => {
             let rows = [];
             switch(dataBlockCount++) {
                 case 1:
                     break;
                 case 2: 
                     // eps estimates
-                    rows = collectChildText($(this));
+                    rows = collectChildText(block);
                     for (const row of rows) {
                         if (!isDefined(row[0]) || row[0] == '') continue;
                         let year = new Year(
@@ -780,7 +782,7 @@ function extractAndProcess() {
                     break;
                 case 3: 
                     // revenue estimates
-                    rows = collectChildText($(this));
+                    rows = collectChildText(block);
                     for (const row of rows) {
                         if (!isDefined(row[0]) || row[0] == '') continue;
                         let yearInt = getAnnualEstimateYear(row[0]);
@@ -800,7 +802,7 @@ function extractAndProcess() {
                     break;
                 case 4:
                     // earnings data
-                    rows = collectChildText($(this));
+                    rows = collectChildText(block);
                     for (const row of rows) {
                         if (!isDefined(row[0]) || row[0] == '' || !row[0].includes('FQ')) continue;
                         let q = new SAQarter(row);
@@ -813,11 +815,11 @@ function extractAndProcess() {
         });  
     }
     else if (default_ds == 2) {
-        let data = $('#earnings_announcements_tabs').next().html().trim();
-        data = data.substr(data.indexOf('{'));
-        data = data.substr(0, data.lastIndexOf('}')+1);
-        let dataObj = JSON.parse(data);
-        dataObj.earnings_announcements_earnings_table.forEach(function(item, index){
+        let json = document.querySelector('#earnings_announcements_tabs').nextElementSibling.innerHTML.trim()
+        json = json.substr(json.indexOf('{'));
+        json = json.substr(0, json.lastIndexOf('}')+1);
+        let dataObj = JSON.parse(json);
+        dataObj.earnings_announcements_earnings_table.forEach(item => {
             let quarter = new ZAQarter(
                 item[0],
                 item[1],
@@ -1150,8 +1152,7 @@ function parseFundamentalsData(raw, results) {
         results.description = results.description.replace(regex, '');
     }
 
-    results.ratings = dom.querySelector('.fullview-ratings-outer').outerHTML;
-    results.ratings = results.ratings.replace(/<\/?b>/g, '');
+    results.ratings = transformRatingsData(dom.querySelector('.fullview-ratings-outer').outerHTML);
 
     results.news = dom.querySelector('.fullview-news-outer').outerHTML;
     
@@ -1159,6 +1160,38 @@ function parseFundamentalsData(raw, results) {
     results.insiders = bds[bds.length-1].outerHTML;
 
     return results;
+}
+
+const transformRatingsData = (html) => {
+    html = html.replace(/<\/?b>/g, '')
+    const parser = new DOMParser()
+    const dom = parser.parseFromString(html, 'text/html')
+    const ratingsNodes = dom.querySelectorAll('table table')   
+    let result = ''
+    result = '<table id="ht-ratings">\n'
+    for (const ratingsNode of ratingsNodes) {
+        let ratingsRow = ratingsNode.querySelector('tr')
+        let rowClass = ratingsRow.getAttribute('class')
+        let highlightClass = ''
+        switch(rowClass.trim()) {
+            case 'body-table-rating-downgrade':
+                highlightClass = 'ht-ratings-downgrade'
+                break
+            case 'body-table-rating-upgrade':
+                highlightClass = 'ht-ratings-upgrade'
+                break
+        }
+        result += '<tr'
+        if (highlightClass != '') result += ' class="' + highlightClass + '"'
+        result += '>\n'    
+        let cells = ratingsNode.querySelectorAll('td')
+        for (let cellNode of cells) {
+            result += '<td>' + cellNode.innerHTML + '</td>\n'
+        }
+        result += '</tr>\n'
+    }
+    result += '</table>\n'
+    return result  
 }
 
 // Chrome prepends chrome-extension://adcd/
@@ -1261,4 +1294,42 @@ function getSymbol(url) {
 
 function getSiblingText(arr, txt) {
    return arr[arr.findIndex(el => el.textContent === txt) + 1].textContent; 
+}
+
+const bodyPrepend = (html) => {
+    document.body.insertAdjacentHTML('afterbegin', html);
+}
+
+const headPrepend = (html) => {
+    document.head.insertAdjacentHTML('afterbegin', html);
+}
+
+const hide = (element) => {
+    if (element != null && element.style != null)
+        element.style.display = "none";
+}
+
+// show an element
+const show = (element) => {
+    if (element != null && element.style != null)
+        element.style.display = "block";    
+}
+
+// toggle the element visibility
+const toggle = (element) => {
+    if (element != null && element.style != null) {
+        if(element.style.display === "none"){
+            element.style.display = "block";
+        }else{
+            element.style.display = "none";
+        }
+    }
+    //elem.classList.toggle('hidden');
+}
+
+const contains = (selector, text) => {
+  const elements = document.querySelectorAll(selector)
+  return [].filter.call(elements, (element) => {
+    return element.textContent.includes(text)
+  }).length > 0
 }
