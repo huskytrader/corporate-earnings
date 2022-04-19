@@ -61,13 +61,8 @@ const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
 
-
-// init options to default values
-var enable_copy_on_click = false;
-// chart type: 1=desc first sentence, 2=full desc
-var data_to_copy = 1;
-var fetch_fundamental_data = false;
-var chart_type = 1;
+var fetch_fundamental_data = true;
+var chart_type = CHART_TYPE.DAILY;
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
@@ -76,20 +71,16 @@ var limit_num_qtr = true;
 // init data structures
 var epsDates = [];
 var annualEst = [];
-var fundamentals = [];
+var fundamentals = {};
 
-chrome.storage.local.get(['enable_copy_on_click', 
-                          'data_to_copy',
-                          'chart_type', 
+chrome.storage.local.get(['chart_type', 
                           'fetch_fundamental_data', 
                           'show_earnings_surprise', 
                           'ms_style_output', 
                           'limit_num_qtr', 
                           'default_ds'], 
                           function(options) {
-
-    if (isDefined(options.enable_copy_on_click)) {enable_copy_on_click = options.enable_copy_on_click;}
-    if (isDefined(options.data_to_copy)) {data_to_copy = options.data_to_copy;}                        
+                   
     if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
     if (isDefined(options.chart_type)) { chart_type = options.chart_type; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
@@ -101,9 +92,8 @@ chrome.storage.local.get(['enable_copy_on_click',
     if (fetch_fundamental_data == true) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
-                response = parseFundamentalsData(response.raw, response);
-                fundamentals.push(response)
-                waitForEl("#h_earnings", displayFundamentals, 30); 
+                processFundamentalsData(response, fundamentals);
+                waitForEl("#ht-earnings-quarterly", displayFundamentals, 30); 
             }
         });
     }
@@ -113,12 +103,6 @@ chrome.storage.local.get(['enable_copy_on_click',
 
     if (default_ds == 1) {
         // SA
-        //const noData = document.querySelector('#history .no-data') == null;
-        //if(noData) {
-        //    hide(document.querySelector('#waiting'));
-        //    bodyPrepend('<div class="mymsg">No earnings data available for this symbol.</div>');
-        //    return;
-        //}   
         waitForEarningsData(displayEarnings, 30);
     }
     else if (default_ds == 2) {
@@ -128,10 +112,6 @@ chrome.storage.local.get(['enable_copy_on_click',
         //displayContent();
     }
  });
-
-//
-// end of main
-//
 
 /**
  * Wait for the specified element to appear in the DOM. When the element appears,
@@ -167,22 +147,53 @@ function waitForEl(el, callback, maxtries = false, interval = 100) {
 }
 
 function displayFundamentals(el) {
-    if (fundamentals.length > 0) {        
-       let html = '<div class="f_container"><div colspan="2" class="column">' + fundamentalsToHtml(fundamentals[0], 
-                                                                                        enable_copy_on_click, 
-                                                                                        data_to_copy == 1) + 
-       '</div></div>';  
+    if (!isDefined(fundamentals.ticker)) return      
 
-        if (document.querySelector('#h_earnings'))
-            document.querySelector('#h_earnings').insertAdjacentHTML('beforeend', html);
+    const companyHtml = `<a href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> (${fundamentals.ticker})
+                    ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
+                    `;
+    document.getElementById('ht-company').innerHTML = companyHtml;
+    document.getElementById('ht-description').innerHTML = fundamentals.description;
+    document.getElementById('ht-fundamentals-mktcap').innerHTML = fundamentals.mktcap;
+    document.getElementById('ht-fundamentals-adr').innerHTML = fundamentals.adr;
+    document.getElementById('ht-fundamentals-float').innerHTML = fundamentals.float;
+    document.getElementById('ht-fundamentals-earnings').innerHTML = fundamentals.earnings;
+    document.getElementById('ht-fundamentals-shortfloat').innerHTML = fundamentals.shorts;
+    document.getElementById('ht-fundamentals-instown').innerHTML = fundamentals.instown;
+    document.getElementById('ht-fundamentals-daystocover').innerHTML = fundamentals.daystocover;
+    document.getElementById('ht-fundamentals-instrans3mo').innerHTML = fundamentals.instchange;
+    document.getElementById('ht-fundamentals-avgvol').innerHTML = fundamentals.avgvolume;
+    document.getElementById('ht-fundamentals-relvol').innerHTML = fundamentals.relvolume;
 
-    } 
+    document.getElementById('ht-ratings-cell').innerHTML = fundamentals.ratingsHtml;
+    document.getElementById('ht-news-cell').innerHTML = fundamentals.newsHtml;
+    document.getElementById('ht-insiders-cell').innerHTML = fundamentals.insidersHtml;
+
+
+    if (chart_type == CHART_TYPE.WEEKLY || chart_type == CHART_TYPE.BOTH) {
+        let weekly = '';
+        if (isDefined(fundamentals.weeklyChart)) 
+            weekly = '<img src="data:image/png;base64, ' + fundamentals.weeklyChart + '" alt="' + fundamentals.ticker + ' chart"/>';
+        else 
+            weekly = 'No weekly chart available';
+
+        document.getElementById('ht-chart-weekly').innerHTML = weekly;
+    }  
+    if (chart_type == CHART_TYPE.DAILY || chart_type == CHART_TYPE.BOTH) {
+        let daily = '';
+        if (isDefined(fundamentals.dailyChart)) 
+            daily = '<img src="data:image/png;base64, ' + fundamentals.dailyChart + '" alt="' + fundamentals.ticker + ' chart"/>';
+        else 
+            daily = 'No daily chart available';
+
+        document.getElementById('ht-chart-daily').innerHTML = daily;
+    }  
 }
 
 function displayEarnings(isContains) {
     if(!isContains) {
-        hide(document.querySelector('#waiting'));
-        bodyPrepend('<div class="mymsg">No earnings data available for this symbol.</div>');
+        hide(document.querySelector('#ht-waiting'));
+        bodyPrepend('<div class="ht-msg">No earnings data available for this symbol.</div>');
         return;
     }
     extractAndProcess();
@@ -191,12 +202,12 @@ function displayEarnings(isContains) {
 }
 
 function displayWaiting() {
-    bodyPrepend('<div class="container" id="waiting"><p class="loading_msg">Loading</p></div>');
+    bodyPrepend('<div id="ht-waiting"><p class="ht-loadingmsg">Loading</p></div>');
 }
 
 function insertCSS() {
     const css = `<style>
-    .mymsg, #waiting {
+    .ht-msg, #ht-waiting {
        font-size: 1em;
        font-style: italic;
        z-index: 9999;
@@ -205,171 +216,186 @@ function insertCSS() {
        padding: 20px;
        font-weight: bold;
     }
-    .myt {
-       float: left;
-       border-collapse: collapse;
-       margin: 25px ${show_earnings_surprise ? 20 : 50}px 25px 0px;
-       padding-left: 5px;
-       font-family: sans-serif;
-       min-width: 400px;
-       box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    #ht-root-container {
+        width: 100%;
     }
-    .myt thead tr {
-       background-color: #333333;
-       color: #ffffff;
-       ${show_earnings_surprise ? 'font-size: 0.80em;' : ''}
-       text-align: left;
-    }
-    .myt th,
-    .myt td {
-       padding: 12px ${show_earnings_surprise ? 8 : 12}px;
-    }
-    .myt tbody tr {
-      border-bottom: 1px solid #dddddd;
-    }
-    .myt tbody tr:nth-of-type(even) {
-       background-color: #f3f3f3;
-    }
-    .myt tbody tr:last-of-type {
-        /*border-bottom: 2px solid #009879;*/
-    }
-    .myt tbody tr .schg {
-        color: ${CHANGE_POSITIVE_COLOR};
-        font-weight: bold;
-    }
-    .myt tbody tr .wchg {
-        color: ${CHANGE_POSITIVE_COLOR};
-    }
-    .myt tbody tr .ssur {
-        color: ${SURPRISE_POSITIVE_COLOR};
-        font-weight: bold;
-    }
-    .myt tbody tr .wsur {
-        color: ${SURPRISE_POSITIVE_COLOR};
-    }
-    .myt tbody tr .sneg {
-        color: ${CHANGE_NEGATIVE_COLOR};
-        font-weight: bold;
-    }
-    .myt tbody tr .wneg {
-        color: ${CHANGE_NEGATIVE_COLOR};
-    }     
-    .myt tbody tr td {
-        text-align: right;
-    }
-    .myf {
-       float: left;
+    #ht-fundamentals-container {
        border: 1px solid #c9c9bb;
        border-collapse: collapse;
-       margin: 15px 20px 25px 0px;
+       margin: 0px 0px 5px 0px;
        padding-left: 5px;
        font-family: sans-serif;
-       width: 900px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
-    .myf tr{
+    #ht-fundamentals-container tr{
         border: 1px solid #c9c9bb;
     }
-    .myf td{
+    #ht-fundamentals-container td{
         border: 1px solid #c9c9bb;
-        padding: 10px 5px;
-        width: 12%;
+        padding: 2px 5px;   
     }
-    .fdata {
-        text-align: left;
-    }
-    .fdata.ladr {
-        color: ${LOW_ADR_COLOR};
-        font-weight: bold;
-    }
-    .fdata.hshorts {
-        color: ${HIGH_SHORT_INTEREST_COLOR};
-        font-weight: bold;
-    }
-    .fdata.learnings {
-        color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
-        font-weight: bold;
-    }
-    .fdata.hinstchange {
-        color: ${HIGH_INST_CHANGE_COLOR};
-        font-weight: bold;
-    }
-    .ftitle {
-        text-align: center;
-        width: 25%;
-    }
-    #f_ticker {
-        font-size: 1.2em;
-    }
-    .fv_chart {
-        width: 900px;
-        height: 340px;
-    }
-    .fv_description {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 900px;
-        padding: 10px 0px;
-    }
-    .fv_description:hover {
-            white-space: normal;
-        }
-    .body-table-rating-upgrade {
-        color: #04C90A;
-    }
-    .body-table-rating-downgrade {
-        color: #FF0000;
-    }
-    .news-link-container {
-        display: flex;
-    }
-    .news-link-left {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        padding: 2px 0px;
-    }
-    .news-link-right {
-        padding-left: 4px;
-        display: flex;
-        align-items: flex-end;
-        white-space: nowrap;
-    }
-    .insider-buy-row-1, .insider-buy-row-2 {
-        background-color: #b3f7a6;
-    }
-    .insider-sale-row-1, .insider-sale-row-2 {
-        background-color: #fac68e;
-    }
-    .body-table-news-gain {
-        color: #00FF00;
-    }
-    .body-table-news-loss {
-        color: #FF0000;
-    }
-    ul[data-tabs] li {
+    .ht-fdata {
         font-size: 0.7em;
     }
-    .data-tab {
-        margin-top: 20px;
+    .ht-fdata td {
+        text-align: left;
     }
-    #h_inner {
-        margin: 0 auto;
-    }   
-    .h_container {
+    #ht-company {  
+    }
+    #ht-description {
+        max-width: 700px;
         overflow: hidden;
-        margin-top: 6px;
-        margin-bottom: 50px;
-        width:100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 7px 0px;
     }
-    .column {
-        float: left;
-        margin: 10px;
-        padding-bottom: 100%;
-        margin-bottom: -100%;
+    #ht-description:hover {
+        white-space: normal;
     }
-    .loading_msg:after {
+    #ht-ec-container {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #c9c9bb; 
+    }
+    #ht-earnings-container {
+        border: 1px solid #c9c9bb;
+        padding:  10px 5px;
+    }
+    #ht-earnings-yearly {
+        padding-bottom: 10px;
+    }
+    #ht-rni-container {
+        border-collapse: collapse;
+    }
+    #ht-ratings-cell {
+        width:  30%;
+        vertical-align: top;
+        border: 1px solid #c9c9bb;
+    }
+    #ht-news-cell {
+        width:  50%;
+        vertical-align: top;
+        border: 1px solid #c9c9bb;
+    }
+    #ht-insiders-cell {
+        border: 1px solid #c9c9bb;
+    } 
+    #ht-ratings {
+        width: 100%;
+        height: 100%;         
+    }
+    #ht-ratings td {
+        font-size: 12px;
+        vertical-align: top;
+    }
+    .ht-ratings-date {
+        white-space: nowrap;
+    }
+    .ht-ratings-price {
+        white-space: nowrap;
+    }
+    .ht-ratings-upgrade {
+         color: #04C90A;
+    }
+    .ht-ratings-downgrade {
+        color: #FF0000;
+    }
+    #ht-news {
+        width:  100%;
+        height: 100%;
+    }
+    .ht-news-date {
+        white-space: nowrap;
+        text-align:  right;
+        padding-right: 2px;
+        font-size: 12px;
+    }
+    .ht-news-link, .ht-news-link:hover, .ht-news-link:link, .ht-news-link:visited {
+        color: #1e6dc0;
+        text-decoration: none;
+    }
+    .ht-news-link:hover {
+        background-color: #1e6dc0;
+        color: #fff;
+    }
+    .ht-news-source {
+        color: #aa6dc0;
+        font-size: 9px;
+        padding-left: 3px;
+    }
+    #ht-insiders-cell {
+        vertical-align: top;
+    }
+    #ht-insiders td {
+        font-size: 12px;
+    }
+    .ht-insiders-date {
+        white-space: nowrap;
+    }
+    .ht-insiders-buy {
+        color: #03fc66;
+    }
+    .ht-insiders-sell {
+        color: #f76b2f;
+    }
+    .ht-earnings-table {
+       border-collapse: collapse;
+       margin: 5px 0px 5px 0px;
+       font-family: sans-serif;
+       min-width: 20%;
+       box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+    .ht-earnings-table thead tr {
+       background-color: #333333;
+       color: #ffffff;
+       font-size: 0.85em;
+       text-align: left;
+    }
+    .ht-earnings-table th,
+    .ht-earnings-table td {
+       padding: 12px ${show_earnings_surprise ? 6 : 8}px;
+    }
+    .ht-earnings-table tbody tr {
+      border-bottom: 1px solid #dddddd;
+    }
+    .ht-earnings-table tbody tr:nth-of-type(even) {
+       background-color: #f3f3f3;
+    }
+    .ht-earnings-table tbody tr:last-of-type {
+        /*border-bottom: 2px solid #009879;*/
+    }
+    .ht-earnings-table tbody tr th,
+    .ht-earnings-table tbody tr td {
+        padding: 4px;
+    }
+    .ht-earnings-table tbody tr .schg {
+        color: ${CHANGE_POSITIVE_COLOR};
+        font-weight: bold;
+    }
+    .ht-earnings-table tbody tr .wchg {
+        color: ${CHANGE_POSITIVE_COLOR};
+    }
+    .ht-earnings-table tbody tr .ssur {
+        color: ${SURPRISE_POSITIVE_COLOR};
+        font-weight: bold;
+    }
+    .ht-earnings-table tbody tr .wsur {
+        color: ${SURPRISE_POSITIVE_COLOR};
+    }
+    .ht-earnings-table tbody tr .sneg {
+        color: ${CHANGE_NEGATIVE_COLOR};
+        font-weight: bold;
+    }
+    .ht-earnings-table tbody tr .wneg {
+        color: ${CHANGE_NEGATIVE_COLOR};
+    }     
+    .ht-earnings-table tbody tr td {
+        text-align: right;
+    }    
+    .ht-earnings-table tbody tr td:first-child {
+        white-space: nowrap;
+    }  
+    .ht-loadingmsg:after {
         content: '.';
         animation: dots 1s steps(1, end) infinite;
     }
@@ -406,96 +432,73 @@ function insertCSS() {
 //
 //
 function displayContent() {
-    hide(document.querySelector('#waiting'));
-    bodyPrepend('<div id="h_earnings" class="e_container">' + 
-        '<div class="e_inner"><div class="column">' + yearlyToHtml(annualEst) + '</div>' + 
-        '<div class="column">' + epsDatesToHtml(epsDates) + '</div></div></div>');
-}
-
-function fundamentalsToHtml(data, enable_copy_on_click, short_description) {
+    hide(document.querySelector('#ht-waiting'));
     const html = `
-        <div class="data-tab" id="f_fundamentals">  
-            <table class="myf"><tbody>
+    <div id="ht-root-container">
+        <table id="ht-fundamentals-container">
             <tr>
-                <td class="ftitle" colspan="4"><a target="_blank" id="f_ticker" href="${data.tickerHref}">${data.ticker}</a><br/>
-                ${data.site}<br/>
-                <a target="_blank" href="${data.sectorHref}">${data.sector}</a> | <a target="_blank" href="${data.industryHref}">${data.industry}</a> | <a target="_blank" href="${data.countryHref}">${data.country}</a>
+                <td id="ht-company" colspan="4">                            
                 </td>
             </tr>
             <tr>
-                <td colspan="4"><div class="fv_description">${data.description}</div></td>
+                <td colspan="4"><div id="ht-description"></div></td>
             </tr>
+            <tr class="ht-fdata">
+                <td>Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
+                <td>ADR</td><td id="ht-fundamentals-adr"></td>
+            </tr>
+            <tr class="ht-fdata">
+                <td>Float</td><td id="ht-fundamentals-float"></td>
+                <td>Next Earnings</td><td id=ht-fundamentals-earnings></td>
+            </tr>
+            <tr class="ht-fdata">
+                <td>Short Float</td><td id="ht-fundamentals-shortfloat"></td>
+                <td>Inst Own</td><td id="ht-fundamentals-instown"></td>
+            </tr>
+            <tr class="ht-fdata">
+                <td>Days to cover</td><td id="ht-fundamentals-daystocover"></td>
+                <td>Inst Trans (3mo)</td><td id="ht-fundamentals-instrans3mo"></td>
+            </tr>
+            <tr class="ht-fdata">
+                <td>Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
+                <td>Rel Volume</td><td id="ht-fundamentals-relvol"></td>
+            </tr> 
+        </table>            
+        <table id="ht-ec-container">
             <tr>
-                <td>Mkt Cap</td><td class="fdata">${data.mktcap}</td>
-                <td>ADR</td><td class="fdata${getHighlightClass4ADR(data.adr)}">${data.adr}</td>
+                <td id="ht-earnings-container">
+                    <div id="ht-earnings-yearly">
+                        ${yearlyToHtml(annualEst)}
+                    </div>
+                    <div id="ht-earnings-quarterly">
+                        ${epsDatesToHtml(epsDates)}
+                    </div>
+                </td>
+                <td id="ht-chart-container">
+                    <div id="ht-chart-weekly">
+                    </div>
+                    <div id="ht-chart-daily">
+                    </div>
+                </td>
             </tr>
+        </table>
+        <table id="ht-rni-container">
             <tr>
-                <td>Float</td><td class="fdata">${data.float}</td>
-                <td>Next Earnings</td><td class="fdata${getHighlightClass4Earnings(data.earnings, data.daysToEarnings)}">${data.earnings}</td>
-            </tr>
-            <tr>
-                <td>Short Float</td><td class="fdata${getHighlightClass4Shorts(data.shorts)}">${data.shorts}</td>
-                <td>Inst Own</td><td class="fdata">${data.instown}</td>
-            </tr>
-            <tr>
-                <td>Days to cover</td><td class="fdata">${data.daystocover}</td>
-                <td>Inst Trans (3mo)</td><td class="fdata${getHighlightClass4InstChange(data.instchange)}">${strToNum(data.instchange) > 0 ? "+"+data.instchange : data.instchange}</td>
-            </tr>
-            <tr>
-                <td>Avg Volume</td><td class="fdata">${data.avgvolume}</td>
-                <td>Rel Volume</td><td class="fdata">${data.relvolume}</td>
-            </tr>
-        </tbody></table>
-        </div>
-        <div class="data-tab" id="f_chart">
-            ${ chart_type == CHART_TYPE.WEEKLY || chart_type == CHART_TYPE.BOTH ?
-                isDefined(data.weeklyChart) ? ('<img class="fv_chart" src="data:image/png;base64, ' + data.weeklyChart + '" alt="' + data.ticker + ' chart"/>') 
-                                    : 'No data available'
-                : '' }
-            ${ chart_type == CHART_TYPE.DAILY || chart_type == CHART_TYPE.BOTH ?    
-                isDefined(data.dailyChart) ? ('<br/><img class="fv_chart" src="data:image/png;base64, ' + data.dailyChart + '" alt="' + data.ticker + ' chart"/>') 
-                                    : 'No data available'
-               : '' }
-        </div>
-        <div class="data-tab" id="f_ratings">
-            ${isDefined(data.ratings) ? data.ratings : 'No data available'}
-        </div>
-        <div class="data-tab" id="f_news">
-            ${isDefined(data.news) ? data.news : 'No data available'}
-        </div>
-        <div class="data-tab" id="f_insiders">
-            ${isDefined(data.insiders) ? data.insiders : 'No data available'}
-        </div>
-        <script>
-            var descriptionInterval = undefined;
-            function copyOnDocumentFocus() {
-                if (${enable_copy_on_click} && document.hasFocus()) {
-                    clearInterval(descriptionInterval);
-                    copyDescription(${short_description});
-                }
-            } 
-            function copyDescription(short_description) {
-                let desc = document.querySelector('.fv_description').textContent
-                const match = /\\.\ [A-Z]/.exec(desc);
-                if (short_description && match) {
-                    desc = desc.substr(0, match.index);
-                }
-                toClipboard(desc);                
-            }           
-            function toClipboard(text) {
-                navigator.clipboard.writeText(text).then(function(){}, function(err) {
-                    console.log("Failed to copy description to clipboard", err);
-                });
-            }
-
-            descriptionInterval = false && setInterval(copyOnDocumentFocus, 300);
-        </script>
-        `;
-    return html;
+                <td id="ht-ratings-cell">
+                </td>
+                <td id="ht-news-cell"> 
+                </td>   
+                <td id="ht-insiders-cell">
+                </td>
+            </tr>    
+        </table>
+    </div>
+    `;
+    bodyPrepend(html);
 }
 
 function epsDatesToHtml(epsDates) {
-    let html = '<table class="myt">';
+    let html = '<table class="ht-earnings-table">';
     html += '<thead><tr>';
     if (default_ds == 2) html += '<td>Date</td>';
     html += '<td>Quarter</td><td>EPS</td><td>%Change</td>';
@@ -574,7 +577,7 @@ function epsDatesToHtml(epsDates) {
 }
 
 function yearlyToHtml(annualEst) {
-    let html = '<table class="myt">';
+    let html = '<table class="ht-earnings-table">';
     html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
@@ -1110,10 +1113,12 @@ class Year {
     }
 }
 
+function processFundamentalsData(response, results) {
+    results.dailyChart = response.dailyChart;
+    results.weeklyChart = response.weeklyChart;
 
-function parseFundamentalsData(raw, results) {
     const parser = new DOMParser();
-    const dom = parser.parseFromString(raw, 'text/html');
+    const dom = parser.parseFromString(response.raw, 'text/html');
 
     const tickerNode = dom.querySelector('.fullview-ticker');
     results.ticker = tickerNode.textContent;
@@ -1122,7 +1127,7 @@ function parseFundamentalsData(raw, results) {
 
     const secondRowNode = tickerNode.parentElement.parentElement.nextElementSibling;
     const siteNode = secondRowNode.querySelector('a');
-    results.site = siteNode.outerHTML;
+    results.companySite = siteNode.getAttribute('href');
     results.companyName = siteNode.textContent;
 
     const thirdRowNode = secondRowNode.nextElementSibling;
@@ -1152,12 +1157,15 @@ function parseFundamentalsData(raw, results) {
         results.description = results.description.replace(regex, '');
     }
 
-    results.ratings = transformRatingsData(dom.querySelector('.fullview-ratings-outer').outerHTML);
+    results.ratingsJson = extractRatings(dom.querySelector('.fullview-ratings-outer').outerHTML);
+    results.ratingsHtml = renderRatings(results.ratingsJson);
 
-    results.news = dom.querySelector('.fullview-news-outer').outerHTML;
+    results.newsJson = extractNews(dom.querySelector('.fullview-news-outer').outerHTML);
+    results.newsHtml = renderNews(results.newsJson);
     
     const bds = dom.querySelectorAll('.body-table');
-    results.insiders = bds[bds.length-1].outerHTML;
+    results.insidersJson = extractInsiders(bds[bds.length-1].outerHTML);
+    results.insidersHtml = renderInsiders(results.insidersJson);
 
     return results;
 }
@@ -1296,6 +1304,7 @@ function getSiblingText(arr, txt) {
    return arr[arr.findIndex(el => el.textContent === txt) + 1].textContent; 
 }
 
+// prepends html to body
 const bodyPrepend = (html) => {
     document.body.insertAdjacentHTML('afterbegin', html);
 }
@@ -1333,3 +1342,141 @@ const contains = (selector, text) => {
     return element.textContent.includes(text)
   }).length > 0
 }
+
+// extractors extract data from client html into json
+const extractInsiders = (html) => {
+    let insiders = []
+    const parser = new DOMParser()
+    const dom  = parser.parseFromString(html, 'text/html')
+    const rows = dom.querySelectorAll('tr')
+    for (let [index, row] of rows.entries()) {
+        if (index == 0) continue
+        let result = {} 
+        if (row.className.includes('is-sale')) result.isSell =1
+        else if (row.className.includes('is-buy')) result.isBuy =1
+        let cells = row.querySelectorAll('td')
+        result.insider = cells[0].querySelector('a').innerHTML
+        result.relationship = cells[1].innerHTML
+        result.date = cells[2].innerHTML
+        result.transaction = cells[3].innerHTML
+        result.cost = cells[4].innerHTML
+        result.shares = cells[5].innerHTML
+        result.value = cells[6].innerHTML
+        result.sharesTotal = cells[7].innerHTML
+        result.linkHref = cells[8].querySelector('a').getAttribute('href')
+        result.linkText = cells[8].querySelector('a').innerHTML
+        insiders.push(result)
+    }
+    return insiders
+}
+
+const renderInsiders = (json) => {
+    let html = '<table id="ht-insiders">\n'
+    for (const item of json) {
+        html += '<tr>\n'
+        html += '<td class="ht-insiders-date">' + item.date + '</td>\n'
+        html += '<td'
+        if (item.isSell) html += ' class="ht-insiders-sell"'
+        else if (item.isBuy) html += ' class="ht-insiders-buy"'
+        html += '>' + item.transaction + '</td>\n'
+        html += '<td>' + item.cost + '</td>\n'
+        html += '<td>' + item.value + '</td>\n'
+        html += '<td>' + item.shares + '</td>\n'
+        html += '<td>' + item.insider + '</td>\n'
+        html += '<td>' + item.relationship + '</td>\n'
+        html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a></td>\n'
+        html += '</tr>\n' 
+    }
+    html += '</table>\n'
+    return html
+}
+
+const extractRatings = (html) => {
+    let ratings = []
+    html = html.replace(/<\/?b>/g, '')
+    const parser = new DOMParser()
+    const dom = parser.parseFromString(html, 'text/html')
+    const ratingsNodes = dom.querySelectorAll('table table')   
+    
+    for (const ratingsNode of ratingsNodes) {
+        let result = {}
+        let ratingsRow = ratingsNode.querySelector('tr')
+        let rowClass = ratingsRow.getAttribute('class')
+        switch(rowClass.trim()) {
+            case 'body-table-rating-downgrade':
+                result.downgrade = 1
+                break
+            case 'body-table-rating-upgrade':
+                result.upgrade = 1
+                break
+        }
+     
+        let cells = ratingsNode.querySelectorAll('td')
+        result.date = cells[0].innerHTML
+        result.action = cells[1].innerHTML
+        result.analyst = cells[2].innerHTML
+        result.rating = cells[3].innerHTML
+        result.price = cells[4].innerHTML
+        ratings.push(result)
+    }
+    return ratings  
+}
+
+const renderRatings = (json) => {
+    let html = '<table id="ht-ratings">\n'
+    for (const item of json) {
+        html += '<tr'
+        if (item.upgrade) html += ' class="ht-ratings-upgrade"'
+        else if (item.downgrade) html += ' class="ht-ratings-downgrade"'    
+        html += '>\n'
+        html += '<td class="ht-ratings-date">' + item.date + '</td>\n'
+        html += '<td>' + item.action + '</td>\n'
+        html += '<td>' + item.analyst + '</td>\n'
+        html += '<td>' + item.rating + '</td>\n'
+        html += '<td class="ht-ratings-price">' + item.price + '</td>\n'
+        html += '</tr>\n' 
+    }
+    html += '</table>\n'
+    return html
+}
+
+const extractNews = (html) => {
+    let news = []
+    const parser = new DOMParser()
+    const dom = parser.parseFromString(html, 'text/html')
+    const newsTableNode = dom.querySelector('table')   
+    let newsRowsNodes = newsTableNode.querySelectorAll('tr')
+
+    for (const newsRowNode of newsRowsNodes) {  
+        let result = {}
+        let cells = newsRowNode.querySelectorAll('td')
+        for (let cellNode of cells) {
+            let linkNode = cellNode.querySelector('a')
+            if (linkNode != null) {
+                result.linkHref =  linkNode.getAttribute('href') 
+                result.linkText = linkNode.innerHTML
+                let spanNode = cellNode.querySelector('span')
+                if (spanNode != null)
+                   result.source = spanNode.innerHTML.trim() 
+ 
+            }
+            else 
+                result.date =  cellNode.innerHTML.trim().replace(/\&nbsp;/g, '') 
+        }
+        news.push(result)
+    }    
+    return news
+}
+
+const renderNews = (json) => {
+    let html = '<table id="ht-news">\n'
+    for (const item of json) {
+        html += '<tr>\n'
+        html += '<td class="ht-news-date">' + item.date + '</td>\n'
+        html += '<td><a class="ht-news-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a><span class="ht-news-source">'+ item.source + '</span></td>\n'
+        html += '</tr>\n' 
+    }
+    html += '</table>\n'
+    return html
+}
+
