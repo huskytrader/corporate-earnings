@@ -1,7 +1,4 @@
 //options
-var enable_copy_on_click = false;
-// chart type: 1=desc first sentence, 2=full desc
-var data_to_copy = 1;
 var fetch_fundamental_data = false;
 // chart type: 1=none, 2=weekly, 3=daily, 4=both
 var chart_type = 1;
@@ -17,11 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Restores checkbox state using the options stored in chrome.storage.
 function restore_options() {
-  chrome.storage.local.get(['enable_copy_on_click', 'data_to_copy', 'chart_type', 
+  chrome.storage.local.get(['chart_type', 
                             'fetch_fundamental_data', 'show_earnings_surprise', 'open_new_tab', 
                             'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
-    if (isDefined(options.enable_copy_on_click)) {enable_copy_on_click = options.enable_copy_on_click;}
-    if (isDefined(options.data_to_copy)) {data_to_copy = options.data_to_copy;}
     if (isDefined(options.fetch_fundamental_data)) {fetch_fundamental_data = options.fetch_fundamental_data;}
     if (isDefined(options.chart_type)) {chart_type = options.chart_type;}
     if (isDefined(options.show_earnings_surprise)) {show_earnings_surprise = options.show_earnings_surprise;}
@@ -35,8 +30,6 @@ function restore_options() {
 }
 
 function restore_ui() {
-  document.getElementById('enable_copy_on_click').checked = enable_copy_on_click;
-  document.getElementById('copy_type_'+data_to_copy).checked = true;
   document.getElementById('fetch_fundamental_data').checked = fetch_fundamental_data;
   document.getElementById('chart_type_'+chart_type).checked = true;
   document.getElementById('show_earnings_surprise').checked = show_earnings_surprise;
@@ -54,10 +47,9 @@ function restore_ui() {
   document.querySelector('.checkbox').addEventListener('change', save_options);
   document.querySelector('#ds-switch').addEventListener('change', save_options);
   document.querySelector('#chart-select').addEventListener('change', save_options);
-  document.querySelector('#copy-on-click-select').addEventListener('change', save_options);
 
   // set version
-  document.getElementById('version').textContent = chrome.runtime.getManifest().version;
+  document.getElementById('version').innerHTML = chrome.runtime.getManifest().version;
 
   // show/hide chart selector
   if (fetch_fundamental_data == true) {
@@ -66,19 +58,10 @@ function restore_ui() {
   else {
     hide(document.getElementById("chart-select"));
   }
-
-  // show/hide copy selector
-  if (enable_copy_on_click == true) {
-    show(document.getElementById("copy-on-click-select"));
-  }
-  else {
-    hide(document.getElementById("copy-on-click-select"));
-  }
 }
 
 // Saves options to storage
 function save_options() {
-  let enable_copy_on_click = document.getElementById('enable_copy_on_click').checked;
   let fetch_fundamental_data = document.getElementById('fetch_fundamental_data').checked;
   let show_earnings_surprise = document.getElementById('show_earnings_surprise').checked;
   let open_new_tab = document.getElementById('open_new_tab').checked;
@@ -92,11 +75,8 @@ function save_options() {
     default_ds = 2;
   }
   let chart_type = document.querySelector('input[name="chart"]:checked').value;
-  let copy_type = document.querySelector('input[name="copy"]:checked').value;
   
   chrome.storage.local.set({
-    enable_copy_on_click: enable_copy_on_click,
-    data_to_copy: copy_type,
     chart_type: chart_type,
     fetch_fundamental_data: fetch_fundamental_data,
     show_earnings_surprise: show_earnings_surprise,
@@ -111,14 +91,6 @@ function save_options() {
   }
   else {
     show(document.getElementById("chart-select"));
-  }
-
-   // show/hide copy selector
-  if (enable_copy_on_click == false) {
-    hide(document.getElementById("copy-on-click-select"));
-  }
-  else {
-    show(document.getElementById("copy-on-click-select"));
   }
 }
 
