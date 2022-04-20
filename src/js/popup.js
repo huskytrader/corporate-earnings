@@ -45,6 +45,7 @@ function handleSubmit() {
             chrome.tabs.update(tab.id, {url: targetUrl});
         });
         document.getElementById("symbol").focus();
+        document.getElementById("symbol").select();
     }
 }
 

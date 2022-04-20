@@ -156,19 +156,34 @@ function displayFundamentals(el) {
     document.getElementById('ht-description').innerHTML = fundamentals.description;
     document.getElementById('ht-fundamentals-mktcap').innerHTML = fundamentals.mktcap;
     document.getElementById('ht-fundamentals-adr').innerHTML = fundamentals.adr;
+    const isHighlightAdr = isAdrLow(fundamentals.adr);
+    if (isHighlightAdr) {
+        document.getElementById('ht-fundamentals-adr').classList.add('ladr');
+    }
     document.getElementById('ht-fundamentals-float').innerHTML = fundamentals.float;
     document.getElementById('ht-fundamentals-earnings').innerHTML = fundamentals.earnings;
+    const isHighlightEarnings = isEarningsDateClose(fundamentals.earnings, fundamentals.daysToEarnings);
+    if (isHighlightEarnings) {
+        document.getElementById('ht-fundamentals-earnings').classList.add('learnings');
+    }
     document.getElementById('ht-fundamentals-shortfloat').innerHTML = fundamentals.shorts;
+    const isHighlightShorts = isShortInterestHigh(fundamentals.shorts);
+    if (isHighlightShorts) {
+        document.getElementById('ht-fundamentals-shortfloat').classList.add('hshorts');
+    }
     document.getElementById('ht-fundamentals-instown').innerHTML = fundamentals.instown;
     document.getElementById('ht-fundamentals-daystocover').innerHTML = fundamentals.daystocover;
     document.getElementById('ht-fundamentals-instrans3mo').innerHTML = fundamentals.instchange;
+    const isHighlightInstChange = isHighInstitutionalOwnershipChange(fundamentals.instchange);
+    if (isHighlightInstChange) {
+        document.getElementById('ht-fundamentals-instrans3mo').classList.add('hinstchange');
+    }
     document.getElementById('ht-fundamentals-avgvol').innerHTML = fundamentals.avgvolume;
     document.getElementById('ht-fundamentals-relvol').innerHTML = fundamentals.relvolume;
 
     document.getElementById('ht-ratings-cell').innerHTML = fundamentals.ratingsHtml;
     document.getElementById('ht-news-cell').innerHTML = fundamentals.newsHtml;
     document.getElementById('ht-insiders-cell').innerHTML = fundamentals.insidersHtml;
-
 
     if (chart_type == CHART_TYPE.WEEKLY || chart_type == CHART_TYPE.BOTH) {
         let weekly = '';
@@ -239,6 +254,22 @@ function insertCSS() {
     }
     .ht-fdata td {
         text-align: left;
+    }    
+    #ht-fundamentals-earnings.learnings {
+        color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
+        font-weight: bold;
+    }
+    #ht-fundamentals-adr.ladr {
+        color: ${LOW_ADR_COLOR};
+        font-weight: bold;
+    }
+    #ht-fundamentals-shortfloat.hshorts {
+        color: ${HIGH_SHORT_INTEREST_COLOR};
+        font-weight: bold;
+    }
+    #ht-fundamentals-instown.hinstchange {
+        color: ${HIGH_INST_CHANGE_COLOR};
+        font-weight: bold;
     }
     #ht-company {  
     }
@@ -661,34 +692,31 @@ function getHighlightClass4Surprise(num, str) {
     return hclass;
 }
 
-function getHighlightClass4ADR(adrStr) {
-    let hclass = '';
-    if (! isDefined(adrStr) || adrStr.length == 0) { return hclass; }
+function isAdrLow(adrStr) {
+    if (! isDefined(adrStr) || adrStr.length == 0) return false;
     let adr = parseFloat(adrStr.replace(/%$/, ""));
     if (adr < LOW_ADR_THRESHOLD) {
-        hclass = ' ladr';
+        return true;
     } 
-    return hclass;
+    return false;
 }
 
-function getHighlightClass4Shorts(shortsStr) {
-    let hclass = '';
-    if (! isDefined(shortsStr) || shortsStr.length == 0 || shortsStr == '-') { return hclass; }
+function isShortInterestHigh(shortsStr) {
+    if (! isDefined(shortsStr) || shortsStr.length == 0 || shortsStr == '-') return false;
     let shorts = parseFloat(shortsStr.replace(/%$/, ""));
     if (shorts > HIGH_SHORT_INTEREST_THRESHOLD) {
-        hclass = ' hshorts';
+        return true;
     } 
-    return hclass;
+    return false;
 }
 
-function getHighlightClass4InstChange(instChangeStr) {
-    let hclass = '';
-    if (! isDefined(instChangeStr) || instChangeStr.length == 0 || instChangeStr == '-') { return hclass; }
+function isHighInstitutionalOwnershipChange(instChangeStr) {
+    if (! isDefined(instChangeStr) || instChangeStr.length == 0 || instChangeStr == '-') return false;
     let instChange = parseFloat(instChangeStr.replace(/%$/, ""));
     if (instChange > HIGH_INST_CHANGE_THRESHOLD) {
-        hclass = ' hinstchange';
+        return true;
     } 
-    return hclass;
+    return false;
 }
 
 function strToNum(str) {
@@ -698,14 +726,12 @@ function strToNum(str) {
     return parseFloat(str);
 }
 
-function getHighlightClass4Earnings(earningsStr, daysToEarnings) {
-    let hclass = '';
-    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr == '-') { return hclass; }
-    
+function isEarningsDateClose(earningsStr, daysToEarnings) {
+    if (! isDefined(earningsStr) || earningsStr.length == 0 || earningsStr == '-')  return false;
     if (isDefined(daysToEarnings) && daysToEarnings <= DAYS_BEFORE_EARNINGS_WARN_THRESHOLD) {
-        hclass = ' learnings';
+        return true;
     } 
-    return hclass;
+    return false;
 }
 
 //
@@ -1231,7 +1257,7 @@ function processEarnings(str, results) {
     const earningsDate = new Date(today.getFullYear(), earningsMonth, parts[1]);
     earningsDate.setHours(0,0,0,0);
 
-    if (earningsDate.getTime() < today.getTime()) {
+    if (earningsDate.getTime() + (24*60*60*1000) < today.getTime()) {
         results.earnings = '-';
         return;
     }
