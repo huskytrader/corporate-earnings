@@ -293,7 +293,9 @@ function insertCSS() {
         padding:  10px 5px;
     }
     #ht-earnings-yearly {
+        float: left;
         padding-bottom: 10px;
+        padding-right: 20px;
     }
     #ht-rni-container {
         border-collapse: collapse;
@@ -381,23 +383,20 @@ function insertCSS() {
        color: #ffffff;
        font-size: 0.85em;
        text-align: left;
+       padding: 4px ${show_earnings_surprise ? 4 : 6}px;
     }
-    .ht-earnings-table th,
-    .ht-earnings-table td {
-       padding: 12px ${show_earnings_surprise ? 6 : 8}px;
-    }
+    .ht-earnings-table tbody tr td {
+        text-align: right;
+        padding: 4px;
+    }    
+    .ht-earnings-table tbody tr td:first-child {
+        white-space: nowrap;
+    } 
     .ht-earnings-table tbody tr {
       border-bottom: 1px solid #dddddd;
     }
     .ht-earnings-table tbody tr:nth-of-type(even) {
        background-color: #f3f3f3;
-    }
-    .ht-earnings-table tbody tr:last-of-type {
-        /*border-bottom: 2px solid #009879;*/
-    }
-    .ht-earnings-table tbody tr th,
-    .ht-earnings-table tbody tr td {
-        padding: 4px;
     }
     .ht-earnings-table tbody tr .schg {
         color: ${CHANGE_POSITIVE_COLOR};
@@ -419,13 +418,7 @@ function insertCSS() {
     }
     .ht-earnings-table tbody tr .wneg {
         color: ${CHANGE_NEGATIVE_COLOR};
-    }     
-    .ht-earnings-table tbody tr td {
-        text-align: right;
-    }    
-    .ht-earnings-table tbody tr td:first-child {
-        white-space: nowrap;
-    }  
+    }      
     .ht-loadingmsg:after {
         content: '.';
         animation: dots 1s steps(1, end) infinite;
@@ -464,6 +457,7 @@ function insertCSS() {
 //
 function displayContent() {
     hide(document.querySelector('#ht-waiting'));
+    const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
     const html = `
     <div id="ht-root-container">
         <table id="ht-fundamentals-container">
@@ -505,12 +499,7 @@ function displayContent() {
                         ${epsDatesToHtml(epsDates)}
                     </div>
                 </td>
-                <td id="ht-chart-container">
-                    <div id="ht-chart-weekly">
-                    </div>
-                    <div id="ht-chart-daily">
-                    </div>
-                </td>
+                ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
             </tr>
         </table>
         <table id="ht-rni-container">
