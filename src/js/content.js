@@ -149,7 +149,7 @@ function waitForEl(el, callback, maxtries = false, interval = 100) {
 function displayFundamentals(el) {
     if (!isDefined(fundamentals.ticker)) return      
 
-    const companyHtml = `<a href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> (${fundamentals.ticker})
+    const companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> (${fundamentals.ticker})
                     ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
                     `;
     document.getElementById('ht-company').innerHTML = companyHtml;
@@ -234,12 +234,23 @@ function insertCSS() {
     #ht-root-container {
         width: 100%;
         margin: 5px 5px 0 5px;
+        border: 1px solid #c9c9bb;
+        border-collapse: collapse;
+    }
+    #ht-root-container table {
+        width: auto;
+        display:table;
+        margin: 0 0;
+    }
+    #ht-root-container td {
+        font-weight: 400;
+        line-height: 1.5;
+        font-family: sans-serif;
     }
     #ht-fundamentals-container {
        border: 1px solid #c9c9bb;
        border-collapse: collapse;
        margin: 0px 0px 5px 0px;
-       font-family: sans-serif;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
     #ht-fundamentals-container tr{
@@ -248,12 +259,12 @@ function insertCSS() {
     #ht-fundamentals-container td{
         border: 1px solid #c9c9bb;
         padding: 2px 5px;   
-    }
-    .ht-fdata {
-        font-size: 0.7em;
-    }
-    .ht-fdata td {
+        font-size: small;
         text-align: left;
+    }
+    #ht-fundamentals-container.ht-fdata td {
+        text-align: left;
+        font-size: small;
     }    
     #ht-fundamentals-earnings.learnings {
         color: ${DAYS_BEFORE_EARNINGS_WARN_COLOR};
@@ -271,7 +282,17 @@ function insertCSS() {
         color: ${HIGH_INST_CHANGE_COLOR};
         font-weight: bold;
     }
-    #ht-company {  
+    #ht-company a{  
+        text-align: left;
+        font-size: medium;
+    }
+    a#ht-company-link, a#ht-company-link:hover, a#ht-company-link:link, a#ht-company-link:visited {
+        color: #1e6dc0;
+        text-decoration: none;
+    }
+    a#ht-company-link:hover {
+        background-color: #1e6dc0;
+        color: #fff;
     }
     #ht-description {
         max-width: 700px;
@@ -279,6 +300,7 @@ function insertCSS() {
         text-overflow: ellipsis;
         white-space: nowrap;
         padding: 7px 0px;
+        font-size: medium;
     }
     #ht-description:hover {
         white-space: normal;
@@ -300,6 +322,9 @@ function insertCSS() {
     #ht-rni-container {
         border-collapse: collapse;
     }
+    #ht-rni-container td {
+        font-size: small;
+    }
     #ht-ratings-cell {
         width:  30%;
         vertical-align: top;
@@ -318,8 +343,12 @@ function insertCSS() {
         height: 100%;         
     }
     #ht-ratings td {
-        font-size: 12px;
         vertical-align: top;
+        border: 0;
+        border-top: 0;
+        border: bottom: 0;
+        text-align: left;
+        padding: 0 2px;
     }
     .ht-ratings-date {
         white-space: nowrap;
@@ -337,30 +366,40 @@ function insertCSS() {
         width:  100%;
         height: 100%;
     }
+    #ht-news td {
+        border: 0;
+        border-top: 0;
+        border: bottom: 0;
+        text-align: left;
+        padding: 0 2px;
+    }
     .ht-news-date {
         white-space: nowrap;
         text-align:  right;
         padding-right: 2px;
-        font-size: 12px;
     }
-    .ht-news-link, .ht-news-link:hover, .ht-news-link:link, .ht-news-link:visited {
+    a.ht-news-link, a.ht-news-link:hover, a.ht-news-link:link, a.ht-news-link:visited {
         color: #1e6dc0;
         text-decoration: none;
     }
-    .ht-news-link:hover {
+    a.ht-news-link:hover {
         background-color: #1e6dc0;
         color: #fff;
     }
     .ht-news-source {
         color: #aa6dc0;
-        font-size: 9px;
+        font-size: x-small;
         padding-left: 3px;
     }
     #ht-insiders-cell {
         vertical-align: top;
     }
     #ht-insiders td {
-        font-size: 12px;
+        border: 0;
+        border-top: 0;
+        border: bottom: 0;
+        text-align: left;
+        padding: 0 2px;
     }
     .ht-insiders-date {
         white-space: nowrap;
@@ -371,22 +410,31 @@ function insertCSS() {
     .ht-insiders-sell {
         color: #f76b2f;
     }
+    a.ht-insiders-link, a.ht-insiders-link:hover, a.ht-insiders-link:link, a.ht-insiders-link:visited {
+        color: #1e6dc0;
+        text-decoration: none;
+    }
+    a.ht-insiders-link:hover {
+        background-color: #1e6dc0;
+        color: #fff;
+    }
     .ht-earnings-table {
        border-collapse: collapse;
        font-family: sans-serif;
-       min-width: 20%;
+       min-width: 30%;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
-    .ht-earnings-table thead tr {
+    .ht-earnings-table thead tr td {
        background-color: #333333;
        color: #ffffff;
-       font-size: 0.85em;
+       font-size: small;
        text-align: left;
        padding: 4px ${show_earnings_surprise ? 4 : 6}px;
     }
     .ht-earnings-table tbody tr td {
         text-align: right;
         padding: 4px;
+        font-size: medium;
     }    
     .ht-earnings-table tbody tr td:first-child {
         white-space: nowrap;
@@ -460,7 +508,7 @@ function displayContent() {
     const showEarningsOnly = !fetch_fundamental_data;
     if (showEarningsOnly) {
         html = `
-        <div id="ht-root-container">
+        <div id="ht-root-container" style="width: 100%; border: 0;">
             <div id="ht-earnings-yearly">
                 ${yearlyToHtml(annualEst)}
             </div>
@@ -476,8 +524,7 @@ function displayContent() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td id="ht-company" colspan="4">                            
-                    </td>
+                    <td id="ht-company" colspan="4"></td>
                 </tr>
                 <tr>
                     <td colspan="4"><div id="ht-description"></div></td>
@@ -506,7 +553,7 @@ function displayContent() {
             <table id="ht-ec-container">
                 <tr>
                     <td id="ht-earnings-container">
-                        <div id="ht-earnings-yearly">
+                        <div id="ht-earnings-yearly" ${!showChart ? ('style="clear: both;"') : ''}>
                             ${yearlyToHtml(annualEst)}
                         </div>
                         <div id="ht-earnings-quarterly">
