@@ -841,6 +841,7 @@ function extractAndProcess() {
     if (default_ds == 1) {
         // add quarters
         let dataBlockCount = 1;
+        const yearRegex = /^[A-Za-z]{3} \d{4}/;
         const blocks = document.querySelectorAll('[data-test-id="table-body"]')
         blocks.forEach(block => {
             let rows = [];
@@ -851,7 +852,7 @@ function extractAndProcess() {
                     // eps estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '') continue;
+                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(yearRegex) == null) continue;
                         let year = new Year(
                             getAnnualEstimateYear(row[0]),
                             "*" + getAnnualEstimateYear(row[0]),
@@ -864,7 +865,7 @@ function extractAndProcess() {
                     // revenue estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '') continue;
+                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(yearRegex) == null) continue;
                         let yearInt = getAnnualEstimateYear(row[0]);
                         const foundYear = annualEst.find(q => q.year == yearInt);
                         if (foundYear) {
@@ -873,7 +874,7 @@ function extractAndProcess() {
                         else {
                             let year = new Year(
                                 yearInt,
-                                "*" + year,
+                                "*" + yearInt,
                                 undefined,
                                 revenueStringToFloat(row[1]));
                             annualEst.push(year);
