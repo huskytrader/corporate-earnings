@@ -44,7 +44,7 @@ function restore_ui() {
   }
 
   // attach event handlers
-  document.querySelector('.checkbox').addEventListener('change', save_options);
+  document.querySelectorAll('.checkbox').forEach((checkbox) => checkbox.addEventListener('change', save_options));
   document.querySelector('#ds-switch').addEventListener('change', save_options);
   document.querySelector('#chart-select').addEventListener('change', save_options);
 

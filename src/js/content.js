@@ -233,12 +233,12 @@ function insertCSS() {
     }
     #ht-root-container {
         width: 100%;
+        margin: 5px 5px 0 5px;
     }
     #ht-fundamentals-container {
        border: 1px solid #c9c9bb;
        border-collapse: collapse;
        margin: 0px 0px 5px 0px;
-       padding-left: 5px;
        font-family: sans-serif;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
@@ -373,7 +373,6 @@ function insertCSS() {
     }
     .ht-earnings-table {
        border-collapse: collapse;
-       margin: 5px 0px 5px 0px;
        font-family: sans-serif;
        min-width: 20%;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
@@ -457,63 +456,79 @@ function insertCSS() {
 //
 function displayContent() {
     hide(document.querySelector('#ht-waiting'));
-    const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
-    const html = `
-    <div id="ht-root-container">
-        <table id="ht-fundamentals-container">
-            <tr>
-                <td id="ht-company" colspan="4">                            
-                </td>
-            </tr>
-            <tr>
-                <td colspan="4"><div id="ht-description"></div></td>
-            </tr>
-            <tr class="ht-fdata">
-                <td>Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
-                <td>ADR</td><td id="ht-fundamentals-adr"></td>
-            </tr>
-            <tr class="ht-fdata">
-                <td>Float</td><td id="ht-fundamentals-float"></td>
-                <td>Next Earnings</td><td id=ht-fundamentals-earnings></td>
-            </tr>
-            <tr class="ht-fdata">
-                <td>Short Float</td><td id="ht-fundamentals-shortfloat"></td>
-                <td>Inst Own</td><td id="ht-fundamentals-instown"></td>
-            </tr>
-            <tr class="ht-fdata">
-                <td>Days to cover</td><td id="ht-fundamentals-daystocover"></td>
-                <td>Inst Trans (3mo)</td><td id="ht-fundamentals-instrans3mo"></td>
-            </tr>
-            <tr class="ht-fdata">
-                <td>Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
-                <td>Rel Volume</td><td id="ht-fundamentals-relvol"></td>
-            </tr> 
-        </table>            
-        <table id="ht-ec-container">
-            <tr>
-                <td id="ht-earnings-container">
-                    <div id="ht-earnings-yearly">
-                        ${yearlyToHtml(annualEst)}
-                    </div>
-                    <div id="ht-earnings-quarterly">
-                        ${epsDatesToHtml(epsDates)}
-                    </div>
-                </td>
-                ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
-            </tr>
-        </table>
-        <table id="ht-rni-container">
-            <tr>
-                <td id="ht-ratings-cell">
-                </td>
-                <td id="ht-news-cell"> 
-                </td>   
-                <td id="ht-insiders-cell">
-                </td>
-            </tr>    
-        </table>
-    </div>
-    `;
+    let html = '';
+    const showEarningsOnly = !fetch_fundamental_data;
+    if (showEarningsOnly) {
+        html = `
+        <div id="ht-root-container">
+            <div id="ht-earnings-yearly">
+                ${yearlyToHtml(annualEst)}
+            </div>
+            <div id="ht-earnings-quarterly">
+                ${epsDatesToHtml(epsDates)}
+            </div>
+        </div>
+        `;
+    }
+    else {
+        const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
+        html = `
+        <div id="ht-root-container">
+            <table id="ht-fundamentals-container">
+                <tr>
+                    <td id="ht-company" colspan="4">                            
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4"><div id="ht-description"></div></td>
+                </tr>
+                <tr class="ht-fdata">
+                    <td>Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
+                    <td>ADR</td><td id="ht-fundamentals-adr"></td>
+                </tr>
+                <tr class="ht-fdata">
+                    <td>Float</td><td id="ht-fundamentals-float"></td>
+                    <td>Next Earnings</td><td id=ht-fundamentals-earnings></td>
+                </tr>
+                <tr class="ht-fdata">
+                    <td>Short Float</td><td id="ht-fundamentals-shortfloat"></td>
+                    <td>Inst Own</td><td id="ht-fundamentals-instown"></td>
+                </tr>
+                <tr class="ht-fdata">
+                    <td>Days to cover</td><td id="ht-fundamentals-daystocover"></td>
+                    <td>Inst Trans (3mo)</td><td id="ht-fundamentals-instrans3mo"></td>
+                </tr>
+                <tr class="ht-fdata">
+                    <td>Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
+                    <td>Rel Volume</td><td id="ht-fundamentals-relvol"></td>
+                </tr> 
+            </table>            
+            <table id="ht-ec-container">
+                <tr>
+                    <td id="ht-earnings-container">
+                        <div id="ht-earnings-yearly">
+                            ${yearlyToHtml(annualEst)}
+                        </div>
+                        <div id="ht-earnings-quarterly">
+                            ${epsDatesToHtml(epsDates)}
+                        </div>
+                    </td>
+                    ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
+                </tr>
+            </table>
+            <table id="ht-rni-container">
+                <tr>
+                    <td id="ht-ratings-cell">
+                    </td>
+                    <td id="ht-news-cell"> 
+                    </td>   
+                    <td id="ht-insiders-cell">
+                    </td>
+                </tr>    
+            </table>
+        </div>
+        `;
+    }
     bodyPrepend(html);
 }
 
