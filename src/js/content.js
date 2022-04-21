@@ -223,17 +223,17 @@ function displayWaiting() {
 function insertCSS() {
     const css = `<style>
     .ht-msg, #ht-waiting {
-       font-size: 1em;
+       font-size: large;
        font-style: italic;
        z-index: 9999;
        color: #39ff14;
        background-color: #000000;
-       padding: 20px;
+       padding: 40px;
        font-weight: bold;
     }
     #ht-root-container {
         width: 100%;
-        margin: 5px 5px 0 5px;
+        margin: 0;
         border: 1px solid #c9c9bb;
         border-collapse: collapse;
     }
@@ -312,12 +312,14 @@ function insertCSS() {
     }
     #ht-earnings-container {
         border: 1px solid #c9c9bb;
-        padding:  10px 5px;
+        padding:  10px 5px 10px 0;
     }
     #ht-earnings-yearly {
-        float: left;
         padding-bottom: 10px;
         padding-right: 20px;
+    }
+    #ht-chart-container {
+        width: 100%;
     }
     #ht-rni-container {
         border-collapse: collapse;
