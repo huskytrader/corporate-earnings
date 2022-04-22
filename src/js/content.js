@@ -217,7 +217,7 @@ function displayEarnings(isContains) {
 }
 
 function displayWaiting() {
-    bodyPrepend('<div id="ht-waiting"><p class="ht-loadingmsg">Loading</p></div>');
+    bodyPrepend('<div id="ht-waiting"><p class="ht-loadingmsg">Waiting for data</p></div>');
 }
 
 function insertCSS() {
@@ -536,7 +536,7 @@ function displayContent() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td id="ht-company" colspan="4"></td>
+                    <td id="ht-company" colspan="4"><span class="ht-loadingmsg">Waiting for data</span></td>
                 </tr>
                 <tr>
                     <td colspan="4"><div id="ht-description"></div></td>
