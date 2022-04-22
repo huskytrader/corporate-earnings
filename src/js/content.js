@@ -315,8 +315,8 @@ function insertCSS() {
         border: 1px solid #c9c9bb; 
     }
     td#ht-earnings-container {
-        border: 1px solid #c9c9bb;
         padding:  10px 5px 10px 0;
+        border: 1px solid #c9c9bb;
         ${!showChart ? ('width: 100% !important;') : ''}
     }
     #ht-earnings-yearly {
