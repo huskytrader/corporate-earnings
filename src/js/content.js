@@ -140,14 +140,15 @@ function waitForEl(el, callback, maxtries = false, interval = 100) {
     const retry = maxtries === false || maxtries-- > 0;
     if (retry && !isContains) return; // will try again
     clearInterval(poller);
-    setTimeout(function() {
-            callback(isContains);
-    }, 1000);
+    callback(isContains);
   }, interval);
 }
 
 function displayFundamentals(el) {
-    if (!isDefined(fundamentals.ticker)) return      
+    if (!isDefined(fundamentals.ticker)) {
+        document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
+        return
+    }      
 
     const companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> <span id="ht-ticker">(${fundamentals.ticker})</span>
                     ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
@@ -231,6 +232,10 @@ function insertCSS() {
        background-color: #000000;
        padding: 40px;
        font-weight: bold;
+    }
+    #ht-warningmsg {
+        color: #ff0000;
+        font-style: italic;
     }
     #ht-root-container {
         width: 100%;
@@ -1245,15 +1250,30 @@ function processFundamentalsData(response, results) {
         results.description = results.description.replace(regex, '');
     }
 
-    results.ratingsJson = extractRatings(dom.querySelector('.fullview-ratings-outer').outerHTML);
-    results.ratingsHtml = renderRatings(results.ratingsJson);
+    if (dom.querySelector('.fullview-ratings-outer') != null) {
+        results.ratingsJson = extractRatings(dom.querySelector('.fullview-ratings-outer').outerHTML);
+        results.ratingsHtml = renderRatings(results.ratingsJson);
+    }
+    else {
+        results.ratingsHtml = 'No ratings available';
+    }
 
-    results.newsJson = extractNews(dom.querySelector('.fullview-news-outer').outerHTML);
-    results.newsHtml = renderNews(results.newsJson);
+    if (dom.querySelector('.fullview-news-outer') != null) {
+        results.newsJson = extractNews(dom.querySelector('.fullview-news-outer').outerHTML);
+        results.newsHtml = renderNews(results.newsJson);
+    }
+    else {
+        results.newsHtml = 'No news available';
+    }
     
     const bds = dom.querySelectorAll('.body-table');
-    results.insidersJson = extractInsiders(bds[bds.length-1].outerHTML);
-    results.insidersHtml = renderInsiders(results.insidersJson);
+    if (Array.from(bds).length > 0) {
+        results.insidersJson = extractInsiders(bds[bds.length-1].outerHTML);
+        results.insidersHtml = renderInsiders(results.insidersJson);
+    }
+    else {
+        results.insidersHtml = 'No insider transactions available';
+    }
 
     return results;
 }
