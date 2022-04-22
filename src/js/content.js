@@ -149,7 +149,7 @@ function waitForEl(el, callback, maxtries = false, interval = 100) {
 function displayFundamentals(el) {
     if (!isDefined(fundamentals.ticker)) return      
 
-    const companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> (${fundamentals.ticker})
+    const companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> <span id="ht-ticker">(${fundamentals.ticker})</span>
                     ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
                     `;
     document.getElementById('ht-company').innerHTML = companyHtml;
@@ -221,6 +221,7 @@ function displayWaiting() {
 }
 
 function insertCSS() {
+    const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
     const css = `<style>
     .ht-msg, #ht-waiting {
        font-size: large;
@@ -294,6 +295,9 @@ function insertCSS() {
         background-color: #1e6dc0;
         color: #fff;
     }
+    span#ht-ticker {
+       font-size: medium; 
+    }
     #ht-description {
         max-width: 700px;
         overflow: hidden;
@@ -310,16 +314,22 @@ function insertCSS() {
         border-collapse: collapse;
         border: 1px solid #c9c9bb; 
     }
-    #ht-earnings-container {
+    td#ht-earnings-container {
         border: 1px solid #c9c9bb;
         padding:  10px 5px 10px 0;
+        ${!showChart ? ('width: 100% !important;') : ''}
     }
     #ht-earnings-yearly {
         padding-bottom: 10px;
         padding-right: 20px;
+        ${!showChart ? ('float: left;') : ''}
+    }
+    #ht-earnings-quarterly {
+        ${!showChart ? ('float: left;') : ''}
     }
     #ht-chart-container {
         width: 100%;
+        text-align: left;
     }
     #ht-rni-container {
         border-collapse: collapse;
@@ -436,7 +446,7 @@ function insertCSS() {
     .ht-earnings-table tbody tr td {
         text-align: right;
         padding: 4px;
-        font-size: medium;
+        font-size: small;
     }    
     .ht-earnings-table tbody tr td:first-child {
         white-space: nowrap;
@@ -447,32 +457,32 @@ function insertCSS() {
     .ht-earnings-table tbody tr:nth-of-type(even) {
        background-color: #f3f3f3;
     }
-    .ht-earnings-table tbody tr .schg {
+    .ht-earnings-table tbody tr .ht-strong-pos-change{
         color: ${CHANGE_POSITIVE_COLOR};
         font-weight: bold;
     }
-    .ht-earnings-table tbody tr .wchg {
+    .ht-earnings-table tbody tr .ht-weak-pos-change {
         color: ${CHANGE_POSITIVE_COLOR};
     }
-    .ht-earnings-table tbody tr .ssur {
-        color: ${SURPRISE_POSITIVE_COLOR};
-        font-weight: bold;
-    }
-    .ht-earnings-table tbody tr .wsur {
-        color: ${SURPRISE_POSITIVE_COLOR};
-    }
-    .ht-earnings-table tbody tr .sneg {
+    .ht-earnings-table tbody tr .ht-strong-neg-change {
         color: ${CHANGE_NEGATIVE_COLOR};
         font-weight: bold;
     }
-    .ht-earnings-table tbody tr .wneg {
+    .ht-earnings-table tbody tr .ht-weak-neg-change {
         color: ${CHANGE_NEGATIVE_COLOR};
-    }      
+    } 
+    .ht-earnings-table tbody tr .ht-strong-pos-surprise {
+        color: ${SURPRISE_POSITIVE_COLOR};
+        font-weight: bold;
+    }
+    .ht-earnings-table tbody tr .ht-weak-pos-surprise {
+        color: ${SURPRISE_POSITIVE_COLOR};
+    }     
     .ht-loadingmsg:after {
         content: '.';
-        animation: dots 1s steps(1, end) infinite;
+        animation: ht-dots 1s steps(1, end) infinite;
     }
-    @keyframes dots {
+    @keyframes ht-dots {
         0%, 12.5% {
             opacity: 0;
         }
@@ -515,7 +525,7 @@ function displayContent() {
                 ${yearlyToHtml(annualEst)}
             </div>
             <div id="ht-earnings-quarterly">
-                ${epsDatesToHtml(epsDates)}
+                ${quarterlyToHtml(epsDates)}
             </div>
         </div>
         `;
@@ -555,11 +565,11 @@ function displayContent() {
             <table id="ht-ec-container">
                 <tr>
                     <td id="ht-earnings-container">
-                        <div id="ht-earnings-yearly" ${!showChart ? ('style="clear: both;"') : ''}>
+                        <div id="ht-earnings-yearly">
                             ${yearlyToHtml(annualEst)}
                         </div>
                         <div id="ht-earnings-quarterly">
-                            ${epsDatesToHtml(epsDates)}
+                            ${quarterlyToHtml(epsDates)}
                         </div>
                     </td>
                     ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
@@ -581,7 +591,7 @@ function displayContent() {
     bodyPrepend(html);
 }
 
-function epsDatesToHtml(epsDates) {
+function quarterlyToHtml(epsDates) {
     let html = '<table class="ht-earnings-table">';
     html += '<thead><tr>';
     if (default_ds == 2) html += '<td>Date</td>';
@@ -643,7 +653,7 @@ function epsDatesToHtml(epsDates) {
         }
         html += '<tr>';
         if (default_ds == 2) html += '<td>' + item.date + '</td>';
-        html += '<td>' + getDisplayQuarter(item.name) + '</td>';
+        html += '<td style="white-space: nowrap;">' + getDisplayQuarter(item.name) + '</td>';
         html += '<td>' + item.eps.eps + '</td>';
         html += '<td class="' + getHighlightClass4Change(item.eps.perf, epsPerf) + '">' + epsPerf + '</td>';
         if (show_earnings_surprise) {
@@ -713,16 +723,15 @@ function getHighlightClass4Change(num, str) {
     if (! isDefined(num)) { return hclass; }
 
     if (num >= 30) {
-        hclass = ' schg';
+        hclass = ' ht-strong-pos-change';
     } else if (num > 0 && num < 30) {
-        hclass = ' wchg';
+        hclass = ' ht-weak-pos-change';
     } else if (num < 0 && num > -20) {
-        hclass = ' wneg';
+        hclass = ' ht-weak-neg-change';
     }
     else if (num <= -20) {
-        hclass = ' sneg';
+        hclass = ' ht-strong-neg-change';
     }
-    
     return hclass;
 }
 
@@ -732,16 +741,15 @@ function getHighlightClass4Surprise(num, str) {
     if (! isDefined(num)) { return hclass; }
 
     if (num >= 30) {
-        hclass = ' ssur';
+        hclass = ' ht-strong-pos-surprise';
     } else if (num > 0 && num < 30) {
-        hclass = ' wsur';
+        hclass = ' ht-weak-pos-surprise';
     } else if (num < 0 && num > -20) {
-        hclass = ' wneg';
+        hclass = ' ht-weak-neg-change';
     }
     else if (num <= -20) {
-        hclass = ' sneg';
+        hclass = ' ht-strong-neg-change';
     }
-    
     return hclass;
 }
 
@@ -843,7 +851,7 @@ function extractAndProcess() {
     if (default_ds == 1) {
         // add quarters
         let dataBlockCount = 1;
-        const yearRegex = /^[A-Za-z]{3} \d{4}/;
+        const monthYearRegex = /^[A-Za-z]{3} \d{4}/;
         const blocks = document.querySelectorAll('[data-test-id="table-body"]')
         blocks.forEach(block => {
             let rows = [];
@@ -854,7 +862,7 @@ function extractAndProcess() {
                     // eps estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(yearRegex) == null) continue;
+                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(monthYearRegex) == null) continue;
                         let year = new Year(
                             getAnnualEstimateYear(row[0]),
                             "*" + getAnnualEstimateYear(row[0]),
@@ -867,7 +875,7 @@ function extractAndProcess() {
                     // revenue estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(yearRegex) == null) continue;
+                        if (!isDefined(row[0]) || row[0] == '' || row[0].match(monthYearRegex) == null) continue;
                         let yearInt = getAnnualEstimateYear(row[0]);
                         const foundYear = annualEst.find(q => q.year == yearInt);
                         if (foundYear) {
