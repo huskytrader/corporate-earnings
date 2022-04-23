@@ -106,10 +106,8 @@ chrome.storage.local.get(['chart_type',
         waitForEarningsData(displayEarnings, 30);
     }
     else if (default_ds == 2) {
-        displayEarnings(true);
         // ZA
-        //extractAndProcess();
-        //displayContent();
+        displayEarnings(true);
     }
  });
 
@@ -237,6 +235,11 @@ function insertCSS() {
         color: #ff0000;
         font-style: italic;
     }
+    #ht-waiting-fundamentals {
+        font-style: italic; 
+        font-weight: bold; 
+        color: #39ff14; 
+    }
     #ht-root-container {
         width: 100%;
         margin: 0;
@@ -354,12 +357,13 @@ function insertCSS() {
     }
     #ht-insiders-cell {
         border: 1px solid #c9c9bb;
+        vertical-align: top;
     } 
-    #ht-ratings {
+    #ht-ratings-table {
         width: 100%;
         height: 100%;         
     }
-    #ht-ratings td {
+    #ht-ratings-table td {
         vertical-align: top;
         border: 0;
         border-top: 0;
@@ -379,21 +383,22 @@ function insertCSS() {
     .ht-ratings-downgrade {
         color: #FF0000;
     }
-    #ht-news {
+    #ht-news-table {
         width:  100%;
         height: 100%;
     }
-    #ht-news td {
+    #ht-news-table td {
         border: 0;
         border-top: 0;
         border: bottom: 0;
-        text-align: left;
-        padding: 0 2px;
     }
-    .ht-news-date {
+    .ht-news-date-cell {
         white-space: nowrap;
         text-align:  right;
-        padding-right: 2px;
+        padding-right: 4px;
+    }
+    .ht-news-link-cell {
+        text-align: left;
     }
     a.ht-news-link, a.ht-news-link:hover, a.ht-news-link:link, a.ht-news-link:visited {
         color: #1e6dc0;
@@ -408,10 +413,7 @@ function insertCSS() {
         font-size: x-small;
         padding-left: 3px;
     }
-    #ht-insiders-cell {
-        vertical-align: top;
-    }
-    #ht-insiders td {
+    #ht-insiders-table td {
         border: 0;
         border-top: 0;
         border: bottom: 0;
@@ -541,30 +543,30 @@ function displayContent() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td id="ht-company" colspan="4"><span class="ht-loadingmsg">Waiting for data</span></td>
+                    <td id="ht-company" colspan="4"><span id="ht-waiting-fundamentals" class="ht-loadingmsg">Waiting for data</span></td>
                 </tr>
                 <tr>
                     <td colspan="4"><div id="ht-description"></div></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td>Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
-                    <td>ADR</td><td id="ht-fundamentals-adr"></td>
+                    <td title="Market capitalization">Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
+                    <td title="Monthly volatility">ADR</td><td id="ht-fundamentals-adr"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td>Float</td><td id="ht-fundamentals-float"></td>
-                    <td>Next Earnings</td><td id=ht-fundamentals-earnings></td>
+                    <td title="Shares float">Shares Float</td><td id="ht-fundamentals-float"></td>
+                    <td title="Next earnings date">Next Earnings</td><td id=ht-fundamentals-earnings></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td>Short Float</td><td id="ht-fundamentals-shortfloat"></td>
-                    <td>Inst Own</td><td id="ht-fundamentals-instown"></td>
+                    <td title="Short interest shares">Short Float</td><td id="ht-fundamentals-shortfloat"></td>
+                    <td title="Institutional ownership">Inst Own</td><td id="ht-fundamentals-instown"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td>Days to cover</td><td id="ht-fundamentals-daystocover"></td>
-                    <td>Inst Trans (3mo)</td><td id="ht-fundamentals-instrans3mo"></td>
+                    <td title="Short interest ratio">Days to cover</td><td id="ht-fundamentals-daystocover"></td>
+                    <td title="Institutional transactions (3 month change in institutional ownership)">Inst Trans</td><td id="ht-fundamentals-instrans3mo"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td>Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
-                    <td>Rel Volume</td><td id="ht-fundamentals-relvol"></td>
+                    <td title="Average volume">Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
+                    <td title="Relative volume">Rel Volume</td><td id="ht-fundamentals-relvol"></td>
                 </tr> 
             </table>            
             <table id="ht-ec-container">
@@ -1284,7 +1286,7 @@ const transformRatingsData = (html) => {
     const dom = parser.parseFromString(html, 'text/html')
     const ratingsNodes = dom.querySelectorAll('table table')   
     let result = ''
-    result = '<table id="ht-ratings">\n'
+    result = '<table id="ht-ratings-table">\n'
     for (const ratingsNode of ratingsNodes) {
         let ratingsRow = ratingsNode.querySelector('tr')
         let rowClass = ratingsRow.getAttribute('class')
@@ -1479,7 +1481,7 @@ const extractInsiders = (html) => {
 }
 
 const renderInsiders = (json) => {
-    let html = '<table id="ht-insiders">\n'
+    let html = '<table id="ht-insiders-table">\n'
     for (const item of json) {
         html += '<tr>\n'
         html += '<td class="ht-insiders-date">' + item.date + '</td>\n'
@@ -1531,7 +1533,7 @@ const extractRatings = (html) => {
 }
 
 const renderRatings = (json) => {
-    let html = '<table id="ht-ratings">\n'
+    let html = '<table id="ht-ratings-table">\n'
     for (const item of json) {
         html += '<tr'
         if (item.upgrade) html += ' class="ht-ratings-upgrade"'
@@ -1577,11 +1579,11 @@ const extractNews = (html) => {
 }
 
 const renderNews = (json) => {
-    let html = '<table id="ht-news">\n'
+    let html = '<table id="ht-news-table">\n'
     for (const item of json) {
         html += '<tr>\n'
-        html += '<td class="ht-news-date">' + item.date + '</td>\n'
-        html += '<td><a class="ht-news-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a><span class="ht-news-source">'+ item.source + '</span></td>\n'
+        html += '<td class="ht-news-date-cell">' + item.date + '</td>\n'
+        html += '<td class="ht-news-link-cell"><a class="ht-news-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a><span class="ht-news-source">'+ item.source + '</span></td>\n'
         html += '</tr>\n' 
     }
     html += '</table>\n'
