@@ -215,8 +215,8 @@ function displayEarnings(isContains) {
         return;
     }
     extractAndProcess();
-    hideClientContent()
     displayContent();
+    hideClientContent()
 }
 
 function displayWaiting() {
@@ -810,37 +810,10 @@ function isEarningsDateClose(earningsStr, daysToEarnings) {
 // extraction/preparation
 //
 function hideClientContent() {
-    if (default_ds == 1) {
-        // SA
-        hide(document.querySelector('#root'));
-        hide(document.querySelector('nav[aria-label="Main"] div'))
-        hide(document.querySelector('#main-nav-wrapper-row'));
-        hide(document.querySelector('#tab-content-header'));
-        hide(document.querySelector('#sp-center-menu'));
-        hide(document.querySelector('.symbol_title'));
-        hide(document.querySelector('#estimates'));
-        hide(document.querySelector('#cresscap'));
-        hide(document.querySelector('.panel-body'));
-        hide(document.querySelector('#breaking-news'));
-        hide(document.querySelector('.col-xs-3'));
-    }
-    else if (default_ds == 2) {
-        //ZA
-        hide(document.querySelector('header'));
-        hide(document.querySelector('.primary-nav--content'));
-        hide(document.querySelector('#primary'));
-        hide(document.querySelector('.header-logos'));
-        hide(document.querySelector('.user-menu_list'));
-        hide(document.querySelector('.clearfix top-header-section'));
-        hide(document.querySelector('#quote_ribbon_v2'));
-        hide(document.querySelector('#quote_sidebar_toggle+nav.left_subnav'));
-        hide(document.querySelector('.quote_body'));
-        hide(document.querySelector('.reserach_reports_cta_v2'));
-        hide(document.querySelector('.quote_body_full nav'));
-        hide(document.querySelector('#banner a'));
-        hide(document.querySelector('iframe'));
-        hide(document.querySelector('footer'));
-        hide(document.querySelector('div.disclosure-fixed-slab'));
+    let elem = document.querySelector('#ht-waiting').nextElementSibling;
+    while (elem) {
+        hide(elem);
+        elem = elem.nextElementSibling;
     }
 }
 
