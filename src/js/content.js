@@ -879,7 +879,7 @@ function extractAndProcess() {
                     // earnings data
                     rows = collectChildText(block);
                     for (const row of rows) {
-                        if (!isDefined(row[0]) || row[0] == '' || !row[0].includes('FQ')) continue;
+                        if (!isDefined(row[0]) || !isDefined(row[1]) || !isDefined(row[3]) || row[0] == '' || !row[0].includes('FQ')) continue;
                         let q = new SAQarter(row);
                         if (isQuarterValid(q)) {
                             epsDates.unshift(q);
