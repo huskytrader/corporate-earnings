@@ -1,5 +1,5 @@
 //options
-var fetch_fundamental_data = false;
+var show_earnings_only = false;
 // chart type: 1=none, 2=weekly, 3=daily, 4=both
 var chart_type = 1;
 var show_earnings_surprise = false;
@@ -15,9 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // Restores checkbox state using the options stored in chrome.storage.
 function restore_options() {
   chrome.storage.local.get(['chart_type', 
-                            'fetch_fundamental_data', 'show_earnings_surprise', 'open_new_tab', 
+                            'show_earnings_only', 'show_earnings_surprise', 'open_new_tab', 
                             'ms_style_output', 'limit_num_qtr', 'default_ds'], function(options) {
-    if (isDefined(options.fetch_fundamental_data)) {fetch_fundamental_data = options.fetch_fundamental_data;}
+    if (isDefined(options.show_earnings_only)) {show_earnings_only = options.show_earnings_only;}
     if (isDefined(options.chart_type)) {chart_type = options.chart_type;}
     if (isDefined(options.show_earnings_surprise)) {show_earnings_surprise = options.show_earnings_surprise;}
     if (isDefined(options.open_new_tab)) {open_new_tab = options.open_new_tab;}
@@ -30,7 +30,8 @@ function restore_options() {
 }
 
 function restore_ui() {
-  document.getElementById('fetch_fundamental_data').checked = fetch_fundamental_data;
+
+  document.getElementById('show_earnings_only').checked = show_earnings_only;
   document.getElementById('chart_type_'+chart_type).checked = true;
   document.getElementById('show_earnings_surprise').checked = show_earnings_surprise;
   document.getElementById('open_new_tab').checked = open_new_tab;
@@ -51,18 +52,18 @@ function restore_ui() {
   // set version
   document.getElementById('version').innerHTML = chrome.runtime.getManifest().version;
 
-  // show/hide chart selector
-  if (fetch_fundamental_data == true) {
-    show(document.getElementById("chart-select"));
+  // gray out chart selector if show_earnings_only is selected
+ if (show_earnings_only == false) {
+    ungrayDiv(document.getElementById("chart-select"));
   }
   else {
-    hide(document.getElementById("chart-select"));
+    grayDiv(document.getElementById("chart-select"));
   }
 }
 
 // Saves options to storage
 function save_options() {
-  let fetch_fundamental_data = document.getElementById('fetch_fundamental_data').checked;
+  let show_earnings_only = document.getElementById('show_earnings_only').checked;
   let show_earnings_surprise = document.getElementById('show_earnings_surprise').checked;
   let open_new_tab = document.getElementById('open_new_tab').checked;
   let ms_style_output = document.getElementById('ms_style_output').checked;
@@ -78,7 +79,7 @@ function save_options() {
   
   chrome.storage.local.set({
     chart_type: chart_type,
-    fetch_fundamental_data: fetch_fundamental_data,
+    show_earnings_only: show_earnings_only,
     show_earnings_surprise: show_earnings_surprise,
     open_new_tab: open_new_tab,
     ms_style_output: ms_style_output,
@@ -86,11 +87,11 @@ function save_options() {
     default_ds: default_ds
   });
 
-  if (fetch_fundamental_data == false) {
-    hide(document.getElementById("chart-select"));
+ if (show_earnings_only == true) {
+    grayDiv(document.getElementById("chart-select"));
   }
   else {
-    show(document.getElementById("chart-select"));
+    ungrayDiv(document.getElementById("chart-select"));
   }
 }
 
@@ -107,4 +108,14 @@ const hide = (element) => {
 const show = (element) => {
     if (element != null && element.style != null)
         element.style.display = "block";    
+}
+
+const grayDiv = (element) => {
+  element.style.opacity = 0.5
+  element.style.pointerEvents = 'none';
+}
+
+const ungrayDiv = (element) => {
+  element.style.opacity = 1.0
+  element.style.pointerEvents = 'auto';
 }

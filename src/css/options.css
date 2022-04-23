@@ -10,11 +10,12 @@ ul {
     padding-left:0;
 }
 
-.ds-select {    
-    font-size: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
+#ds-select {    
     width: 100%;
+}
+
+#ds-switch label{
+    font-size: small;
 }
 
 #ds-label {
@@ -22,22 +23,20 @@ ul {
 }
 
 #title {
-    font-size: 12px;
     text-align: center;
+    font-size: small;
 }
 
-#chart-select {
-    display: none;
-    font-size: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-#copy-on-click-select {
-    display: none;
-    font-size: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+#chart-switch label{
+    font-size: small;
 }
 
 #open_new_tab {
     margin-top: 5px;
 }
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: green;
+}
+

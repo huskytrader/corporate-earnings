@@ -12,7 +12,7 @@
     <div id="content">        
         <ul>
          <li>
-          <div class="ds-select">
+          <div id="ds-select">
             <label id="ds-label" for="ds-switch">Data source</label>
             <div id="ds-switch">
               <input type="radio" id="ds_one" name="data-source" value="1" />
@@ -22,8 +22,8 @@
             </div> 
           </div>
         </li>
-        <li><input type="checkbox" id="fetch_fundamental_data" class="checkbox"><label for="fetch_fundamental_data">Fetch additional data</label></li>
-         <div id="chart-select"> 
+        <li>
+          <div id="chart-select"> 
             <label id="chart-label" for="chart-switch">Chart</label>
             <div id="chart-switch">
               <input type="radio" id="chart_type_1" name="chart" value="1" />
@@ -36,6 +36,8 @@
               <label for="chart_type_4">Both</label>
             </div> 
          </div>
+       </li>
+        <li><input type="checkbox" id="show_earnings_only" class="checkbox"><label for="show_earnings_only">Show earnings only</label></li>
          <li><input type="checkbox" id="show_earnings_surprise" class="checkbox"><label for="show_earnings_surprise">Show earnings surprise</label></li>
          <li><input type="checkbox" id="open_new_tab" class="checkbox"><label for="open_new_tab">New tab per symbol</label></li>
          <li><input type="checkbox" id="ms_style_output" class="checkbox"><label for="ms-style-output">MS style %Chg output</label></li>

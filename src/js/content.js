@@ -62,6 +62,7 @@ const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
 
 var fetch_fundamental_data = true;
+var show_earnings_only = false;
 var chart_type = CHART_TYPE.DAILY;
 var show_earnings_surprise = false;
 var default_ds = 1;
@@ -74,14 +75,17 @@ var annualEst = [];
 var fundamentals = {};
 
 chrome.storage.local.get(['chart_type', 
-                          'fetch_fundamental_data', 
+                          'show_earnings_only', 
                           'show_earnings_surprise', 
                           'ms_style_output', 
                           'limit_num_qtr', 
                           'default_ds'], 
                           function(options) {
                    
-    if (isDefined(options.fetch_fundamental_data)) { fetch_fundamental_data = options.fetch_fundamental_data; }
+    if (isDefined(options.show_earnings_only)) { 
+        show_earnings_only = options.show_earnings_only; 
+        fetch_fundamental_data = !options.show_earnings_only; 
+    }
     if (isDefined(options.chart_type)) { chart_type = options.chart_type; }
     if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
     if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
@@ -89,7 +93,7 @@ chrome.storage.local.get(['chart_type',
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
 
-    if (fetch_fundamental_data == true) {
+    if (fetch_fundamental_data) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
                 processFundamentalsData(response, fundamentals);
