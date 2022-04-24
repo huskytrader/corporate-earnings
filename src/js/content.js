@@ -3,7 +3,7 @@ const CHANGE_POSITIVE_COLOR = '#0000FF';
 const CHANGE_NEGATIVE_COLOR = '#FF0000';
 const SURPRISE_POSITIVE_COLOR = '#04C90A';
 
-const LOW_ADR_THRESHOLD = 4.5;
+const LOW_ADR_THRESHOLD = 4.0;
 const LOW_ADR_COLOR = '#FF0000';
 
 const HIGH_SHORT_INTEREST_THRESHOLD = 20;
@@ -559,7 +559,7 @@ function insertHTML() {
                 </tr>
                 <tr class="ht-fdata">
                     <td title="Market capitalization">Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
-                    <td title="Monthly volatility">ADR</td><td id="ht-fundamentals-adr"></td>
+                    <td title="Monthly volatility">ADR (monthly volatility)</td><td id="ht-fundamentals-adr"></td>
                 </tr>
                 <tr class="ht-fdata">
                     <td title="Shares float">Shares Float</td><td id="ht-fundamentals-float"></td>
@@ -956,8 +956,10 @@ function fillAnnual(epsDates, annualEst) {
         // find all quarters for given year
         epsDates.forEach(function(qtr) {
             if (qtr.name.indexOf(year.toString()) > -1) {
-                yearItem.eps += qtr.eps.eps;
-                yearItem.rev += qtr.rev.rev;
+                if (isDefined(qtr.eps.eps))
+                    yearItem.eps += qtr.eps.eps;
+                if (isDefined(qtr.rev.rev))
+                    yearItem.rev += qtr.rev.rev;
                 ++qtrs4Year;
             }
         })
@@ -1036,7 +1038,8 @@ function isQuarterValid(qtr) {
 }
 
 function isAbleToCalculateQtrRevChange(qtr, compQuarter) {
-    return qtr.rev.rev != 0 && compQuarter.rev.rev != 0;
+    return isDefined(qtr.rev.rev) && qtr.rev.rev != 0 && 
+           isDefined(compQuarter.rev.rev) && compQuarter.rev.rev != 0;
 }
 
 function numberWithCommas(x) {
@@ -1083,6 +1086,7 @@ class SAQarter extends Quarter {
     */
     static parseQtrEps(epsStr, surpriseStr) {
         let eps = {};
+        if (epsStr == '' || epsStr == '-') return undefined;
         eps.eps = parseFloat(epsStr);
         if (isDefined(surpriseStr) && surpriseStr != '-') {
             eps.surprisePerf = SAQarter.calculateSurprisePercent(parseFloat(surpriseStr), eps.eps);
@@ -1119,6 +1123,7 @@ class SAQarter extends Quarter {
 
     static revenueStringToFloat(revStr) {
         revStr = revStr.trim();
+        if (revStr == '' || revStr == '-') return undefined;
         if (revStr.endsWith('M')) {
             return parseFloat(parseFloat(revStr).toFixed(1));
         } else if (revStr.endsWith('K')) {
