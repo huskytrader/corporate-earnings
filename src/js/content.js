@@ -97,7 +97,7 @@ chrome.storage.local.get(['chart_type',
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
                 processFundamentalsData(response, fundamentals);
-                waitForEl("#ht-earnings-quarterly", displayFundamentals, 30); 
+                waitForEl("#ht-company", pushFundamentalData, 15); 
             }
         });
     }
@@ -136,7 +136,7 @@ function waitForEarningsData(callback, maxtries = false, interval = 100) {
   }, interval);
 }
 
-function waitForEl(el, callback, maxtries = false, interval = 100) {
+function waitForEl(el, callback, maxtries = false, interval = 200) {
   const poller = setInterval(() => {
     const isContains = document.querySelector(el)
     const retry = maxtries === false || maxtries-- > 0;
@@ -146,7 +146,8 @@ function waitForEl(el, callback, maxtries = false, interval = 100) {
   }, interval);
 }
 
-function displayFundamentals(el) {
+function pushFundamentalData(found) {
+    if (!found) return;
     if (!isDefined(fundamentals.ticker)) {
         document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
         return
@@ -209,14 +210,20 @@ function displayFundamentals(el) {
 }
 
 function displayEarnings(isContains) {
-    if(!isContains) {
+    extractAndProcessEarningsData();
+    if (epsDates.length == 0 && annualEst.length == 0) {
         hide(document.querySelector('#ht-waiting'));
         bodyPrepend('<div class="ht-msg">No earnings data available for this symbol.</div>');
-        return;
+        return;    
     }
-    extractAndProcess();
-    displayContent();
-    hideClientContent()
+    insertHTML();
+    pushEarningsData();
+    hideNativeContent()
+}
+
+function pushEarningsData() {
+    document.getElementById('ht-earnings-yearly').innerHTML = yearlyToHtml(annualEst);
+    document.getElementById('ht-earnings-quarterly').innerHTML = quarterlyToHtml(epsDates);
 }
 
 function displayWaiting() {
@@ -525,7 +532,7 @@ function insertCSS() {
 // Display functions 
 //
 //
-function displayContent() {
+function insertHTML() {
     hide(document.querySelector('#ht-waiting'));
     let html = '';
     const showEarningsOnly = !fetch_fundamental_data;
@@ -533,10 +540,8 @@ function displayContent() {
         html = `
         <div id="ht-root-container" style="width: 100%; border: 0;">
             <div id="ht-earnings-yearly">
-                ${yearlyToHtml(annualEst)}
             </div>
             <div id="ht-earnings-quarterly">
-                ${quarterlyToHtml(epsDates)}
             </div>
         </div>
         `;
@@ -577,10 +582,8 @@ function displayContent() {
                 <tr>
                     <td id="ht-earnings-container">
                         <div id="ht-earnings-yearly">
-                            ${yearlyToHtml(annualEst)}
                         </div>
                         <div id="ht-earnings-quarterly">
-                            ${quarterlyToHtml(epsDates)}
                         </div>
                     </td>
                     ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
@@ -617,7 +620,7 @@ function quarterlyToHtml(epsDates) {
     html += '</tr></thead><tbody>';
     
     if (epsDates.length == 0) {
-        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data found</td></tr>';
+        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data available</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -686,7 +689,7 @@ function yearlyToHtml(annualEst) {
     html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
     if (annualEst.length == 0) {
-        html += '<tr><td colspan="5">No data found</td></tr>';
+        html += '<tr><td colspan="5">No data available</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -809,7 +812,7 @@ function isEarningsDateClose(earningsStr, daysToEarnings) {
 //
 // extraction/preparation
 //
-function hideClientContent() {
+function hideNativeContent() {
     let elem = document.querySelector('#ht-waiting').nextElementSibling;
     while (elem) {
         hide(elem);
@@ -831,7 +834,9 @@ function collectChildText(elem) {
     return rows;
 }
 
-function extractAndProcess() {
+// attemps to extract earnings quarterly and annual data from html
+// if successful, will parse and calculate Change%
+function extractAndProcessEarningsData() {
     if (default_ds == 1) {
         // add quarters
         let dataBlockCount = 1;
@@ -1420,7 +1425,6 @@ const toggle = (element) => {
             element.style.display = "none";
         }
     }
-    //elem.classList.toggle('hidden');
 }
 
 const contains = (selector, text) => {
