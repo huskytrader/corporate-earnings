@@ -4,8 +4,6 @@
     "version": "3.0.0",
     "description": "Displays earnings and fundamentals in the easy to analyze format",
     "icons": {
-        "16": "src/images/icon16.png",
-        "48": "src/images/icon48.png",
         "128": "src/images/icon128.png"
     },
     "content_scripts": [
