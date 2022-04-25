@@ -1,7 +1,7 @@
 # Frequently Asked Questions
 
-### Adding more features/data points
-* I am open to suggestions
+### Are updates automatic?
+* No, unfortunately, you have to update manually each time. Download the [ZIP file](https://github.com/huskytrader/corporate-earnings/archive/main.zip) and unzip it into the previous location overwriting old files.
 
 ### Changing data thresholds and colors
 * You can change a few variables that control presentation. They are located on top of [src/js/content.js](https://github.com/huskytrader/corporate-earnings/tree/main/src/js/content.js) file
@@ -25,3 +25,6 @@ const HIGH_INST_CHANGE_COLOR = '#00FF00';
 
 ### What about dark mode?
 * You can add it through third-party extensions. Dark Reader works very well.
+
+### Adding more features/data points
+* I am open to suggestions
