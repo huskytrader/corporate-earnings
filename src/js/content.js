@@ -221,7 +221,7 @@ function displayEarnings(isContains) {
 }
 
 function pushEarningsData() {
-    document.getElementById('ht-earnings-yearly').innerHTML = yearlyToHtml(annualData);
+    document.getElementById('ht-earnings-yearly').innerHTML = annualToHtml(annualData);
     document.getElementById('ht-earnings-quarterly').innerHTML = quarterlyToHtml(quarterlyData);
 }
 
@@ -557,24 +557,24 @@ function insertHTML() {
                     <td colspan="4"><div id="ht-description"></div></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td title="Market capitalization">Mkt Cap</td><td id="ht-fundamentals-mktcap"></td>
-                    <td title="Monthly volatility">ADR (monthly volatility)</td><td id="ht-fundamentals-adr"></td>
+                    <td title="Market capitalization">Mkt Cap</td><td title="Market capitalization" id="ht-fundamentals-mktcap"></td>
+                    <td title="Monthly volatility">ADR</td><td title="Monthly volatility" id="ht-fundamentals-adr"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td title="Shares float">Shares Float</td><td id="ht-fundamentals-float"></td>
-                    <td title="Next earnings date">Next Earnings</td><td id=ht-fundamentals-earnings></td>
+                    <td title="Shares float">Shares Float</td><td title="Shares float" id="ht-fundamentals-float"></td>
+                    <td title="Next earnings date">Next Earnings</td><td title="Next earnings date" id=ht-fundamentals-earnings></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td title="Short interest shares">Short Float</td><td id="ht-fundamentals-shortfloat"></td>
-                    <td title="Institutional ownership">Inst Own</td><td id="ht-fundamentals-instown"></td>
+                    <td title="Short interest shares">Short Float</td><td title="Short interest shares" id="ht-fundamentals-shortfloat"></td>
+                    <td title="Institutional ownership">Inst Own</td><td title="Institutional ownership" id="ht-fundamentals-instown"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td title="Short interest ratio">Days to cover</td><td id="ht-fundamentals-daystocover"></td>
-                    <td title="Institutional transactions (3 month change in institutional ownership)">Inst Trans</td><td id="ht-fundamentals-instrans3mo"></td>
+                    <td title="Short interest ratio">Days to cover</td><td title="Short interest ratio" id="ht-fundamentals-daystocover"></td>
+                    <td title="Institutional transactions (3 month change in institutional ownership)">Inst Trans</td><td title="Institutional transactions (3 month change in institutional ownership)" id="ht-fundamentals-instrans3mo"></td>
                 </tr>
                 <tr class="ht-fdata">
-                    <td title="Average volume">Avg Volume</td><td id="ht-fundamentals-avgvol"></td>
-                    <td title="Relative volume">Rel Volume</td><td id="ht-fundamentals-relvol"></td>
+                    <td title="Average volume (3 months)">Avg Volume</td><td title="Average volume (3 months)" id="ht-fundamentals-avgvol"></td>
+                    <td title="Relative volume">Rel Volume</td><td title="Relative volume" id="ht-fundamentals-relvol"></td>
                 </tr> 
             </table>            
             <table id="ht-ec-container">
@@ -683,7 +683,7 @@ function quarterlyToHtml(quarterlyData) {
     return html;
 }
 
-function yearlyToHtml(annualData) {
+function annualToHtml(annualData) {
     let html = '<table class="ht-earnings-table">';
     html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
@@ -713,11 +713,20 @@ function yearlyToHtml(annualData) {
             if (ms_style_output == true) { revPerf = revPerf + '%'; }
         }
 
-        html += '<tr><td>' + item.name + '</td>';
-        html += '<td>' + yearlyEps + '</td>';
-        html += '<td class="' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
-        html += '<td>' + numberWithCommas(yearlyRev) + '</td>';
-        html += '<td class="' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        if (item.name.toString().startsWith('*')) {
+            html += '<tr><td title="Estimated">' + item.name + '</td>';
+            html += '<td title="Estimated">' + yearlyEps + '</td>';
+            html += '<td title="Estimated" class="' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
+            html += '<td title="Estimated">' + numberWithCommas(yearlyRev) + '</td>';
+            html += '<td title="Estimated" class="' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        }
+        else {
+            html += '<tr><td>' + item.name + '</td>';
+            html += '<td>' + yearlyEps + '</td>';
+            html += '<td class="' + getHighlightClass4Change(item.epsPerf, epsPerf) + '">' + epsPerf + '</td>';
+            html += '<td>' + numberWithCommas(yearlyRev) + '</td>';
+            html += '<td class="' + getHighlightClass4Change(item.revPerf, revPerf) + '">' + revPerf  + '</td></tr>';
+        }
     });
     html += '</tbody></table>';
     return html;
