@@ -95,8 +95,8 @@ chrome.storage.local.get(['chart_type',
     if (fetch_fundamental_data) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
-                processFundamentalsData(response, fundamentals);
-                waitForEl("#ht-company", pushFundamentalData, 15); 
+                extractFundamentalData(response, fundamentals);
+                waitForEl("#ht-company", renderFundamentalData, 15); 
             }
         });
     }
@@ -145,7 +145,7 @@ function waitForEl(el, callback, maxtries = false, interval = 200) {
   }, interval);
 }
 
-function pushFundamentalData(found) {
+function renderFundamentalData(found) {
     if (!found) return;
     if (!isDefined(fundamentals.ticker)) {
         document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
@@ -156,6 +156,8 @@ function pushFundamentalData(found) {
                     ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
                     `;
     document.getElementById('ht-company').innerHTML = companyHtml;
+    const priceVolume = `\$${fundamentals.price}</br><span id="ht-volume">Vol: ${fundamentals.volume}</span>`;
+    document.getElementById('ht-pricevol').innerHTML = priceVolume;
     document.getElementById('ht-description').innerHTML = fundamentals.description;
     document.getElementById('ht-fundamentals-mktcap').innerHTML = fundamentals.mktcap;
     document.getElementById('ht-fundamentals-adr').innerHTML = fundamentals.adr;
@@ -315,6 +317,12 @@ function insertCSS() {
     }
     span#ht-ticker {
        font-size: medium; 
+    }
+    td#ht-pricevol {
+        font-size: medium;
+    }
+    span#ht-volume {
+        font-size: small;
     }
     #ht-description {
         max-width: 700px;
@@ -552,7 +560,8 @@ function insertHTML() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td id="ht-company" colspan="4"><span id="ht-waiting-fundamentals" class="ht-loadingmsg">Waiting for data</span></td>
+                    <td colspan="3" id="ht-company" colspan="4"><span id="ht-waiting-fundamentals" class="ht-loadingmsg">Waiting for data</span></td>
+                    <td id="ht-pricevol"></td>
                 </tr>
                 <tr>
                     <td colspan="4"><div id="ht-description"></div></td>
@@ -1204,7 +1213,7 @@ class Year {
     }
 }
 
-function processFundamentalsData(response, results) {
+function extractFundamentalData(response, results) {
     results.dailyChart = response.dailyChart;
     results.weeklyChart = response.weeklyChart;
 
@@ -1241,6 +1250,8 @@ function processFundamentalsData(response, results) {
     results.instchange = getSiblingText(tds, 'Inst Trans');
     results.relvolume = getSiblingText(tds, 'Rel Volume');
     results.avgvolume = getSiblingText(tds, 'Avg Volume');
+    results.price = getSiblingText(tds, 'Price');
+    results.volume = getSiblingText(tds, 'Volume');
     
     results.description = dom.querySelector('.fullview-profile').textContent;
     if (isDefined(results.companyName)) {
