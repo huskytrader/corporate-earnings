@@ -1,7 +1,7 @@
 //options
 var show_earnings_only = false;
 // chart type: 1=none, 2=weekly, 3=daily, 4=both
-var chart_type = 1;
+var chart_type = 3;
 var show_earnings_surprise = false;
 var open_new_tab = false;
 var ms_style_output = true;
