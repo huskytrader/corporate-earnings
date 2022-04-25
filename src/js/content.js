@@ -1484,11 +1484,8 @@ const renderInsiders = (json) => {
         if (item.isSell) html += ' class="ht-insiders-sell"'
         else if (item.isBuy) html += ' class="ht-insiders-buy"'
         html += '>' + item.transaction + '</td>\n'
-        html += '<td>' + item.cost + '</td>\n'
-        html += '<td>' + item.value + '</td>\n'
-        html += '<td>' + item.shares + '</td>\n'
-        html += '<td>' + item.insider + '</td>\n'
-        html += '<td>' + item.relationship + '</td>\n'
+        html += '<td>$' + item.value + ' (' + item.shares + ' shs)</td>\n'
+        html += '<td>' + item.insider + ' (' + item.relationship + ')</td>\n'
         html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a></td>\n'
         html += '</tr>\n' 
     }
