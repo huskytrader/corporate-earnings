@@ -69,9 +69,8 @@ var default_ds = 1;
 var ms_style_output = true;
 var limit_num_qtr = true;
 
-// init data structures
-var epsDates = [];
-var annualEst = [];
+var quarterlyData = [];
+var annualData = [];
 var fundamentals = {};
 
 chrome.storage.local.get(['chart_type', 
@@ -211,7 +210,7 @@ function pushFundamentalData(found) {
 
 function displayEarnings(isContains) {
     extractAndProcessEarningsData();
-    if (epsDates.length == 0 && annualEst.length == 0) {
+    if (quarterlyData.length == 0 && annualData.length == 0) {
         hide(document.querySelector('#ht-waiting'));
         bodyPrepend('<div class="ht-msg">No earnings data available for this symbol.</div>');
         return;    
@@ -222,8 +221,8 @@ function displayEarnings(isContains) {
 }
 
 function pushEarningsData() {
-    document.getElementById('ht-earnings-yearly').innerHTML = yearlyToHtml(annualEst);
-    document.getElementById('ht-earnings-quarterly').innerHTML = quarterlyToHtml(epsDates);
+    document.getElementById('ht-earnings-yearly').innerHTML = yearlyToHtml(annualData);
+    document.getElementById('ht-earnings-quarterly').innerHTML = quarterlyToHtml(quarterlyData);
 }
 
 function displayWaiting() {
@@ -605,7 +604,7 @@ function insertHTML() {
     bodyPrepend(html);
 }
 
-function quarterlyToHtml(epsDates) {
+function quarterlyToHtml(quarterlyData) {
     let html = '<table class="ht-earnings-table">';
     html += '<thead><tr>';
     if (default_ds == 2) html += '<td>Date</td>';
@@ -619,15 +618,15 @@ function quarterlyToHtml(epsDates) {
     }
     html += '</tr></thead><tbody>';
     
-    if (epsDates.length == 0) {
+    if (quarterlyData.length == 0) {
         html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data available</td></tr>';
         html += '</tbody></table>';
         return html;
     }
 
-    epsDates.forEach(function(item, index) {
+    quarterlyData.forEach(function(item, index) {
         // skip all but the last 8 qtrs if option is enabled
-        if (limit_num_qtr == true && index < epsDates.length - 8) { return; }
+        if (limit_num_qtr == true && index < quarterlyData.length - 8) { return; }
         
         let epsPerf = '-';
         if (isDefined(item.eps.perf)) {
@@ -684,17 +683,17 @@ function quarterlyToHtml(epsDates) {
     return html;
 }
 
-function yearlyToHtml(annualEst) {
+function yearlyToHtml(annualData) {
     let html = '<table class="ht-earnings-table">';
     html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
-    if (annualEst.length == 0) {
+    if (annualData.length == 0) {
         html += '<tr><td colspan="5">No data available</td></tr>';
         html += '</tbody></table>';
         return html;
     }
 
-    annualEst.forEach(function(item, index){
+    annualData.forEach(function(item, index){
         let yearlyEps = '-';
         if (typeof item.eps !== 'undefined') {
             yearlyEps = item.eps.toString();
@@ -857,7 +856,7 @@ function extractAndProcessEarningsData() {
                             "*" + getAnnualEstimateYear(row[0]),
                             row[1]);
                         year.qtrs4Year = 4;           
-                        annualEst.push(year);
+                        annualData.push(year);
                     }
                     break;
                 case 3: 
@@ -866,7 +865,7 @@ function extractAndProcessEarningsData() {
                     for (const row of rows) {
                         if (!isDefined(row[0]) || row[0] == '' || row[0].match(monthYearRegex) == null) continue;
                         let yearInt = getAnnualEstimateYear(row[0]);
-                        const foundYear = annualEst.find(q => q.year == yearInt);
+                        const foundYear = annualData.find(q => q.year == yearInt);
                         if (foundYear) {
                             foundYear.rev = revenueStringToFloat(row[1]);
                         }
@@ -876,7 +875,7 @@ function extractAndProcessEarningsData() {
                                 "*" + yearInt,
                                 undefined,
                                 revenueStringToFloat(row[1]));
-                            annualEst.push(year);
+                            annualData.push(year);
                         }
                     }
                     break;
@@ -887,7 +886,7 @@ function extractAndProcessEarningsData() {
                         if (!isDefined(row[0]) || !isDefined(row[1]) || !isDefined(row[3]) || row[0] == '' || !row[0].includes('FQ')) continue;
                         let q = new SAQarter(row);
                         if (isQuarterValid(q)) {
-                            epsDates.unshift(q);
+                            quarterlyData.unshift(q);
                         }
                     };
                     break;
@@ -908,14 +907,14 @@ function extractAndProcessEarningsData() {
                 dataObj.earnings_announcements_sales_table);
    
             if (isQuarterValid(quarter)) {
-                epsDates.unshift(quarter);
+                quarterlyData.unshift(quarter);
             }
         });
     }
 
-    calculateQuarterlyPerf(epsDates);   
-    fillAnnual(epsDates, annualEst);
-    calculateAnnualPerf(annualEst);
+    calculateQuarterlyPerf(quarterlyData);   
+    fillAnnual(quarterlyData, annualData);
+    calculateAnnualPerf(annualData);
 }
 
 // Calculations
@@ -946,15 +945,15 @@ function calculateQuarterlyPerf(qrts) {
 // getLatestYear to get year for latest quarter available (e.g. 2020)
 // attempt to find all quarters for given year
 // when found 0 quarters, exit
-function fillAnnual(epsDates, annualEst) {
-    if (epsDates.length == 0) { return; }
-    let year = getLatestQtrYear(epsDates);
+function fillAnnual(quarterlyData, annualData) {
+    if (quarterlyData.length == 0) { return; }
+    let year = getLatestQtrYear(quarterlyData);
     while (true) {
         let yearItem = new Year(year, year, 0, 0);
         let qtrs4Year = 0;
 
         // find all quarters for given year
-        epsDates.forEach(function(qtr) {
+        quarterlyData.forEach(function(qtr) {
             if (qtr.name.indexOf(year.toString()) > -1) {
                 if (isDefined(qtr.eps.eps))
                     yearItem.eps += qtr.eps.eps;
@@ -972,7 +971,7 @@ function fillAnnual(epsDates, annualEst) {
             yearItem.eps = +yearItem.eps.toFixed(2);
             yearItem.rev = +yearItem.rev.toFixed(1);
             yearItem.qtrs4Year = qtrs4Year;
-            annualEst.unshift(yearItem);
+            annualData.unshift(yearItem);
         }
         --year;
     }
@@ -1021,9 +1020,9 @@ function getAnnualEstimateYear(str) {
     return parseInt(start);
 }
 
-function getLatestQtrYear(epsDates) {
-    if (epsDates.length == 0) { return undefined; }
-    let lastQtrName = epsDates[epsDates.length-1].name;
+function getLatestQtrYear(quarterlyData) {
+    if (quarterlyData.length == 0) { return undefined; }
+    let lastQtrName = quarterlyData[quarterlyData.length-1].name;
     let year = parseInt(lastQtrName.substr(lastQtrName.indexOf(' ')+1));
     return year;
 }
