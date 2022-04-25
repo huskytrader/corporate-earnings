@@ -350,6 +350,7 @@ function insertCSS() {
         text-align: left;
     }
     #ht-rni-container {
+        width: 100%;
         border-collapse: collapse;
     }
     #ht-rni-container td {
@@ -580,22 +581,17 @@ function insertHTML() {
             <table id="ht-ec-container">
                 <tr>
                     <td id="ht-earnings-container">
-                        <div id="ht-earnings-yearly">
-                        </div>
-                        <div id="ht-earnings-quarterly">
-                        </div>
+                        <div id="ht-earnings-yearly"></div>
+                        <div id="ht-earnings-quarterly"></div>
                     </td>
                     ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
                 </tr>
             </table>
             <table id="ht-rni-container">
                 <tr>
-                    <td id="ht-ratings-cell">
-                    </td>
-                    <td id="ht-news-cell"> 
-                    </td>   
-                    <td id="ht-insiders-cell">
-                    </td>
+                    <td id="ht-ratings-cell"></td>
+                    <td id="ht-news-cell"></td>   
+                    <td id="ht-insiders-cell"></td>
                 </tr>    
             </table>
         </div>
@@ -1096,7 +1092,7 @@ class SAQarter extends Quarter {
         let eps = {};
         if (epsStr == '' || epsStr == '-') return undefined;
         eps.eps = parseFloat(epsStr);
-        if (isDefined(surpriseStr) && surpriseStr != '-') {
+        if (isDefined(surpriseStr) && surpriseStr != '-' && isDefined(eps.eps)) {
             eps.surprisePerf = SAQarter.calculateSurprisePercent(parseFloat(surpriseStr), eps.eps);
         }
         return eps;
@@ -1115,7 +1111,7 @@ class SAQarter extends Quarter {
         rev.rev = 0;
 
         rev.rev = SAQarter.revenueStringToFloat(revStr);
-        if (isDefined(surpriseStr) && surpriseStr != '-') {
+        if (isDefined(surpriseStr) && surpriseStr != '-' && isDefined(rev.rev)) {
             rev.surprisePerf = SAQarter.calculateSurprisePercent(SAQarter.revenueStringToFloat(surpriseStr), rev.rev);
         }
 
@@ -1123,7 +1119,7 @@ class SAQarter extends Quarter {
     }
 
     static calculateSurprisePercent(surprise, measure) {
-        if (!isDefined(surprise)) { return undefined; }
+        if (!isDefined(surprise) || !isDefined(measure)) { return undefined; }
         let projected = measure - surprise;
         let surprisePercent = calculatePercentChange(measure, projected);
         return surprisePercent;
@@ -1171,8 +1167,11 @@ class ZAQarter extends Quarter {
     static parseQtrEps(epsStr, epsSurpriseStr) {
         let eps = {};
         eps.eps =  parseFloat(epsStr.replace(/\$/, ''));
-        epsSurpriseStr = epsSurpriseStr.substr(epsSurpriseStr.indexOf('>') + 2).slice(0, -7);
-        eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
+
+        if (isDefined(epsSurpriseStr) && epsSurpriseStr.indexOf('>') > -1) {
+            epsSurpriseStr = epsSurpriseStr.substr(epsSurpriseStr.indexOf('>') + 2).slice(0, -7);
+            eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
+        }
         return eps;
     }
 
@@ -1186,8 +1185,10 @@ class ZAQarter extends Quarter {
                 // round to 1 decimal
                 rev.rev = Math.round(rev.rev * 10) / 10;
                 
-                let revSurprise = item[5].substr(item[5].indexOf('>') + 2).slice(0, -7);
-                rev.surprisePerf = Math.round(parseFloat(revSurprise));
+                if (isDefined(item[5]) && item[5].indexOf('>') > -1) {
+                    let revSurprise = item[5].substr(item[5].indexOf('>') + 2).slice(0, -7);
+                    rev.surprisePerf = Math.round(parseFloat(revSurprise));
+                }
             }
         });
         return rev;
