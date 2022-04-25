@@ -63,7 +63,7 @@ const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
 
 var fetch_fundamental_data = true;
 var show_earnings_only = false;
-var chart_type = CHART_TYPE.DAILY;
+var chart_type = CHART_TYPE.NONE;
 var show_earnings_surprise = false;
 var default_ds = 1;
 var ms_style_output = true;
