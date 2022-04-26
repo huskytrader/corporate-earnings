@@ -91,18 +91,27 @@ chrome.storage.local.get(['chart_type',
     if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
     if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
 
+    insertCSS();
+    displayWaiting();
 
     if (fetch_fundamental_data) {
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
                 extractFundamentalData(response, fundamentals);
-                waitForEl("#ht-company", renderFundamentalData, 15); 
+                if (document.getElementById('ht-root-container') == null) {
+                    insertHTML();
+                    hideNativeContent();
+                }
+                renderFundamentalData();
+                if (document.getElementById('ht-msg-noearnings') != null) {
+                    hide(document.getElementById('ht-msg-noearnings'));
+                    hide(document.getElementById('ht-waiting-earnings'));
+                    
+                }
+                //waitForEl("#ht-company", renderFundamentalData, 15); 
             }
         });
     }
-
-    insertCSS();
-    displayWaiting();
 
     if (default_ds == 1) {
         // SA
@@ -129,9 +138,10 @@ function waitForEarningsData(callback, maxtries = false, interval = 100) {
     const retry = maxtries === false || maxtries-- > 0;
     if (retry && !isContains) return; // will try again
     clearInterval(poller);
+    //callback(isContains);
     setTimeout(function() {
             callback(isContains);
-    }, 1000);
+    }, 1500);
   }, interval);
 }
 
@@ -145,7 +155,7 @@ function waitForEl(el, callback, maxtries = false, interval = 200) {
   }, interval);
 }
 
-function renderFundamentalData(found) {
+function renderFundamentalData(found = true) {
     if (!found) return;
     if (!isDefined(fundamentals.ticker)) {
         document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
@@ -212,17 +222,25 @@ function renderFundamentalData(found) {
 
 function displayEarnings(isContains) {
     extractAndProcessEarningsData();
-    if (quarterlyData.length == 0 && annualData.length == 0) {
-        hide(document.querySelector('#ht-waiting'));
-        bodyPrepend('<div class="ht-msg">No earnings data available for this symbol.</div>');
-        return;    
+    if (document.getElementById('ht-root-container') == null) {
+        if (quarterlyData.length == 0 && annualData.length == 0) {
+            hide(document.getElementById('ht-waiting'));
+            bodyPrepend('<div id="ht-msg-noearnings">No earnings data available for this symbol.</div>');
+            return;    
+        }
+        else {
+            insertHTML();
+            pushEarningsData();
+            hideNativeContent();
+        }
     }
-    insertHTML();
-    pushEarningsData();
-    hideNativeContent()
+    else {
+        pushEarningsData();
+    }
 }
 
 function pushEarningsData() {
+    hide(document.getElementById('ht-waiting-earnings'));
     document.getElementById('ht-earnings-yearly').innerHTML = annualToHtml(annualData);
     document.getElementById('ht-earnings-quarterly').innerHTML = quarterlyToHtml(quarterlyData);
 }
@@ -234,7 +252,7 @@ function displayWaiting() {
 function insertCSS() {
     const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
     const css = `<style>
-    .ht-msg, #ht-waiting {
+    #ht-msg-noearnings, #ht-waiting {
        font-size: large;
        font-style: italic;
        z-index: 9999;
@@ -251,6 +269,12 @@ function insertCSS() {
         font-style: italic; 
         font-weight: bold; 
         color: #39ff14; 
+    }
+    #ht-waiting-earnings {
+        font-style: italic; 
+        font-weight: bold; 
+        color: #39ff14; 
+        font-size: medium;
     }
     #ht-root-container {
         width: 100%;
@@ -590,7 +614,7 @@ function insertHTML() {
             <table id="ht-ec-container">
                 <tr>
                     <td id="ht-earnings-container">
-                        <div id="ht-earnings-yearly"></div>
+                        <div id="ht-earnings-yearly"><span id="ht-waiting-earnings" class="ht-loadingmsg">Waiting for data</span></div>
                         <div id="ht-earnings-quarterly"></div>
                     </td>
                     ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
@@ -1278,12 +1302,9 @@ function extractFundamentalData(response, results) {
     const bds = dom.querySelectorAll('.body-table');
     if (Array.from(bds).length > 0) {
         results.insidersJson = extractInsiders(bds[bds.length-1].outerHTML);
-        results.insidersHtml = renderInsiders(results.insidersJson);
+        results.insidersHtml = (results.insidersJson.length > 0) ? renderInsiders(results.insidersJson) :
+                                'No insider transactions available'; 
     }
-    else {
-        results.insidersHtml = 'No insider transactions available';
-    }
-
     return results;
 }
 
