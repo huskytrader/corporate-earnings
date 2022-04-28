@@ -98,17 +98,7 @@ chrome.storage.local.get(['chart_type',
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
                 extractFundamentalData(response, fundamentals);
-                if (document.getElementById('ht-root-container') == null) {
-                    insertHTML();
-                    hideNativeContent();
-                }
-                renderFundamentalData();
-                if (document.getElementById('ht-msg-noearnings') != null) {
-                    hide(document.getElementById('ht-msg-noearnings'));
-                    hide(document.getElementById('ht-waiting-earnings'));
-                    
-                }
-                //waitForEl("#ht-company", renderFundamentalData, 15); 
+                waitForEl('#ht-root-container', renderFundamentalData, 25);
             }
         });
     }
@@ -125,7 +115,7 @@ chrome.storage.local.get(['chart_type',
 
 /**
  * Wait for the specified element to appear in the DOM. When the element appears,
- * provide it to the callback. Will wait additional 250ms where callback.
+ * provide it to the callback. Wait additional 500ms where callback.
  *
  * @param selector 
  * @param callback function that takes selected element (null if timeout)
@@ -134,14 +124,13 @@ chrome.storage.local.get(['chart_type',
  */
 function waitForEarningsData(callback, maxtries = false, interval = 100) {
   const poller = setInterval(() => {
-    const isContains = contains('span', 'Earnings history')
+    const isContains = contains('h2', 'FQ')
     const retry = maxtries === false || maxtries-- > 0;
     if (retry && !isContains) return; // will try again
     clearInterval(poller);
-    //callback(isContains);
     setTimeout(function() {
             callback(isContains);
-    }, 1500);
+    }, 500);
   }, interval);
 }
 
@@ -158,7 +147,7 @@ function waitForEl(el, callback, maxtries = false, interval = 200) {
 function renderFundamentalData(found = true) {
     if (!found) return;
     if (!isDefined(fundamentals.ticker)) {
-        document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
+        //document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
         return
     }      
 
@@ -218,6 +207,7 @@ function renderFundamentalData(found = true) {
 
         document.getElementById('ht-chart-daily').innerHTML = daily;
     }  
+    show(document.getElementById('ht-fundamentals-container'));
 }
 
 function displayEarnings(isContains) {
@@ -286,17 +276,19 @@ function insertCSS() {
         width: auto;
         display:table;
         margin: 0 0;
+        border-collapse: collapse;
     }
     #ht-root-container td {
         font-weight: 400;
         line-height: 1.5;
         font-family: sans-serif;
     }
-    #ht-fundamentals-container {
+    table#ht-fundamentals-container {
        border: 1px solid #c9c9bb;
        border-collapse: collapse;
        margin: 0px 0px 5px 0px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+       display: none;
     }
     #ht-fundamentals-container tr{
         border: 1px solid #c9c9bb;
@@ -584,7 +576,7 @@ function insertHTML() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td colspan="3" id="ht-company" colspan="4"><span id="ht-waiting-fundamentals" class="ht-loadingmsg">Waiting for data</span></td>
+                    <td colspan="3" id="ht-company" colspan="4"></td>
                     <td id="ht-pricevol"></td>
                 </tr>
                 <tr>
@@ -1459,14 +1451,14 @@ const hide = (element) => {
 // show an element
 const show = (element) => {
     if (element != null && element.style != null)
-        element.style.display = "block";    
+        element.style.display = "table";    
 }
 
 // toggle the element visibility
 const toggle = (element) => {
     if (element != null && element.style != null) {
         if(element.style.display === "none"){
-            element.style.display = "block";
+            element.style.display = "table";
         }else{
             element.style.display = "none";
         }
