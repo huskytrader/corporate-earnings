@@ -98,7 +98,7 @@ chrome.storage.local.get(['chart_type',
         chrome.runtime.sendMessage({chart_type: chart_type}, (response) => {
             if (!response.error) {     
                 extractFundamentalData(response, fundamentals);
-                waitForEl('#ht-root-container', renderFundamentalData, 25);
+                waitForEl('#ht-root-container', pushFundamentalsData, 25);
             }
         });
     }
@@ -144,16 +144,21 @@ function waitForEl(el, callback, maxtries = false, interval = 200) {
   }, interval);
 }
 
-function renderFundamentalData(found = true) {
+function pushFundamentalsData(found = true) {
     if (!found) return;
     if (!isDefined(fundamentals.ticker)) {
-        //document.getElementById('ht-company').innerHTML = '<span class="ht-warningmsg">No data received</span>';
         return
     }      
 
-    const companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a> <span id="ht-ticker">(${fundamentals.ticker})</span>
-                    ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}
-                    `;
+    let companyHtml = '';
+    if (isDefined(fundamentals.companySite)) 
+        companyHtml = `<a id="ht-company-link" href="${fundamentals.companySite}" target="_blank"><b>${fundamentals.companyName}</b></a>`;
+    else 
+        companyHtml = `<b>${fundamentals.companyName}</b>`;
+
+    companyHtml += ` <span id="ht-ticker">(${fundamentals.ticker})</span>
+                    ${fundamentals.sector} | ${fundamentals.industry} | ${fundamentals.country}`;
+
     document.getElementById('ht-company').innerHTML = companyHtml;
     const priceVolume = `\$${fundamentals.price}</br><span id="ht-volume">Vol: ${fundamentals.volume}</span>`;
     document.getElementById('ht-pricevol').innerHTML = priceVolume;
@@ -215,8 +220,15 @@ function displayEarnings(isContains) {
     if (document.getElementById('ht-root-container') == null) {
         if (quarterlyData.length == 0 && annualData.length == 0) {
             hide(document.getElementById('ht-waiting'));
-            bodyPrepend('<div id="ht-msg-noearnings">No earnings data available for this symbol.</div>');
-            return;    
+            if (isDefined(fundamentals.ticker)) {
+                insertHTML();
+                pushFundamentalsData();
+                pushEarningsData();
+                hideNativeContent();
+            }
+            else {
+                bodyPrepend('<div id="ht-msg-noearnings">No earnings data available for this symbol.</div>');
+            }    
         }
         else {
             insertHTML();
@@ -227,6 +239,7 @@ function displayEarnings(isContains) {
     else {
         pushEarningsData();
     }
+    return;
 }
 
 function pushEarningsData() {
@@ -577,7 +590,7 @@ function insertHTML() {
             <table id="ht-fundamentals-container">
                 <tr>
                     <td colspan="3" id="ht-company" colspan="4"></td>
-                    <td id="ht-pricevol"></td>
+                    <td title="Price / Volume" id="ht-pricevol"></td>
                 </tr>
                 <tr>
                     <td colspan="4"><div id="ht-description"></div></td>
@@ -640,7 +653,7 @@ function quarterlyToHtml(quarterlyData) {
     html += '</tr></thead><tbody>';
     
     if (quarterlyData.length == 0) {
-        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data available</td></tr>';
+        html += '<tr><td colspan="${show_earnings_surprise ? 7 : 5}">No data</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -709,7 +722,7 @@ function annualToHtml(annualData) {
     html += '<thead><tr><td>Year</td><td>EPS</td><td>%Change</td><td>Revenue(Mil)</td><td>%Change</td></tr></thead><tbody>';
     
     if (annualData.length == 0) {
-        html += '<tr><td colspan="5">No data available</td></tr>';
+        html += '<tr><td colspan="5">No data</td></tr>';
         html += '</tbody></table>';
         return html;
     }
@@ -873,7 +886,7 @@ function extractAndProcessEarningsData() {
         const blocks = document.querySelectorAll('[data-test-id="table-body"]')
         blocks.forEach(block => {
             let rows = [];
-            switch(dataBlockCount++) {
+            switch(dataBlockCount) {
                 case 1:
                     break;
                 case 2: 
@@ -921,6 +934,7 @@ function extractAndProcessEarningsData() {
                     };
                     break;
             }
+            ++dataBlockCount;
         });  
     }
     else if (default_ds == 2) {
@@ -1235,7 +1249,6 @@ function extractFundamentalData(response, results) {
 
     const parser = new DOMParser();
     const dom = parser.parseFromString(response.raw, 'text/html');
-
     const tickerNode = dom.querySelector('.fullview-ticker');
     results.ticker = tickerNode.textContent;
     results.tickerHref = fixExternalLink(tickerNode.getAttribute('href'));
@@ -1243,8 +1256,13 @@ function extractFundamentalData(response, results) {
 
     const secondRowNode = tickerNode.parentElement.parentElement.nextElementSibling;
     const siteNode = secondRowNode.querySelector('a');
-    results.companySite = siteNode.getAttribute('href');
-    results.companyName = siteNode.textContent;
+    if (siteNode != null) {
+        results.companySite = siteNode.getAttribute('href');
+        results.companyName = siteNode.textContent;
+    }
+    else {
+        results.companyName = secondRowNode.textContent;
+    }
 
     const thirdRowNode = secondRowNode.nextElementSibling;
     const thirdRowLinks = thirdRowNode.querySelectorAll('a');
@@ -1280,7 +1298,7 @@ function extractFundamentalData(response, results) {
         results.ratingsHtml = renderRatings(results.ratingsJson);
     }
     else {
-        results.ratingsHtml = 'No ratings available';
+        results.ratingsHtml = 'No ratings';
     }
 
     if (dom.querySelector('.fullview-news-outer') != null) {
@@ -1288,14 +1306,14 @@ function extractFundamentalData(response, results) {
         results.newsHtml = renderNews(results.newsJson);
     }
     else {
-        results.newsHtml = 'No news available';
+        results.newsHtml = 'No news';
     }
     
     const bds = dom.querySelectorAll('.body-table');
     if (Array.from(bds).length > 0) {
         results.insidersJson = extractInsiders(bds[bds.length-1].outerHTML);
         results.insidersHtml = (results.insidersJson.length > 0) ? renderInsiders(results.insidersJson) :
-                                'No insider transactions available'; 
+                                'No insider transactions'; 
     }
     return results;
 }
