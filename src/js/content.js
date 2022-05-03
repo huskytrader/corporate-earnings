@@ -589,7 +589,7 @@ function insertHTML() {
         <div id="ht-root-container">
             <table id="ht-fundamentals-container">
                 <tr>
-                    <td colspan="3" id="ht-company" colspan="4"></td>
+                    <td colspan="3" id="ht-company"></td>
                     <td title="Price / Volume" id="ht-pricevol"></td>
                 </tr>
                 <tr>
@@ -1318,37 +1318,6 @@ function extractFundamentalData(response, results) {
     return results;
 }
 
-const transformRatingsData = (html) => {
-    html = html.replace(/<\/?b>/g, '')
-    const parser = new DOMParser()
-    const dom = parser.parseFromString(html, 'text/html')
-    const ratingsNodes = dom.querySelectorAll('table table')   
-    let result = ''
-    result = '<table id="ht-ratings-table">\n'
-    for (const ratingsNode of ratingsNodes) {
-        let ratingsRow = ratingsNode.querySelector('tr')
-        let rowClass = ratingsRow.getAttribute('class')
-        let highlightClass = ''
-        switch(rowClass.trim()) {
-            case 'body-table-rating-downgrade':
-                highlightClass = 'ht-ratings-downgrade'
-                break
-            case 'body-table-rating-upgrade':
-                highlightClass = 'ht-ratings-upgrade'
-                break
-        }
-        result += '<tr'
-        if (highlightClass != '') result += ' class="' + highlightClass + '"'
-        result += '>\n'    
-        let cells = ratingsNode.querySelectorAll('td')
-        for (let cellNode of cells) {
-            result += '<td>' + cellNode.innerHTML + '</td>\n'
-        }
-        result += '</tr>\n'
-    }
-    result += '</table>\n'
-    return result  
-}
 
 // Chrome prepends chrome-extension://adcd/
 // Firefox prepends mozilla-extension://uuid/
@@ -1357,15 +1326,6 @@ function fixExternalLink(str) {
     res = res.replace(FIREFOX_PREFIX_REGEX, decode(FETCH_URL_PREFIX));
     if (! res.startsWith('http')) res = decode(FETCH_URL_PREFIX) + res;
     return res;
-}
-
-// remove onmouse* events from insiders
-// prepend URL_PREFIX
-function processInsiders(str) {
-    if (!isDefined(str)) { return undefined; }
-    let removed = str.replace(/ on\w+="[^"]*"/g, '');
-    removed = removed.replace(/insidertrading\.ashx/g, decode(FETCH_URL_PREFIX) + "insidertrading.ashx");
-    return removed;
 }
 
 function processEarnings(str, results) {
