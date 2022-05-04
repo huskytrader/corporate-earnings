@@ -15,6 +15,11 @@
 1. Drag the `corporate-earnings-main` folder anywhere on the page to import it (do not delete the folder afterwards)
 1. Use the extension by pressing on extension icon to the right of address bar and entering a stock symbol in the popup dialog
 
+**Firefox**
+1. Click on latest .xpi file in [releases](https://github.com/huskytrader/corporate-earnings/releases)
+1. Dialog will popup, click Continue to Installation.
+1. Dialog will popup asking to confirm permissions. Click Add.
+
 ### Troubleshooting
 * Make sure to read [FAQ](FAQ.md)
 * If earnings data doesn't appear on top of the page, try refreshing the page and/or turning off adblocker
