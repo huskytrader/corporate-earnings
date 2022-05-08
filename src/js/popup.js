@@ -1,5 +1,6 @@
 const ds1_urlPrefix = "aHR0cHM6Ly9zZWVraW5nYWxwaGEuY29tL3N5bWJvbC8=";
 const ds2_urlPrefix = "aHR0cHM6Ly93d3cuemFja3MuY29tL3N0b2NrL3Jlc2VhcmNoLw==";
+const input_box_allowed_regex = /[a-zA-Z]+/;
 
 var open_new_tab = false;
 var default_ds = 1;
@@ -9,12 +10,17 @@ chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("symbol").focus();
     document.getElementById("symbol").addEventListener("keyup", event => {
       if (event.key === 'Enter' || event.keyCode === 13) {
         handleSubmit();
       }
     });
+    document.getElementById("symbol").addEventListener("keypress", event => {
+      if (!input_box_allowed_regex.test(event.key)) {
+        event.preventDefault();
+      }
+    });
+    document.getElementById("symbol").focus();
 });
 
 function handleSubmit() {
