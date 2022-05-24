@@ -13,6 +13,7 @@
                 "https://www.zacks.com/stock/research/*/earnings-calendar"
             ],
             "js":[
+                "src/js/constants.js",
                 "src/js/content.js"
             ],
             "run_at": "document_end"
