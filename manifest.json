@@ -14,7 +14,8 @@
             ],
             "js":[
                 "src/js/constants.js",
-                "src/js/content.js"
+                "src/js/helpers.js",
+                "src/js/core.js"
             ],
             "run_at": "document_end"
         }
