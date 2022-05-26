@@ -88,10 +88,41 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         font-size: medium;
     }
     #ht-root-container {
+        --text-color: black;
+        --bkg-color: white;
+        --border: 1px solid #c9c9bb;
+        --earnings-bkg-color: #333333;
+        --earnings-bkg-color-even: #f3f3f3;
+        --earnings-header-color: #333333;
+        --earnings-change-positive-color: #0000ff;
+        --earnings-change-negative-color: #ff0000;
+        --link-color: #1e6dc0;
+        --link-hover-color: #fff;
+        --link-hover-bg-color: #1e6dc0;
+        --ratings-upgrade-color: #00ff00;
+        --ratings-downgrade-color: #ff0000;
+
         width: 100%;
         margin: 0;
-        border: 1px solid #c9c9bb;
+        border: var(--border);
         border-collapse: collapse;
+        color: var(--text-color);
+        background: var(--bkg-color);
+    }
+    #ht-root-container.ht-dark-theme {
+        --text-color: #e8e6e3;
+        --bkg-color: #1e2021;
+        --border: 1px solid #414749;
+        --earnings-bkg-color: #1e2021;
+        --earnings-bkg-color-even: #1e2021;
+        --earnings-header-color: #262a2b;
+        --earnings-change-positive-color: #3070e2;
+        --earnings-change-negative-color: #dd1b1b;
+        --link-color: #60a9e6;
+        --link-hover-color: #fff;
+        --link-hover-bg-color: #60a9e6;
+        --ratings-upgrade-color: #40fb46;
+        --ratings-downgrade-color: #ff1a1a;
     }
     #ht-root-container table {
         width: auto;
@@ -100,22 +131,21 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         border-collapse: collapse;
     }
     #ht-root-container td {
-        font-weight: 400;
         line-height: 1.5;
         font-family: sans-serif;
     }
     table#ht-fundamentals-container {
-       border: 1px solid #c9c9bb;
+       border: var(--border);
        border-collapse: collapse;
        margin: 0px 0px 5px 0px;
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
        display: none;
     }
     #ht-fundamentals-container tr{
-        border: 1px solid #c9c9bb;
+        border: var(--border);
     }
     #ht-fundamentals-container td{
-        border: 1px solid #c9c9bb;
+        border: var(--border);
         padding: 2px 5px;   
         font-size: small;
         text-align: left;
@@ -145,12 +175,12 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         font-size: medium;
     }
     a#ht-company-link, a#ht-company-link:hover, a#ht-company-link:link, a#ht-company-link:visited {
-        color: #1e6dc0;
+        color: var(--link-color);
         text-decoration: none;
     }
     a#ht-company-link:hover {
-        background-color: #1e6dc0;
-        color: #fff;
+        background-color: var(--link-hover-bg-color);
+        color: var(--link-hover-color);
     }
     span#ht-ticker {
        font-size: medium; 
@@ -175,11 +205,11 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
     #ht-ec-container {
         width: 100%;
         border-collapse: collapse;
-        border: 1px solid #c9c9bb; 
+        border: var(--border);
     }
     td#ht-earnings-container {
         padding:  10px 5px 10px 0;
-        border: 1px solid #c9c9bb;
+        border: var(--border);
         ${!showChart ? ('width: 100% !important;') : ''}
     }
     #ht-earnings-yearly {
@@ -204,15 +234,15 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
     #ht-ratings-cell {
         width:  30%;
         vertical-align: top;
-        border: 1px solid #c9c9bb;
+        border: var(--border);
     }
     #ht-news-cell {
         width:  50%;
         vertical-align: top;
-        border: 1px solid #c9c9bb;
+        border: var(--border);
     }
     #ht-insiders-cell {
-        border: 1px solid #c9c9bb;
+        border: var(--border);
         vertical-align: top;
     } 
     #ht-ratings-table {
@@ -234,10 +264,10 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         white-space: nowrap;
     }
     .ht-ratings-upgrade {
-         color: #04C90A;
+         color: var(--ratings-upgrade-color);
     }
     .ht-ratings-downgrade {
-        color: #FF0000;
+        color: var(--ratings-downgrade-color);
     }
     #ht-news-table {
         width:  100%;
@@ -257,12 +287,12 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         text-align: left;
     }
     a.ht-news-link, a.ht-news-link:hover, a.ht-news-link:link, a.ht-news-link:visited {
-        color: #1e6dc0;
+        color: var(--link-color);
         text-decoration: none;
     }
     a.ht-news-link:hover {
-        background-color: #1e6dc0;
-        color: #fff;
+        background-color: var(--link-hover-bg-color);
+        color: var(--link-hover-color);
     }
     .ht-news-source {
         color: #aa6dc0;
@@ -286,12 +316,12 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         color: #f76b2f;
     }
     a.ht-insiders-link, a.ht-insiders-link:hover, a.ht-insiders-link:link, a.ht-insiders-link:visited {
-        color: #1e6dc0;
+        color: var(--link-color);
         text-decoration: none;
     }
     a.ht-insiders-link:hover {
-        background-color: #1e6dc0;
-        color: #fff;
+        background-color: var(--link-hover-bg-color);
+        color: var(--link-hover-color);
     }
     .ht-earnings-table {
        border-collapse: collapse;
@@ -300,7 +330,7 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
     .ht-earnings-table thead tr td {
-       background-color: #333333;
+       background-color: var(--earnings-header-color);
        color: #ffffff;
        font-size: small;
        text-align: left;
@@ -315,30 +345,30 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         white-space: nowrap;
     } 
     .ht-earnings-table tbody tr {
-      border-bottom: 1px solid #dddddd;
+      border-bottom: var(--border);
     }
     .ht-earnings-table tbody tr:nth-of-type(even) {
-       background-color: #f3f3f3;
+       background-color: var(--earnings-bkg-color-even);
     }
-    .ht-earnings-table tbody tr .ht-strong-pos-change{
-        color: ${CHANGE_POSITIVE_COLOR};
+    .ht-strong-pos-change{
+        color: var(--earnings-change-positive-color);
         font-weight: bold;
     }
-    .ht-earnings-table tbody tr .ht-weak-pos-change {
-        color: ${CHANGE_POSITIVE_COLOR};
+    .ht-weak-pos-change {
+        color: var(--earnings-change-positive-color);
     }
-    .ht-earnings-table tbody tr .ht-strong-neg-change {
-        color: ${CHANGE_NEGATIVE_COLOR};
+    td.ht-strong-neg-change {
+        color: var(--earnings-change-negative-color);
         font-weight: bold;
     }
-    .ht-earnings-table tbody tr .ht-weak-neg-change {
-        color: ${CHANGE_NEGATIVE_COLOR};
+    .ht-weak-neg-change {
+        color: var(--earnings-change-negative-color);
     } 
-    .ht-earnings-table tbody tr .ht-strong-pos-surprise {
+    .ht-strong-pos-surprise {
         color: ${SURPRISE_POSITIVE_COLOR};
         font-weight: bold;
     }
-    .ht-earnings-table tbody tr .ht-weak-pos-surprise {
+    .ht-weak-pos-surprise {
         color: ${SURPRISE_POSITIVE_COLOR};
     }     
     .ht-loadingmsg:after {
@@ -380,7 +410,7 @@ const HTML_EARNINGS_ONLY = `
         `;
 
 const HTML = (showChart = null) => `
-        <div id="ht-root-container">
+        <div id="ht-root-container" class="ht-dark-theme">
             <table id="ht-fundamentals-container">
                 <tr>
                     <td colspan="3" id="ht-company"></td>

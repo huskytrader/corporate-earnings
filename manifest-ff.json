@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "3.0.1",
+    "version": "3.1.0",
     "description": "Displays earnings and fundamentals in the easy to analyze format",
     "icons": {
         "128": "src/images/icon128.png"
@@ -13,7 +13,9 @@
                 "https://www.zacks.com/stock/research/*/earnings-calendar"
             ],
             "js":[
-                "src/js/content.js"
+                "src/js/constants.js",
+                "src/js/helpers.js",
+                "src/js/core.js"
             ],
             "run_at": "document_end"
         }
