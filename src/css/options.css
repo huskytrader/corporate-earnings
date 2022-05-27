@@ -10,6 +10,10 @@ ul {
     padding-left:0;
 }
 
+#theme-switch label{
+    font-size: small;
+}
+
 #ds-select {    
     width: 100%;
 }

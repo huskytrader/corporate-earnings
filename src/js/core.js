@@ -3,6 +3,7 @@ var show_earnings_only = false;
 var chart_type = CHART_TYPE.NONE;
 var show_earnings_surprise = false;
 var default_ds = 1;
+var default_theme = 'dark';
 var ms_style_output = true;
 var limit_num_qtr = true;
 
@@ -15,18 +16,20 @@ chrome.storage.local.get(['chart_type',
                           'show_earnings_surprise', 
                           'ms_style_output', 
                           'limit_num_qtr', 
-                          'default_ds'], 
+                          'default_ds',
+                          'theme'], 
                           function(options) {
                    
     if (isDefined(options.show_earnings_only)) { 
         show_earnings_only = options.show_earnings_only; 
         fetch_fundamental_data = !options.show_earnings_only; 
     }
-    if (isDefined(options.chart_type)) { chart_type = options.chart_type; }
-    if (isDefined(options.show_earnings_surprise)) { show_earnings_surprise = options.show_earnings_surprise; }
-    if (isDefined(options.default_ds)) { default_ds = options.default_ds; } 
-    if (isDefined(options.ms_style_output)) { ms_style_output = options.ms_style_output; }
-    if (isDefined(options.limit_num_qtr)) { limit_num_qtr = options.limit_num_qtr; }
+    if (isDefined(options.chart_type))  chart_type = options.chart_type; 
+    if (isDefined(options.show_earnings_surprise))  show_earnings_surprise = options.show_earnings_surprise; 
+    if (isDefined(options.default_ds))  default_ds = options.default_ds; 
+    if (isDefined(options.theme))  default_theme = options.theme; 
+    if (isDefined(options.ms_style_output))  ms_style_output = options.ms_style_output; 
+    if (isDefined(options.limit_num_qtr)) limit_num_qtr = options.limit_num_qtr; 
 
     insertCSS();
     displayWaiting();
@@ -48,7 +51,18 @@ chrome.storage.local.get(['chart_type',
         // ZA
         displayEarnings(true);
     }
- });
+
+    // listen for option updates
+    chrome.runtime.onMessage.addListener(
+        (request, sender, sendResponse) => {
+            if (request.theme) {
+                if (request.theme == 'dark')
+                    document.getElementById('ht-root-container').classList.add('ht-dark-theme');
+                else 
+                    document.getElementById('ht-root-container').classList.remove('ht-dark-theme');
+            }
+        });
+    });
 
 /**
  * Wait for the specified element to appear in the DOM. When the element appears,
@@ -201,7 +215,7 @@ function insertHTML() {
     }
     else {
         const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
-        html = HTML(showChart, show_earnings_surprise);
+        html = HTML(default_theme, showChart, show_earnings_surprise);
     }
     bodyPrepend(html);
 }

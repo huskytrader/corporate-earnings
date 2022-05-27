@@ -409,8 +409,8 @@ const HTML_EARNINGS_ONLY = `
         </div>
         `;
 
-const HTML = (showChart = null) => `
-        <div id="ht-root-container" class="ht-dark-theme">
+const HTML = (theme = 'dark', showChart = null) => `
+        <div id="ht-root-container"${theme === 'dark' ? 'class="ht-dark-theme"' : ''}>
             <table id="ht-fundamentals-container">
                 <tr>
                     <td colspan="3" id="ht-company"></td>
