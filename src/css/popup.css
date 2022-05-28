@@ -26,5 +26,6 @@ body.ht-dark-theme {
 }
 
 #options {
-  font-size: 10px;
+  position:  relative;
+  top:  1px;
 }
