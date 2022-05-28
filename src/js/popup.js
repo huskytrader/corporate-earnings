@@ -4,9 +4,12 @@ const input_box_allowed_regex = /[a-zA-Z]+/;
 
 var open_new_tab = false;
 var default_ds = 1;
-chrome.storage.local.get(['open_new_tab', 'default_ds'], function(options) {
-    if (isDefined(options.open_new_tab)) {open_new_tab = options.open_new_tab;}
-    if (isDefined(options.default_ds)) {default_ds = options.default_ds;}
+var default_theme = 'dark';
+
+chrome.storage.local.get(['open_new_tab', 'default_ds', 'theme'], function(options) {
+    if (isDefined(options.open_new_tab)) open_new_tab = options.open_new_tab;
+    if (isDefined(options.default_ds)) default_ds = options.default_ds;
+    if (isDefined(options.theme)) default_theme = options.theme;
 });
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -110,14 +110,14 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         background: var(--bkg-color);
     }
     #ht-root-container.ht-dark-theme {
-        --text-color: #e8e6e3;
+        --text-color: #f8f0e3;
         --bkg-color: #1e2021;
         --border: 1px solid #414749;
         --earnings-bkg-color: #1e2021;
         --earnings-bkg-color-even: #1e2021;
         --earnings-header-color: #262a2b;
-        --earnings-change-positive-color: #3070e2;
-        --earnings-change-negative-color: #dd1b1b;
+        --earnings-change-positive-color: #60a9e6;
+        --earnings-change-negative-color: #f76b2f;
         --link-color: #60a9e6;
         --link-hover-color: #fff;
         --link-hover-bg-color: #60a9e6;

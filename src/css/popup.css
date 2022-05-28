@@ -1,7 +1,16 @@
 body {
+  --text-color: black;
+  --bkg-color: white;
+  color: var(--text-color);
+  background: var(--bkg-color);
   margin: 3px 10px;
   white-space: nowrap;
   font-size: max(14px, 1em);
+}
+
+body.ht-dark-theme {
+  --text-color: #f8f0e3;
+  --bkg-color: #1e2021;
 }
 
 #symbol {

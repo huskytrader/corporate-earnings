@@ -1,8 +1,17 @@
 body {
+    --text-color: black;
+    --bkg-color: white;
+    color: var(--text-color);
+    background: var(--bkg-color);
     white-space:nowrap;
     font-size: 20px;
     font-size: max(20px, 1em);
     font-family: inherit;
+}
+
+body.ht-dark-theme {
+  --text-color: #f8f0e3;
+  --bkg-color: #1e2021;
 }
 
 ul {
