@@ -94,14 +94,13 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         --earnings-bkg-color: #333333;
         --earnings-bkg-color-even: #f3f3f3;
         --earnings-header-color: #333333;
-        --earnings-change-positive-color: #0000ff;
-        --earnings-change-negative-color: #ff0000;
+        --earnings-change-positive-color: #1877F2;
+        --earnings-change-negative-color: #FF0800;
         --link-color: #1e6dc0;
         --link-hover-color: #fff;
         --link-hover-bg-color: #1e6dc0;
         --ratings-upgrade-color: #00ff00;
         --ratings-downgrade-color: #ff0000;
-
         width: 100%;
         margin: 0;
         border: var(--border);
@@ -116,8 +115,8 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
         --earnings-bkg-color: #1e2021;
         --earnings-bkg-color-even: #1e2021;
         --earnings-header-color: #262a2b;
-        --earnings-change-positive-color: #60a9e6;
-        --earnings-change-negative-color: #f76b2f;
+        --earnings-change-positive-color: #1877F2;
+        --earnings-change-negative-color: #FF0800;
         --link-color: #60a9e6;
         --link-hover-color: #fff;
         --link-hover-bg-color: #60a9e6;

@@ -650,7 +650,7 @@ const renderInsiders = (json) => {
         html += '>' + item.transaction + '</td>\n'
         html += '<td>$' + item.value + ' (' + item.shares + ' shs)</td>\n'
         html += '<td>' + item.insider + ' (' + item.relationship + ')</td>\n'
-        html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a></td>\n'
+        html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">f4</a></td>\n'
         html += '</tr>\n' 
     }
     html += '</table>\n'
