@@ -23,8 +23,5 @@ const HIGH_INST_CHANGE_THRESHOLD = 10;
 const HIGH_INST_CHANGE_COLOR = '#00FF00';
 ``` 
 
-### What about dark mode?
-* You can add it through third-party extensions. Dark Reader works very well.
-
 ### Adding more features/data points
 * I am open to suggestions
