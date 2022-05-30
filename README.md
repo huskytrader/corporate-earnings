@@ -1,8 +1,7 @@
+<h1 align="center">Corporate Earnings</h1>
 <p align="center">
   <img src="https://github.com/huskytrader/corporate-earnings/blob/main/src/images/icon.png" width="75" height="75"/>
 </p>
-
-<h1 align="center">Corporate Earnings</h1>
 
 *Corporate Earnings is a browser extension which displays earnings data in a format similar to MarketSmith*
 
