@@ -399,8 +399,8 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
     }   
     </style>`;
 
-const HTML_EARNINGS_ONLY = `
-        <div id="ht-root-container" style="width: 100%; border: 0;">
+const HTML_EARNINGS_ONLY = (theme = 'dark') => `
+        <div id="ht-root-container"${theme === 'dark' ? 'class="ht-dark-theme"' : ''} style="width: 100%; border: 0;">
             <div id="ht-earnings-yearly">
             </div>
             <div id="ht-earnings-quarterly">

@@ -211,7 +211,7 @@ function insertHTML() {
     let html = '';
     const showEarningsOnly = !fetch_fundamental_data;
     if (showEarningsOnly) {
-        html = HTML_EARNINGS_ONLY;
+        html = HTML_EARNINGS_ONLY(default_theme);
     }
     else {
         const showChart = fetch_fundamental_data && chart_type != CHART_TYPE.NONE;
