@@ -7,7 +7,7 @@ var show_earnings_surprise = false;
 var open_new_tab = false;
 var ms_style_output = true;
 var limit_num_qtr = true;
-var default_ds = 1;
+var default_ds = 2;
 
 document.addEventListener("DOMContentLoaded", () => {
   restore_options();

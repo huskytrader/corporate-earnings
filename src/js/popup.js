@@ -3,7 +3,7 @@ const ds2_urlPrefix = "aHR0cHM6Ly93d3cuemFja3MuY29tL3N0b2NrL3Jlc2VhcmNoLw==";
 const input_box_allowed_regex = /[a-zA-Z]+/;
 
 var open_new_tab = false;
-var default_ds = 1;
+var default_ds = 2;
 var default_theme = 'dark';
 
 chrome.storage.local.get(['open_new_tab', 'default_ds', 'theme'], function(options) {

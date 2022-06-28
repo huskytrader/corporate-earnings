@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "3.1.1",
+    "version": "3.1.2",
     "description": "Displays earnings and fundamentals in the easy to analyze format",
     "icons": {
         "128": "src/images/icon128.png"
