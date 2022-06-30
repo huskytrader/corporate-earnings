@@ -334,11 +334,15 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
        font-size: small;
        text-align: left;
        padding: 4px ${show_earnings_surprise ? 4 : 6}px;
+       border-top: none;
+       border-bottom: none;
     }
     .ht-earnings-table tbody tr td {
         text-align: right;
         padding: 4px;
         font-size: small;
+        border-top: none;
+        border-bottom: none;
     }    
     .ht-earnings-table tbody tr td:first-child {
         white-space: nowrap;
