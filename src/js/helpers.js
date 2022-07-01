@@ -147,22 +147,22 @@ function getSiblingText(arr, txt) {
 // prepends html to body
 const bodyPrepend = (html) => {
     document.body.insertAdjacentHTML('afterbegin', html);
-}
+};
 
 const headPrepend = (html) => {
     document.head.insertAdjacentHTML('afterbegin', html);
-}
+};
 
 const hide = (element) => {
     if (element != null && element.style != null)
         element.style.display = "none";
-}
+};
 
 // show an element
 const show = (element) => {
     if (element != null && element.style != null)
         element.style.display = "table";    
-}
+};
 
 // toggle the element visibility
 const toggle = (element) => {
@@ -173,14 +173,14 @@ const toggle = (element) => {
             element.style.display = "none";
         }
     }
-}
+};
 
 const contains = (selector, text) => {
-  const elements = document.querySelectorAll(selector)
+  const elements = document.querySelectorAll(selector);
   return [].filter.call(elements, (element) => {
-    return element.textContent.includes(text)
-  }).length > 0
-}
+    return element.textContent.includes(text);
+  }).length > 0;
+};
 
 function isAdrLow(adrStr) {
     if (! isDefined(adrStr) || adrStr.length == 0) return false;
@@ -285,7 +285,7 @@ class SAQarter extends Quarter {
 
     // extracts qtr name in the form mmm yyyy
     static parseQtrName(str) {
-        let qtr = {}
+        let qtr = {};
         let start = str.indexOf('(')+1;
         qtr.name = str.substr(start, str.indexOf(')')-start);
         qtr.month = qtr.name.substr(0,3);

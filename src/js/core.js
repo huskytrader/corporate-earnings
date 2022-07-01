@@ -75,7 +75,7 @@ chrome.storage.local.get(['chart_type',
  */
 function waitForEarningsData(callback, maxtries = false, interval = 100) {
   const poller = setInterval(() => {
-    const isContains = contains('h2', 'FQ')
+    const isContains = contains('h2', 'FQ');
     const retry = maxtries === false || maxtries-- > 0;
     if (retry && !isContains) return; // will try again
     clearInterval(poller);
@@ -87,7 +87,7 @@ function waitForEarningsData(callback, maxtries = false, interval = 100) {
 
 function waitForEl(el, callback, maxtries = false, interval = 200) {
   const poller = setInterval(() => {
-    const isContains = document.querySelector(el)
+    const isContains = document.querySelector(el);
     const retry = maxtries === false || maxtries-- > 0;
     if (retry && !isContains) return; // will try again
     clearInterval(poller);
@@ -355,7 +355,7 @@ function extractAndProcessEarningsData() {
         // add quarters
         let dataBlockCount = 1;
         const monthYearRegex = /^[A-Za-z]{3} \d{4}/;
-        const blocks = document.querySelectorAll('[data-test-id="table-body"]')
+        const blocks = document.querySelectorAll('[data-test-id="table-body"]');
         blocks.forEach(block => {
             let rows = [];
             switch(dataBlockCount) {
@@ -410,7 +410,7 @@ function extractAndProcessEarningsData() {
         });  
     }
     else if (default_ds == 2) {
-        let json = document.querySelector('#earnings_announcements_tabs').nextElementSibling.innerHTML.trim()
+        let json = document.querySelector('#earnings_announcements_tabs').nextElementSibling.innerHTML.trim();
         json = json.substr(json.indexOf('{'));
         json = json.substr(0, json.lastIndexOf('}')+1);
         let dataObj = JSON.parse(json);
@@ -477,7 +477,7 @@ function fillAnnual(quarterlyData, annualData) {
                     yearItem.rev += qtr.rev.rev;
                 ++qtrs4Year;
             }
-        })
+        });
 
         if (qtrs4Year == 0) {
             break;
@@ -586,7 +586,7 @@ function processEarnings(str, results) {
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    const parts = str.split(' ')
+    const parts = str.split(' ');
     if (parts.length < 2) { return undefined; }
     const earningsMonth = REVERSE_MONTH_MAP[parts[0]];
     const earningsDate = new Date(today.getFullYear(), earningsMonth, parts[1]);
@@ -614,135 +614,135 @@ function processEarnings(str, results) {
 
 // extractors extract data from client html into json
 const extractInsiders = (html) => {
-    let insiders = []
-    const parser = new DOMParser()
-    const dom  = parser.parseFromString(html, 'text/html')
-    const rows = dom.querySelectorAll('tr')
+    let insiders = [];
+    const parser = new DOMParser();
+    const dom  = parser.parseFromString(html, 'text/html');
+    const rows = dom.querySelectorAll('tr');
     for (let [index, row] of rows.entries()) {
-        if (index == 0) continue
-        let result = {} 
-        if (row.className.includes('is-sale')) result.isSell =1
-        else if (row.className.includes('is-buy')) result.isBuy =1
-        let cells = row.querySelectorAll('td')
-        result.insider = cells[0].querySelector('a').innerHTML
-        result.relationship = cells[1].innerHTML
-        result.date = cells[2].innerHTML
-        result.transaction = cells[3].innerHTML
-        result.cost = cells[4].innerHTML
-        result.shares = cells[5].innerHTML
-        result.value = cells[6].innerHTML
-        result.sharesTotal = cells[7].innerHTML
-        result.linkHref = cells[8].querySelector('a').getAttribute('href')
-        result.linkText = cells[8].querySelector('a').innerHTML
-        insiders.push(result)
+        if (index == 0) continue;
+        let result = {};
+        if (row.className.includes('is-sale')) result.isSell =1;
+        else if (row.className.includes('is-buy')) result.isBuy =1;
+        let cells = row.querySelectorAll('td');
+        result.insider = cells[0].querySelector('a').innerHTML;
+        result.relationship = cells[1].innerHTML;
+        result.date = cells[2].innerHTML;
+        result.transaction = cells[3].innerHTML;
+        result.cost = cells[4].innerHTML;
+        result.shares = cells[5].innerHTML;
+        result.value = cells[6].innerHTML;
+        result.sharesTotal = cells[7].innerHTML;
+        result.linkHref = cells[8].querySelector('a').getAttribute('href');
+        result.linkText = cells[8].querySelector('a').innerHTML;
+        insiders.push(result);
     }
-    return insiders
-}
+    return insiders;
+};
 
 const renderInsiders = (json) => {
-    let html = '<table id="ht-insiders-table">\n'
+    let html = '<table id="ht-insiders-table">\n';
     for (const item of json) {
-        html += '<tr>\n'
-        html += '<td class="ht-insiders-date">' + item.date + '</td>\n'
-        html += '<td'
-        if (item.isSell) html += ' class="ht-insiders-sell"'
-        else if (item.isBuy) html += ' class="ht-insiders-buy"'
-        html += '>' + item.transaction + '</td>\n'
-        html += '<td>$' + item.value + ' (' + item.shares + ' shs)</td>\n'
-        html += '<td>' + item.insider + ' (' + item.relationship + ')</td>\n'
-        html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">f4</a></td>\n'
-        html += '</tr>\n' 
+        html += '<tr>\n';
+        html += '<td class="ht-insiders-date">' + item.date + '</td>\n';
+        html += '<td';
+        if (item.isSell) html += ' class="ht-insiders-sell"';
+        else if (item.isBuy) html += ' class="ht-insiders-buy"';
+        html += '>' + item.transaction + '</td>\n';
+        html += '<td>$' + item.value + ' (' + item.shares + ' shs)</td>\n';
+        html += '<td>' + item.insider + ' (' + item.relationship + ')</td>\n';
+        html += '<td><a class="ht-insiders-link" href="' + item.linkHref + '" target="_blank">f4</a></td>\n';
+        html += '</tr>\n'; 
     }
-    html += '</table>\n'
-    return html
-}
+    html += '</table>\n';
+    return html;
+};
 
 const extractRatings = (html) => {
-    let ratings = []
-    html = html.replace(/<\/?b>/g, '')
-    const parser = new DOMParser()
-    const dom = parser.parseFromString(html, 'text/html')
-    const ratingsNodes = dom.querySelectorAll('table table')   
+    let ratings = [];
+    html = html.replace(/<\/?b>/g, '');
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(html, 'text/html');
+    const ratingsNodes = dom.querySelectorAll('table table');   
     
     for (const ratingsNode of ratingsNodes) {
-        let result = {}
-        let ratingsRow = ratingsNode.querySelector('tr')
-        let rowClass = ratingsRow.getAttribute('class')
-        switch(rowClass.trim()) {
+        let result = {};
+        let ratingsRow = ratingsNode.querySelector('tr');
+        let rowClass = ratingsRow.getAttribute('class');
+        switch (rowClass.trim()) {
             case 'body-table-rating-downgrade':
-                result.downgrade = 1
-                break
+                result.downgrade = 1;
+                break;
             case 'body-table-rating-upgrade':
-                result.upgrade = 1
-                break
+                result.upgrade = 1;
+                break;
         }
      
-        let cells = ratingsNode.querySelectorAll('td')
-        result.date = cells[0].innerHTML
-        result.action = cells[1].innerHTML
-        result.analyst = cells[2].innerHTML
-        result.rating = cells[3].innerHTML
-        result.price = cells[4].innerHTML
-        ratings.push(result)
+        let cells = ratingsNode.querySelectorAll('td');
+        result.date = cells[0].innerHTML;
+        result.action = cells[1].innerHTML;
+        result.analyst = cells[2].innerHTML;
+        result.rating = cells[3].innerHTML;
+        result.price = cells[4].innerHTML;
+        ratings.push(result);
     }
-    return ratings  
-}
+    return ratings;  
+};
 
 const renderRatings = (json) => {
-    let html = '<table id="ht-ratings-table">\n'
+    let html = '<table id="ht-ratings-table">\n';
     for (const item of json) {
-        html += '<tr'
-        if (item.upgrade) html += ' class="ht-ratings-upgrade"'
-        else if (item.downgrade) html += ' class="ht-ratings-downgrade"'    
-        html += '>\n'
-        html += '<td class="ht-ratings-date">' + item.date + '</td>\n'
-        html += '<td>' + item.action + '</td>\n'
-        html += '<td>' + item.analyst + '</td>\n'
-        html += '<td>' + item.rating + '</td>\n'
-        html += '<td class="ht-ratings-price">' + item.price + '</td>\n'
-        html += '</tr>\n' 
+        html += '<tr';
+        if (item.upgrade) html += ' class="ht-ratings-upgrade"';
+        else if (item.downgrade) html += ' class="ht-ratings-downgrade"';    
+        html += '>\n';
+        html += '<td class="ht-ratings-date">' + item.date + '</td>\n';
+        html += '<td>' + item.action + '</td>\n';
+        html += '<td>' + item.analyst + '</td>\n';
+        html += '<td>' + item.rating + '</td>\n';
+        html += '<td class="ht-ratings-price">' + item.price + '</td>\n';
+        html += '</tr>\n'; 
     }
-    html += '</table>\n'
-    return html
-}
+    html += '</table>\n';
+    return html;
+};
 
 const extractNews = (html) => {
-    let news = []
-    const parser = new DOMParser()
-    const dom = parser.parseFromString(html, 'text/html')
-    const newsTableNode = dom.querySelector('table')   
-    let newsRowsNodes = newsTableNode.querySelectorAll('tr')
+    let news = [];
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(html, 'text/html');
+    const newsTableNode = dom.querySelector('table');  
+    let newsRowsNodes = newsTableNode.querySelectorAll('tr');
 
     for (const newsRowNode of newsRowsNodes) {  
-        let result = {}
-        let cells = newsRowNode.querySelectorAll('td')
+        let result = {};
+        let cells = newsRowNode.querySelectorAll('td');
         for (let cellNode of cells) {
-            let linkNode = cellNode.querySelector('a')
+            let linkNode = cellNode.querySelector('a');
             if (linkNode != null) {
-                result.linkHref =  linkNode.getAttribute('href') 
-                result.linkText = linkNode.innerHTML
-                let spanNode = cellNode.querySelector('span')
+                result.linkHref =  linkNode.getAttribute('href'); 
+                result.linkText = linkNode.innerHTML;
+                let spanNode = cellNode.querySelector('span');
                 if (spanNode != null)
-                   result.source = spanNode.innerHTML.trim() 
+                   result.source = spanNode.innerHTML.trim();
  
             }
             else 
-                result.date =  cellNode.innerHTML.trim().replace(/\&nbsp;/g, '') 
+                result.date =  cellNode.innerHTML.trim().replace(/\&nbsp;/g, '') ;
         }
-        news.push(result)
+        news.push(result);
     }    
-    return news
-}
+    return news;
+};
 
 const renderNews = (json) => {
-    let html = '<table id="ht-news-table">\n'
+    let html = '<table id="ht-news-table">\n';
     for (const item of json) {
-        html += '<tr>\n'
-        html += '<td class="ht-news-date-cell">' + item.date + '</td>\n'
-        html += '<td class="ht-news-link-cell"><a class="ht-news-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a><span class="ht-news-source">'+ item.source + '</span></td>\n'
-        html += '</tr>\n' 
+        html += '<tr>\n';
+        html += '<td class="ht-news-date-cell">' + item.date + '</td>\n';
+        html += '<td class="ht-news-link-cell"><a class="ht-news-link" href="' + item.linkHref + '" target="_blank">' + item.linkText + '</a><span class="ht-news-source">'+ item.source + '</span></td>\n';
+        html += '</tr>\n'; 
     }
-    html += '</table>\n'
-    return html
-}
+    html += '</table>\n';
+    return html;
+};
 

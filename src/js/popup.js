@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function handleSubmit() {
     let stockRegex = /^[a-zA-Z\s]*$/;
-    let symbol = document.getElementById("symbol").value
+    let symbol = document.getElementById("symbol").value;
     if (symbol==null || symbol=="") {
         alert("Symbol must not be blank");
         return;

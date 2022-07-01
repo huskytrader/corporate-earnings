@@ -115,20 +115,20 @@ function isDefined(smth) {
 const hide = (element) => {
     if (element != null && element.style != null)
         element.style.display = "none";
-}
+};
 
 // show an element
 const show = (element) => {
     if (element != null && element.style != null)
         element.style.display = "block";    
-}
+};
 
 const grayDiv = (element) => {
-  element.style.opacity = 0.5
+  element.style.opacity = 0.5;
   element.style.pointerEvents = 'none';
-}
+};
 
 const ungrayDiv = (element) => {
-  element.style.opacity = 1.0
+  element.style.opacity = 1.0;
   element.style.pointerEvents = 'auto';
-}
+};
