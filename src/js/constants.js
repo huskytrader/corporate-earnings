@@ -1,63 +1,63 @@
 // constants
-const CHANGE_POSITIVE_COLOR = '#0000FF';
-const CHANGE_NEGATIVE_COLOR = '#FF0000';
-const SURPRISE_POSITIVE_COLOR = '#04C90A';
+const CHANGE_POSITIVE_COLOR = "#0000FF";
+const CHANGE_NEGATIVE_COLOR = "#FF0000";
+const SURPRISE_POSITIVE_COLOR = "#04C90A";
 
 const LOW_ADR_THRESHOLD = 4.0;
-const LOW_ADR_COLOR = '#FF0000';
+const LOW_ADR_COLOR = "#FF0000";
 
 const HIGH_SHORT_INTEREST_THRESHOLD = 20;
-const HIGH_SHORT_INTEREST_COLOR = '#FF0000';
+const HIGH_SHORT_INTEREST_COLOR = "#FF0000";
 
 const DAYS_BEFORE_EARNINGS_WARN_THRESHOLD = 3;
-const DAYS_BEFORE_EARNINGS_WARN_COLOR = '#FF0000';
+const DAYS_BEFORE_EARNINGS_WARN_COLOR = "#FF0000";
 
 const HIGH_INST_CHANGE_THRESHOLD = 10;
-const HIGH_INST_CHANGE_COLOR = '#00FF00';
+const HIGH_INST_CHANGE_COLOR = "#00FF00";
 
 const MONTH_MAP = {
-    1: 'Jan',
-    2: 'Feb',
-    3: 'Mar',
-    4: 'Apr',
-    5: 'May',
-    6: 'Jun',
-    7: 'Jul',
-    8: 'Aug',
-    9: 'Sep',
-    10: 'Oct',
-    11: 'Nov',
-    12: 'Dec'
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Aug",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dec",
 };
 
 const REVERSE_MONTH_MAP = {
-    'Jan': 0,
-    'Feb': 1,
-    'Mar': 2,
-    'Apr': 3,
-    'May': 4,
-    'Jun': 5,
-    'Jul': 6,
-    'Aug': 7,
-    'Sep': 8,
-    'Oct': 9,
-    'Nov': 10,
-    'Dec': 11
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
 };
 
 const CHART_TYPE = {
     NONE: 1,
-    WEEKLY : 2,
+    WEEKLY: 2,
     DAILY: 3,
-    BOTH: 4
+    BOTH: 4,
 };
 
 const SA_REGEX = /symbol\/([a-zA-Z]+)\/earnings/;
 const ZA_REGEX = /stock\/research\/([a-zA-Z]+)\/earnings-calendar/;
 
-const FETCH_URL = 'aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0='
-const FETCH_URL_PREFIX = 'aHR0cHM6Ly9maW52aXouY29tLw==';
-const IMAGE_URL = 'aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==';
+const FETCH_URL = "aHR0cHM6Ly9maW52aXouY29tL3F1b3RlLmFzaHg/dD0=";
+const FETCH_URL_PREFIX = "aHR0cHM6Ly9maW52aXouY29tLw==";
+const IMAGE_URL = "aHR0cHM6Ly9jaGFydHMyLmZpbnZpei5jb20vY2hhcnQuYXNoeD90PQ==";
 const CHROME_PREFIX_REGEX = /chrome-extension:\/\/\w+\//;
 const FIREFOX_PREFIX_REGEX = /moz-extension:\/\/((\w{4,12}-?)){5}\//;
 
@@ -209,15 +209,15 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
     td#ht-earnings-container {
         padding:  10px 5px 10px 0;
         border: var(--border);
-        ${!showChart ? ('width: 100% !important;') : ''}
+        ${!showChart ? "width: 100% !important;" : ""}
     }
     #ht-earnings-yearly {
         padding-bottom: 10px;
         padding-right: 20px;
-        ${!showChart ? ('float: left;') : ''}
+        ${!showChart ? "float: left;" : ""}
     }
     #ht-earnings-quarterly {
-        ${!showChart ? ('float: left;') : ''}
+        ${!showChart ? "float: left;" : ""}
     }
     #ht-chart-container {
         width: 100%;
@@ -403,8 +403,10 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
     }   
     </style>`;
 
-const HTML_EARNINGS_ONLY = (theme = 'dark') => `
-        <div id="ht-root-container"${theme === 'dark' ? 'class="ht-dark-theme"' : ''} style="width: 100%; border: 0;">
+const HTML_EARNINGS_ONLY = (theme = "dark") => `
+        <div id="ht-root-container"${
+            theme === "dark" ? 'class="ht-dark-theme"' : ""
+        } style="width: 100%; border: 0;">
             <div id="ht-earnings-yearly">
             </div>
             <div id="ht-earnings-quarterly">
@@ -412,8 +414,10 @@ const HTML_EARNINGS_ONLY = (theme = 'dark') => `
         </div>
         `;
 
-const HTML = (theme = 'dark', showChart = null) => `
-        <div id="ht-root-container"${theme === 'dark' ? 'class="ht-dark-theme"' : ''}>
+const HTML = (theme = "dark", showChart = null) => `
+        <div id="ht-root-container"${
+            theme === "dark" ? 'class="ht-dark-theme"' : ""
+        }>
             <table id="ht-fundamentals-container">
                 <tr>
                     <td colspan="3" id="ht-company"></td>
@@ -449,7 +453,11 @@ const HTML = (theme = 'dark', showChart = null) => `
                         <div id="ht-earnings-yearly"><span id="ht-waiting-earnings" class="ht-loadingmsg">Waiting for data</span></div>
                         <div id="ht-earnings-quarterly"></div>
                     </td>
-                    ${showChart ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>' : ''}              
+                    ${
+                        showChart
+                            ? '<td id="ht-chart-container"><div id="ht-chart-weekly"></div><div id="ht-chart-daily"></div></td>'
+                            : ""
+                    }              
                 </tr>
             </table>
             <table id="ht-rni-container">
