@@ -306,7 +306,149 @@ function getHighlightClass4Surprise(num, str) {
     return hclass;
 }
 
+function getParser(ds_type, html) {
+    if (ds_type === 1) return new SAParser(html);
+    else if (ds_type === 2) return new ZAParser(html);
+    else return undefined;
+}
+
 // Classes
+class Parser {
+    constructor() {}
+}
+
+class SAParser extends Parser {
+    constructor(html) {
+        super();
+        const parsedData = SAParser.parse(html);
+        super.qtrData = parsedData[0];
+        super.annualData = parsedData[1];
+    }
+
+    static parse(html = undefined) {
+        const quarterlyData = [],
+            annualData = [];
+        const parser = new DOMParser();
+        let dom = isDefined(html)
+            ? parser.parseFromString(html, "text/html")
+            : document;
+        let dataBlockCount = 1;
+        const monthYearRegex = /^[A-Za-z]{3} \d{4}/;
+        const blocks = dom.querySelectorAll('[data-test-id="table-body"]');
+        blocks.forEach((block) => {
+            let rows = [];
+            switch (dataBlockCount) {
+                case 1:
+                    break;
+                case 2:
+                    // eps estimates
+                    rows = collectChildText(block);
+                    for (const row of rows) {
+                        if (
+                            !isDefined(row[0]) ||
+                            row[0] == "" ||
+                            row[0].match(monthYearRegex) == null
+                        )
+                            continue;
+                        let year = new Year(
+                            getAnnualEstimateYear(row[0]),
+                            "*" + getAnnualEstimateYear(row[0]),
+                            row[1]
+                        );
+                        year.qtrs4Year = 4;
+                        annualData.push(year);
+                    }
+                    break;
+                case 3:
+                    // revenue estimates
+                    rows = collectChildText(block);
+                    for (const row of rows) {
+                        if (
+                            !isDefined(row[0]) ||
+                            row[0] == "" ||
+                            row[0].match(monthYearRegex) == null
+                        )
+                            continue;
+                        let yearInt = getAnnualEstimateYear(row[0]);
+                        const foundYear = annualData.find(
+                            (q) => q.year == yearInt
+                        );
+                        if (foundYear) {
+                            foundYear.rev = revenueStringToFloat(row[1]);
+                        } else {
+                            let year = new Year(
+                                yearInt,
+                                "*" + yearInt,
+                                undefined,
+                                revenueStringToFloat(row[1])
+                            );
+                            annualData.push(year);
+                        }
+                    }
+                    break;
+                case 4:
+                    // earnings data
+                    rows = collectChildText(block);
+                    for (const row of rows) {
+                        if (
+                            !isDefined(row[0]) ||
+                            !isDefined(row[1]) ||
+                            !isDefined(row[3]) ||
+                            row[0] == "" ||
+                            !row[0].includes("FQ")
+                        )
+                            continue;
+                        let q = new SAQarter(row);
+                        if (isQuarterValid(q)) {
+                            quarterlyData.unshift(q);
+                        }
+                    }
+                    break;
+            }
+            ++dataBlockCount;
+        });
+        return [quarterlyData, annualData];
+    }
+}
+
+class ZAParser extends Parser {
+    constructor(html) {
+        super();
+        const parsedData = ZAParser.parse(html);
+        super.qtrData = parsedData[0];
+        super.annualData = undefined;
+    }
+
+    static parse(html = undefined) {
+        const quarterlyData = [],
+            annualData = [];
+        const parser = new DOMParser();
+        let dom = isDefined(html)
+            ? parser.parseFromString(html, "text/html")
+            : document;
+        let json = dom
+            .querySelector("#earnings_announcements_tabs")
+            .nextElementSibling.innerHTML.trim();
+        json = json.substr(json.indexOf("{"));
+        json = json.substr(0, json.lastIndexOf("}") + 1);
+        let dataObj = JSON.parse(json);
+        dataObj.earnings_announcements_earnings_table.forEach((item) => {
+            let quarter = new ZAQarter(
+                item[0],
+                item[1],
+                item[3],
+                item[5],
+                dataObj.earnings_announcements_sales_table
+            );
+
+            if (isQuarterValid(quarter)) {
+                quarterlyData.unshift(quarter);
+            }
+        });
+        return [quarterlyData, undefined];
+    }
+}
+
 class Quarter {
     constructor() {}
 }

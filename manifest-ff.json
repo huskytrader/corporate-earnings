@@ -1,18 +1,18 @@
 {
     "manifest_version": 2,
     "name": "Corporate Earnings",
-    "version": "3.1.2",
+    "version": "3.2.0",
     "description": "Displays earnings and fundamentals in the easy to analyze format",
     "icons": {
         "128": "src/images/icon128.png"
     },
     "content_scripts": [
         {
-            "matches":[
+            "matches": [
                 "https://seekingalpha.com/symbol/*/earnings",
                 "https://www.zacks.com/stock/research/*/earnings-calendar"
             ],
-            "js":[
+            "js": [
                 "src/js/constants.js",
                 "src/js/helpers.js",
                 "src/js/core.js"
@@ -28,15 +28,9 @@
         "page": "src/html/options.html",
         "chrome_style": false
     },
-    "background": { 
-        "scripts": [
-            "src/js/background.js"
-        ],
-        "persistent": false 
+    "background": {
+        "scripts": ["src/js/background.js"],
+        "persistent": false
     },
-    "permissions": [ 
-        "storage",
-        "tabs",
-        "https://*.finviz.com/*"
-    ]
+    "permissions": ["storage", "tabs", "https://*.finviz.com/*"]
 }

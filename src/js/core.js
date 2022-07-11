@@ -2,7 +2,7 @@ var fetch_fundamental_data = true;
 var show_earnings_only = false;
 var chart_type = CHART_TYPE.NONE;
 var show_earnings_surprise = false;
-var default_ds = 2;
+var default_ds = 1;
 var default_theme = "dark";
 var ms_style_output = true;
 var limit_num_qtr = true;
@@ -10,6 +10,8 @@ var limit_num_qtr = true;
 var quarterlyData = [];
 var annualData = [];
 var fundamentals = {};
+
+let overwrite_qtr_data = undefined;
 
 chrome.storage.local.get(
     [
@@ -41,7 +43,10 @@ chrome.storage.local.get(
 
         if (fetch_fundamental_data) {
             chrome.runtime.sendMessage(
-                { chart_type: chart_type },
+                {
+                    command: "fetch_fundamentals",
+                    chart_type: chart_type,
+                },
                 (response) => {
                     if (!response.error) {
                         extractFundamentalData(response, fundamentals);
@@ -55,10 +60,28 @@ chrome.storage.local.get(
             );
         }
 
-        if (default_ds == 1) {
+        if (default_ds === 1) {
+            chrome.runtime.sendMessage(
+                {
+                    command: "fetch_quarterly_data",
+                },
+                (response) => {
+                    if (
+                        !response.error &&
+                        isDefined(response.raw) &&
+                        response.raw.length > 0
+                    ) {
+                        const parser = getParser(2, response.raw);
+                        overwrite_qtr_data = parser.qtrData;
+                    }
+                }
+            );
+        }
+
+        if (default_ds === 1) {
             // SA
             waitForEarningsData(displayEarnings, 30);
-        } else if (default_ds == 2) {
+        } else if (default_ds === 2) {
             // ZA
             displayEarnings(true);
         }
@@ -273,7 +296,7 @@ function insertHTML() {
 function quarterlyToHtml(quarterlyData) {
     let html = '<table class="ht-earnings-table">';
     html += "<thead><tr>";
-    if (default_ds == 2) html += "<td>Date</td>";
+    html += "<td>Date</td>";
     html += "<td>Quarter</td><td>EPS</td><td>%Change</td>";
     if (show_earnings_surprise) {
         html += "<td>%Surprise</td>";
@@ -353,7 +376,7 @@ function quarterlyToHtml(quarterlyData) {
             }
         }
         html += "<tr>";
-        if (default_ds == 2) html += "<td>" + item.date + "</td>";
+        html += "<td>" + item.date + "</td>";
         html +=
             '<td style="white-space: nowrap;">' +
             getDisplayQuarter(item.name) +
@@ -479,104 +502,10 @@ function annualToHtml(annualData) {
 // attemps to extract earnings quarterly and annual data from html
 // if successful, will parse and calculate Change%
 function extractAndProcessEarningsData() {
-    if (default_ds == 1) {
-        // add quarters
-        let dataBlockCount = 1;
-        const monthYearRegex = /^[A-Za-z]{3} \d{4}/;
-        const blocks = document.querySelectorAll('[data-test-id="table-body"]');
-        blocks.forEach((block) => {
-            let rows = [];
-            switch (dataBlockCount) {
-                case 1:
-                    break;
-                case 2:
-                    // eps estimates
-                    rows = collectChildText(block);
-                    for (const row of rows) {
-                        if (
-                            !isDefined(row[0]) ||
-                            row[0] == "" ||
-                            row[0].match(monthYearRegex) == null
-                        )
-                            continue;
-                        let year = new Year(
-                            getAnnualEstimateYear(row[0]),
-                            "*" + getAnnualEstimateYear(row[0]),
-                            row[1]
-                        );
-                        year.qtrs4Year = 4;
-                        annualData.push(year);
-                    }
-                    break;
-                case 3:
-                    // revenue estimates
-                    rows = collectChildText(block);
-                    for (const row of rows) {
-                        if (
-                            !isDefined(row[0]) ||
-                            row[0] == "" ||
-                            row[0].match(monthYearRegex) == null
-                        )
-                            continue;
-                        let yearInt = getAnnualEstimateYear(row[0]);
-                        const foundYear = annualData.find(
-                            (q) => q.year == yearInt
-                        );
-                        if (foundYear) {
-                            foundYear.rev = revenueStringToFloat(row[1]);
-                        } else {
-                            let year = new Year(
-                                yearInt,
-                                "*" + yearInt,
-                                undefined,
-                                revenueStringToFloat(row[1])
-                            );
-                            annualData.push(year);
-                        }
-                    }
-                    break;
-                case 4:
-                    // earnings data
-                    rows = collectChildText(block);
-                    for (const row of rows) {
-                        if (
-                            !isDefined(row[0]) ||
-                            !isDefined(row[1]) ||
-                            !isDefined(row[3]) ||
-                            row[0] == "" ||
-                            !row[0].includes("FQ")
-                        )
-                            continue;
-                        let q = new SAQarter(row);
-                        if (isQuarterValid(q)) {
-                            quarterlyData.unshift(q);
-                        }
-                    }
-                    break;
-            }
-            ++dataBlockCount;
-        });
-    } else if (default_ds == 2) {
-        let json = document
-            .querySelector("#earnings_announcements_tabs")
-            .nextElementSibling.innerHTML.trim();
-        json = json.substr(json.indexOf("{"));
-        json = json.substr(0, json.lastIndexOf("}") + 1);
-        let dataObj = JSON.parse(json);
-        dataObj.earnings_announcements_earnings_table.forEach((item) => {
-            let quarter = new ZAQarter(
-                item[0],
-                item[1],
-                item[3],
-                item[5],
-                dataObj.earnings_announcements_sales_table
-            );
-
-            if (isQuarterValid(quarter)) {
-                quarterlyData.unshift(quarter);
-            }
-        });
-    }
+    const parser = getParser(default_ds);
+    if (isDefined(parser.qtrData)) quarterlyData = parser.qtrData;
+    if (isDefined(parser.annualData)) annualData = parser.annualData;
+    if (isDefined(overwrite_qtr_data)) quarterlyData = overwrite_qtr_data;
 
     calculateQuarterlyPerf(quarterlyData);
     fillAnnual(quarterlyData, annualData);
