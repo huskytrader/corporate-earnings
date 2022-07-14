@@ -15,7 +15,6 @@ const CHART_TYPE = {
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("message: " + JSON.stringify(message));
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         let url = tabs[0].url;
         const symbol = getSymbol(url);
