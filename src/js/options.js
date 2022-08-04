@@ -3,7 +3,7 @@ var default_theme = "dark";
 var show_earnings_only = false;
 // chart type: 1=none, 2=weekly, 3=daily, 4=both
 var chart_type = 1;
-var show_earnings_surprise = false;
+var show_earnings_surprise = true;
 var open_new_tab = false;
 var ms_style_output = true;
 var limit_num_qtr = true;
