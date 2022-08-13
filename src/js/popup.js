@@ -28,6 +28,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     document.getElementById("symbol").focus();
+    document.getElementById("cogwheel").addEventListener("mouseover", (event) => {
+            document.getElementById("cogwheel").src =
+                "../images/icons8-engineering-24-blue.png";
+    });
+    document.getElementById("cogwheel").addEventListener("mouseout", (event) => {
+            document.getElementById("cogwheel").src =
+                "../images/icons8-engineering-24-black.png";
+    });
 });
 
 function handleSubmit() {
