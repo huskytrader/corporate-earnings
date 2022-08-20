@@ -121,7 +121,7 @@ function waitForEarningsData(callback, maxtries = false, interval = 100) {
         clearInterval(poller);
         setTimeout(function () {
             callback(isContains);
-        }, 500);
+        }, 1500);
     }, interval);
 }
 
