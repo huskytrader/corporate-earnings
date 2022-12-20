@@ -27,7 +27,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function fetchQuarterlyData(symbol, sendResponse) {
-    console.log("fetchQuarterlyData");
     if (!isDefined(symbol)) {
         sendResponse({
             error: "No valid symbol passed to fetchQuarterlyData",
