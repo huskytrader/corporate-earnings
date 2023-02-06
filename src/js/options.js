@@ -120,11 +120,6 @@ function save_options() {
   } else {
     ungrayDiv(document.getElementById("chart-select"));
   }
-
-  // send message to content script to update them
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, { theme: default_theme });
-  });
 }
 
 function isDefined(smth) {
