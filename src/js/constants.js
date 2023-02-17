@@ -71,6 +71,7 @@ const CSS = (showChart = false, show_earnings_surprise = false) => `
        background-color: #000000;
        padding: 40px;
        font-weight: bold;
+       position: relative;
     }
     #ht-warningmsg {
         color: #ff0000;
