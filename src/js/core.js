@@ -601,14 +601,11 @@ function extractFundamentalData(response, results) {
 
     const parser = new DOMParser();
     const dom = parser.parseFromString(response.raw, "text/html");
-    const tickerNode = dom.querySelector(".fullview-ticker");
-    results.ticker = tickerNode.textContent;
-    results.tickerHref = fixExternalLink(tickerNode.getAttribute("href"));
-    results.exchange = tickerNode.nextElementSibling.textContent;
+    const firstRowNode = dom.querySelector(".fullview-title").querySelector("a");
+    results.ticker = firstRowNode.textContent;
+    results.tickerHref = fixExternalLink(firstRowNode.getAttribute("href"));
 
-    const secondRowNode =
-        tickerNode.parentElement.parentElement.nextElementSibling;
-    const siteNode = secondRowNode.querySelector("a");
+    const siteNode = firstRowNode.nextElementSibling.querySelector("a");
     if (siteNode != null) {
         results.companySite = siteNode.getAttribute("href");
         results.companyName = siteNode.textContent;
@@ -616,21 +613,22 @@ function extractFundamentalData(response, results) {
         results.companyName = secondRowNode.textContent;
     }
 
-    const thirdRowNode = secondRowNode.nextElementSibling;
-    const thirdRowLinks = thirdRowNode.querySelectorAll("a");
-    results.sector = thirdRowLinks[0].textContent;
-    results.sectorHref = fixExternalLink(thirdRowLinks[0].getAttribute("href"));
-    results.industry = thirdRowLinks[1].textContent;
+    const secondRowNode = dom.querySelector(".fullview-links");
+    const secondRowLinks = secondRowNode.querySelectorAll("a");
+    results.sector = secondRowLinks[0].textContent;
+    results.sectorHref = fixExternalLink(secondRowLinks[0].getAttribute("href"));
+    results.industry = secondRowLinks[1].textContent;
     results.industryHref = fixExternalLink(
-        thirdRowLinks[1].getAttribute("href")
+        secondRowLinks[1].getAttribute("href")
     );
-    results.country = thirdRowLinks[2].textContent;
+    results.country = secondRowLinks[2].textContent;
     results.countryHref = fixExternalLink(
-        thirdRowLinks[2].getAttribute("href")
+        secondRowLinks[2].getAttribute("href")
     );
 
     const tds = Array.from(dom.querySelectorAll("td"));
     const floatRatioCombo = getSiblingText(tds, "Short Float / Ratio");
+    console.log("floatRatioCombo="+floatRatioCombo);
     results.shorts = floatRatioCombo.split("/")[0].trim();
     results.daystocover = floatRatioCombo.split("/")[1].trim();
     results.float = getSiblingText(tds, "Shs Float");
