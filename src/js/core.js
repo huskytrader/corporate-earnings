@@ -628,7 +628,6 @@ function extractFundamentalData(response, results) {
 
     const tds = Array.from(dom.querySelectorAll("td"));
     const floatRatioCombo = getSiblingText(tds, "Short Float / Ratio");
-    console.log("floatRatioCombo="+floatRatioCombo);
     results.shorts = floatRatioCombo.split("/")[0].trim();
     results.daystocover = floatRatioCombo.split("/")[1].trim();
     results.float = getSiblingText(tds, "Shs Float");

@@ -577,7 +577,7 @@ class ZAQarter extends Quarter {
 
         if (isDefined(epsSurpriseStr) && epsSurpriseStr.indexOf(">") > -1) {
             epsSurpriseStr = epsSurpriseStr
-                .substr(epsSurpriseStr.indexOf(">") + 2)
+                .substr(epsSurpriseStr.indexOf(">") + 1)
                 .slice(0, -7);
             eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
         }
@@ -596,7 +596,7 @@ class ZAQarter extends Quarter {
 
                 if (isDefined(item[5]) && item[5].indexOf(">") > -1) {
                     let revSurprise = item[5]
-                        .substr(item[5].indexOf(">") + 2)
+                        .substr(item[5].indexOf(">") + 1)
                         .slice(0, -7);
                     rev.surprisePerf = Math.round(parseFloat(revSurprise));
                 }
