@@ -339,8 +339,6 @@ class SAParser extends Parser {
             let rows = [];
             switch (dataBlockCount) {
                 case 1:
-                    break;
-                case 2:
                     // eps estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
@@ -359,7 +357,7 @@ class SAParser extends Parser {
                         annualData.push(year);
                     }
                     break;
-                case 3:
+                case 2:
                     // revenue estimates
                     rows = collectChildText(block);
                     for (const row of rows) {
@@ -386,7 +384,7 @@ class SAParser extends Parser {
                         }
                     }
                     break;
-                case 4:
+                /*case 5:
                     // earnings data
                     rows = collectChildText(block);
                     for (const row of rows) {
@@ -403,7 +401,7 @@ class SAParser extends Parser {
                             quarterlyData.unshift(q);
                         }
                     }
-                    break;
+                    break;*/
             }
             ++dataBlockCount;
         });
@@ -426,11 +424,11 @@ class ZAParser extends Parser {
         let dom = isDefined(html)
             ? parser.parseFromString(html, "text/html")
             : document;
-        let json = dom
+        let jsonBlock = dom
             .querySelector("#earnings_announcements_tabs")
             .nextElementSibling.innerHTML.trim();
-        json = json.substr(json.indexOf("{"));
-        json = json.substr(0, json.lastIndexOf("}") + 1);
+        let json = jsonBlock.substr(jsonBlock.indexOf("{"));
+        json = json.substr(0, json.indexOf("}") + 1);
         let dataObj = JSON.parse(json);
         dataObj.earnings_announcements_earnings_table.forEach((item) => {
             let quarter = new ZAQarter(
