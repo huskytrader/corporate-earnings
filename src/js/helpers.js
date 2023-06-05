@@ -336,11 +336,13 @@ class SAParser extends Parser {
         const monthYearRegex = /^[A-Za-z]{3} \d{4}/;
         const blocks = dom.querySelectorAll('[data-test-id="table-body"]');
         blocks.forEach((block) => {
-            let rows = [];
+            if (block.textContent.startsWith('FY')) {
+                return; 
+            }
+            let rows = collectChildText(block);
             switch (dataBlockCount) {
                 case 1:
                     // eps estimates
-                    rows = collectChildText(block);
                     for (const row of rows) {
                         if (
                             !isDefined(row[0]) ||
@@ -359,7 +361,6 @@ class SAParser extends Parser {
                     break;
                 case 2:
                     // revenue estimates
-                    rows = collectChildText(block);
                     for (const row of rows) {
                         if (
                             !isDefined(row[0]) ||
