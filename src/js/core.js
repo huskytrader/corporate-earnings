@@ -601,30 +601,25 @@ function extractFundamentalData(response, results) {
 
     const parser = new DOMParser();
     const dom = parser.parseFromString(response.raw, "text/html");
-    const firstRowNode = dom.querySelector(".fullview-title").querySelector("a");
-    results.ticker = firstRowNode.textContent;
-    results.tickerHref = fixExternalLink(firstRowNode.getAttribute("href"));
+    const tickerNode = dom.querySelector(".quote-header_ticker-wrapper > h1");
+    results.ticker = tickerNode.textContent;
+    const anchorNode = dom.querySelector(".quote-header_ticker-wrapper > h2 > a");
+    results.companyName = anchorNode.textContent.trim();
+    results.companySite = fixExternalLink(anchorNode.getAttribute("href"));
 
-    const siteNode = firstRowNode.nextElementSibling.querySelector("a");
-    if (siteNode != null) {
-        results.companySite = siteNode.getAttribute("href");
-        results.companyName = siteNode.textContent;
-    } else {
-        results.companyName = secondRowNode.textContent;
-    }
 
-    const secondRowNode = dom.querySelector(".fullview-links");
-    const secondRowLinks = secondRowNode.querySelectorAll("a");
-    results.sector = secondRowLinks[0].textContent;
-    results.sectorHref = fixExternalLink(secondRowLinks[0].getAttribute("href"));
-    results.industry = secondRowLinks[1].textContent;
-    results.industryHref = fixExternalLink(
-        secondRowLinks[1].getAttribute("href")
-    );
-    results.country = secondRowLinks[2].textContent;
-    results.countryHref = fixExternalLink(
-        secondRowLinks[2].getAttribute("href")
-    );
+    const sectorNode = dom.querySelector(".quote-links a:first-child");
+    results.sector = sectorNode.textContent;
+    results.sectorHref = fixExternalLink(sectorNode.getAttribute("href"));
+
+    const industryNode = dom.querySelector(".quote-links a:nth-of-type(2)");
+    results.industry = industryNode.textContent;
+    results.industryHref = fixExternalLink(industryNode.getAttribute("href"));
+
+    const countryNode = dom.querySelector(".quote-links a:nth-of-type(3)");
+    results.country = countryNode.textContent;
+    results.countryHref = fixExternalLink(countryNode.getAttribute("href"));
+
 
     const tds = Array.from(dom.querySelectorAll("td"));
     const floatRatioCombo = getSiblingText(tds, "Short Float / Ratio");
@@ -650,7 +645,8 @@ function extractFundamentalData(response, results) {
         );
         results.description = results.description.replace(regex, "");
     }
-
+    
+/*
     if (dom.querySelector(".fullview-ratings-outer") != null) {
         results.ratingsJson = extractRatings(
             dom.querySelector(".fullview-ratings-outer").outerHTML
@@ -659,6 +655,10 @@ function extractFundamentalData(response, results) {
     } else {
         results.ratingsHtml = "No ratings";
     }
+
+*/
+
+    results.ratingsHtml = "";
 
     if (dom.querySelector(".fullview-news-outer") != null) {
         results.newsJson = extractNews(
@@ -669,12 +669,12 @@ function extractFundamentalData(response, results) {
         results.newsHtml = "No news";
     }
 
-    const bds = dom.querySelectorAll(".body-table");
-    if (Array.from(bds).length > 0) {
-        results.insidersJson = extractInsiders(bds[bds.length - 1].outerHTML);
+    const insidersNode = dom.querySelector(".body-table");
+    if (insidersNode != null) {
+        const insidersJson = extractInsiders(insidersNode.outerHTML);
         results.insidersHtml =
-            results.insidersJson.length > 0
-                ? renderInsiders(results.insidersJson)
+            insidersJson.length > 0
+                ? renderInsiders(insidersJson)
                 : "No insider transactions";
     }
     return results;
