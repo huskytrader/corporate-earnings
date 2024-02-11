@@ -622,9 +622,8 @@ function extractFundamentalData(response, results) {
 
 
     const tds = Array.from(dom.querySelectorAll("td"));
-    const floatRatioCombo = getSiblingText(tds, "Short Float / Ratio");
-    results.shorts = floatRatioCombo.split("/")[0].trim();
-    results.daystocover = floatRatioCombo.split("/")[1].trim();
+    results.shorts = getSiblingText(tds, "Short Float");
+    results.daystocover = getSiblingText(tds, "Short Ratio");
     results.float = getSiblingText(tds, "Shs Float");
     processEarnings(getSiblingText(tds, "Earnings"), results);
     results.mktcap = getSiblingText(tds, "Market Cap");
