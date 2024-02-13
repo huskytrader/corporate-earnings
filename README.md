@@ -21,7 +21,7 @@
 * On Windows make sure you have extracted the ZIP file not just listed it: right click on the ZIP and select 'Extract All...'. You may end up with an extra corporate-earnings-main folder. Make sure that folder that you drag into Chrome contains manifest.json file.
 
 ### Show your support
-* Star this repo. Follow me on Twitter for updates [@huskytrader](https://twitter.com/huskytrader)
+* Star this repo. Follow me on X (Twitter) for updates [@huskytrader](https://twitter.com/huskytrader)
 * If you find this software useful, [buy me a coffee ☕](https://www.paypal.com/donate?business=M86QSSYXGLXF2&currency_code=USD)
 
 ### Disclaimer
