@@ -574,11 +574,16 @@ class ZAQarter extends Quarter {
         let eps = {};
         eps.eps = parseFloat(epsStr.replace(/\$/, ""));
 
-        if (isDefined(epsSurpriseStr) && epsSurpriseStr.indexOf(">") > -1) {
-            epsSurpriseStr = epsSurpriseStr
-                .substr(epsSurpriseStr.indexOf(">") + 1)
-                .slice(0, -7);
-            eps.surprisePerf = Math.round(parseFloat(epsSurpriseStr));
+        if (isDefined(epsSurpriseStr)) {
+            // Strip HTML tags and extract the content
+            const strippedStr = epsSurpriseStr.replace(/<[^>]+>/g, '');
+            // Match the number (including commas, decimals, and optional sign) before the % sign
+            const match = strippedStr.match(/([-+]?[\d,]+\.?\d*)%?/);
+            if (match) {
+                // Remove commas and the % sign, then parse to float
+                const cleanedStr = match[1].replace(/[,|%]/g, '');
+                eps.surprisePerf = Math.round(parseFloat(cleanedStr));
+            }
         }
         return eps;
     }
